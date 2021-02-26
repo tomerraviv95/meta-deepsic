@@ -1,9 +1,11 @@
 from conf import Conf
 from data_generator import DataGenerator
-from deep_sic_detector import DeepSICNet
+from python_code.detectors.deep_sic_detector import DeepSICNet
 from utils import Utils
 import matplotlib.pyplot as plt
-import torch as tc
+import torch
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 def GetICNetK(data):
@@ -32,10 +34,10 @@ def GetICNetK(data):
     for k in range(conf.K):
         idx = [i for i in range(conf.K) if i != k]
         m_fStrain = util.fSymToProb(data['m_fStrain'][:, k])
-        m_fYtrain = tc.cat((data['m_fYtrain'], util.fSymToProb(data['m_fStrain'][:, idx])), dim=1)
+        m_fYtrain = torch.cat((data['m_fYtrain'], util.fSymToProb(data['m_fStrain'][:, idx])), dim=1)
         k_data = {'m_fStrain': m_fStrain, 'm_fYtrain': m_fYtrain}
         v_cNet_m_fYtrain.append(k_data)
-        v_cNet.append(DeepSICNet(conf, batch_size=conf.s_fTrainSize))
+        v_cNet.append(DeepSICNet(conf, batch_size=conf.s_fTrainSize).to(device))
     return v_cNet, v_cNet_m_fYtrain
 
 
@@ -64,7 +66,7 @@ def GetICNet(data):
     for k in range(conf.K):
         idx = [i for i in range(conf.K) if i != k]
         m_fStrain = util.fSymToProb(data['m_fStrain'][:, k])
-        m_fYtrain = tc.cat((data['m_fYtrain'], data['m_fP'][:, idx]), dim=1)
+        m_fYtrain = torch.cat((data['m_fYtrain'], data['m_fP'][:, idx]), dim=1)
         k_data = {'m_fStrain': m_fStrain, 'm_fYtrain': m_fYtrain}
         v_cNet_m_fYtrain.append(k_data)
         v_cNet.append(DeepSICNet(conf, batch_size=conf.s_fTrainSize))
@@ -85,12 +87,12 @@ def TrainICNet(k_DeepSICNet, k_m_fYtrain, user, iter_idx):
     k_DeepSICNet
         The optimized DeepSECNet network.
     """
-    opt = tc.optim.Adam(k_DeepSICNet.parameters(), lr=1e-2)
-    crt = tc.nn.CrossEntropyLoss()
+    opt = torch.optim.Adam(k_DeepSICNet.parameters(), lr=1e-2)
+    crt = torch.nn.CrossEntropyLoss()
     max_epochs = 100
     for e in range(max_epochs):
         opt.zero_grad()
-        out = k_DeepSICNet(k_m_fYtrain['m_fYtrain'])
+        out = k_DeepSICNet.to(device)(k_m_fYtrain['m_fYtrain'])
         loss = crt(out, k_m_fYtrain['m_fStrain'].squeeze(-1).long())
         loss.backward()
         opt.step()
@@ -117,17 +119,17 @@ def s_fDetDeepSIC(conf, DeepSICs, data):
     m_fY = data['m_fYtest']
     m_fS = data['m_fStest']
     s_nSymbols, s_nK, _ = m_fS.shape
-    m_fShat = tc.zeros(m_fS.shape)
-    softmax1 = tc.nn.Softmax(dim=0)
+    m_fShat = torch.zeros(m_fS.shape).to(device)
+    softmax1 = torch.nn.Softmax(dim=0)
     for syms in range(s_nSymbols):
-        v_fP = 0.5 * tc.ones(s_nK, 1)
-        v_fPnext = tc.zeros(v_fP.shape)
+        v_fP = 0.5 * torch.ones(s_nK, 1).to(device)
+        v_fPnext = torch.zeros(v_fP.shape).to(device)
         v_fCurY = m_fY[syms]
         for ii in range(conf.s_nIter):
             for kk in range(conf.K):
                 idx = [i for i in range(conf.K) if i != kk]
-                v_Input = tc.cat((v_fCurY, v_fP[idx]), dim=0)
-                with tc.no_grad():
+                v_Input = torch.cat((v_fCurY, v_fP[idx]), dim=0)
+                with torch.no_grad():
                     v_fPTemp = softmax1(DeepSICs[kk][ii](v_Input))
                 v_fPnext[kk] = v_fPTemp[1].unsqueeze(-1)
             v_fP = v_fPnext
@@ -135,15 +137,15 @@ def s_fDetDeepSIC(conf, DeepSICs, data):
         if syms % int(s_nSymbols / 20) == 0:
             print(f'Testing | Symbols: {syms}/{s_nSymbols}', end='\r')
     print(f'Testing |Symbols: {syms}/{s_nSymbols}', end='\r')
-    BER = (m_fShat != m_fS).sum() / (tc.FloatTensor([s_nSymbols * s_nK]))
+    BER = (m_fShat != m_fS).sum() / (torch.FloatTensor([s_nSymbols * s_nK]))
     return m_fShat, BER
 
 
 util = Utils()
 conf = Conf()
 DG = DataGenerator(conf)
-softmax = tc.nn.Softmax(dim=1)  # Single symbol probability inference
-softmax1 = tc.nn.Softmax(dim=0)  # Batch probability inference
+softmax = torch.nn.Softmax(dim=1)  # Single symbol probability inference
+softmax1 = torch.nn.Softmax(dim=0)  # Batch probability inference
 BERs = []  # Contains the BER for each SNR
 print(f'=====System Configuration=====\n\n{conf}')
 
@@ -158,16 +160,16 @@ for SNR in conf.v_fSNRdB:  # Traversing the SNRs
         DeepSICs[user][0] = TrainICNet(v_cNet[user], v_cNet_m_fYtrain[user], user, 0)
 
     # Initializing the probabilities
-    m_fP = 0.5 * tc.ones(data['m_fStrain'].shape)
+    m_fP = 0.5 * torch.ones(data['m_fStrain'].shape).to(device)
 
     # Training the DeepSICNet for each user-symbol/iteration
     for i in range(1, conf.s_nIter):
-        m_fPNext = tc.zeros(data['m_fStrain'].shape)
+        m_fPNext = torch.zeros(data['m_fStrain'].shape).to(device)
         # Generating soft symbols for training purposes
         for users in range(conf.K):
             idx = [i for i in range(conf.K) if i != user]
-            m_Input = tc.cat((data['m_fYtrain'], m_fP[:, idx]), dim=1)
-            with tc.no_grad():
+            m_Input = torch.cat((data['m_fYtrain'], m_fP[:, idx]), dim=1)
+            with torch.no_grad():
                 m_fPTemp = softmax(DeepSICs[users][i - 1](m_Input))
             m_fPNext[:, users] = m_fPTemp[:, 1].unsqueeze(-1)
         m_fP = m_fPNext

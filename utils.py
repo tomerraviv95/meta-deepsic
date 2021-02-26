@@ -1,4 +1,5 @@
-import torch as tc
+import torch
+
 
 class Utils():
     """
@@ -19,7 +20,7 @@ class Utils():
         return 0.5 * (x + 1)
 
     def fProbToSym(self, x):
-        return tc.sign(x - 0.5)
+        return torch.sign(x - 0.5)
 
     def fSNRToW(self, SNR):
-        return tc.FloatTensor([10 ** (-0.1 * SNR)])
+        return torch.FloatTensor([10 ** (-0.1 * SNR)])

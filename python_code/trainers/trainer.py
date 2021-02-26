@@ -1,15 +1,8 @@
-import torch
-torch.manual_seed(1)
-import matplotlib.pyplot as plt
-from dataclasses import *
-from matplotlib import rc
-rc('font',**{'family':'sans-serif','sans-serif':['Helvetica']})
-# rc('text', usetex=True)
-plt.rc('font', weight='bold')
-# plt.rcParams['text.latex.preamble'] = [r'\usepackage{sfmath} \boldmath']
+from dataclasses import dataclass
 
-@dataclass(frozen=True)  # Immutable Data Class
-class Conf:
+
+@dataclass
+class Trainer:
     """Form the configuration class.
 
     Keyword arguments:
@@ -30,8 +23,8 @@ class Conf:
     ChannelModel --- The Channel Model: set 'SEQ' for the Spatial Exponential Decay Channel Model, i.e. exp(-|i-j|),
                                         set 'Gaussian' for a Gaussian Channel, i.e. N(0,1).
     """
-    N: int = 6
-    K: int = 6
+    N: int
+    K: int
     v_fSNRdB: list = field(default_factory=lambda: [i for i in range(0, 16, 2)])
     s_nIter: int = 5
     s_fTrainSize: int = 5000
