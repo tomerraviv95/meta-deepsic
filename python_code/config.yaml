@@ -1,5 +1,37 @@
 # general
 run_name: 'test'
 
+#N --- Number of Rx Antennas
+#s_nK --- Number of Transmitted Symbols
+#v_fSNRdB --- SNR Values in dB
+#iterations --- Interference Cancellation Iterations
+#train_size --- Training Data Size
+#test_size --- Test Data Size
+#std --- Estimation Error Variance
+#frame_size --- Frame Size for Generating Noisy Training Data
+#frame_num --- Number of Frames
+#v_nCurves --- A Binary List Indicating the Simulated Algorithms [Soft IC, perfect CSI,
+#                                                                 Soft IC, CSI uncertainty,
+#                                                                 Sequential DeepSIC, Perfect CSI,
+#                                                                 Sequential DeepSIC, CSI Uncertainty]
+#
+#ChannelModel --- The Channel Model: set 'SEQ' for the Spatial Exponential Decay Channel Model, i.e. exp(-|i-j|),
+#                                    set 'Gaussian' for a Gaussian Channel, i.e. N(0,1).
+
 N: 6
 K: 6
+
+SNR_start: 0
+SNR_step: 2
+SNR_end: 16
+
+iterations: 5
+train_size: 5000
+test_size: 20000
+
+std: 0.1
+frame_size: 500
+
+ChannelModel: 'SED'
+v_fConst: [-1, 1]
+DeepSICArch: 'MLP'
