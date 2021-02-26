@@ -1,0 +1,57 @@
+# general
+run_name: 'test'
+
+# coding parameters
+use_ecc: True # Either run with/without ECC. values: [True, False].
+n_symbols: 2 # Number of symbols in ECC, each one is hard-coded 8 bits. values: int.
+
+# channel
+memory_length: 4 # Memory length of the channel. values: int. Tested with values <=4.
+channel_type: 'ISI_AWGN' # Channel type. For this paper, we only used ISI AWGN. values: ['ISI_AWGN'].
+channel_coefficients: 'time_decay' # The taps of the channel. values: ['time_decay','cost2100'].
+noisy_est_var: 0 # Adds noise to channel taps, with variance set by this value and zero mean. values: int.
+fading_in_channel: True # If the channel is fading/non-fading. values: [True, False]
+fading_in_decoder: True # If the decoder is aware of the fading, only used in the full-CSI VA. values: [True, False]
+fading_taps_type: 1 # Fading type, see paper for more details. The synthetic train channel is 1, the test is 2.
+subframes_in_frame: 25 # Number of subframes in each frame. The first subframe is a known pilot, all other are data.
+gamma: 0.2 # gamma value for time decay fading
+
+# validation hyperparameters
+val_block_length: 120 # coherence block time. values: int.
+val_frames: 5 # number of validation frames. values: int.
+val_SNR_start: 10 # start SNR value. values: float.
+val_SNR_end: 10 # end SNR value. values: float.
+val_SNR_step: 1 # step. values: float.
+eval_mode: 'aggregated' # Type of evaluation. Per snr - 'aggregated', Per block - 'by_word'.
+
+# train hyperparameters
+train_block_length: 120 # coherence block time. values: int.
+train_frames: 12 # number of train frames. values: int.
+train_minibatch_num: 25 # number of minibatches. values: int.
+train_minibatch_size: 32 # the size of a given minibatch. values: int.
+train_SNR_start: 10 # start SNR value. values: float.
+train_SNR_end: 10 # end SNR value. values: float.
+train_SNR_step: 1 # step. values: float.
+lr: 0.001 # learning rate. values: float.
+loss_type: 'CrossEntropy' # Loss type. values: 'BCE','CrossEntropy','MSE'.
+optimizer_type: 'Adam' # Optimizer type. values: 'Adam','RMSprop','SGD'.
+
+# seed
+noise_seed: 3450002 # seed value. values: int.
+word_seed: 7860002 # seed value. values: int.
+
+# self-supervised online training
+self_supervised: False # Whether to run the online training (as in ViterbiNet). values: [True, False].
+self_supervised_iterations: 200 # Number of iterations in the online training. values: int.
+ser_thresh: 0.02 # ser threshold. values: float.
+
+# meta-learning
+online_meta: False # Whether to run the meta-learning training in evaluation. values: [False, True].
+meta_lr: 0.1 # learning rate. values: float.
+MAML: True # To use first order meta-learning - False, all orders (MAML) - True.
+weights_init: 'last_frame' # Type of initialization for the meta-learning weights. values: ['random','last_frame','meta_training'].
+window_size: 1 # size of window for the online and meta-learning. values: int.
+buffer_empty: True # Whether to start evaluation from an empty buffer or a randomly initialized one.
+meta_train_iterations: 20 # Number of iterations in the online meta training. values: int.
+meta_j_num: 10 # Number of samples per iteration in the online training. values: int.
+meta_subframes: 5 # How many subframes to wait before meta-learning is done again. values: int.
