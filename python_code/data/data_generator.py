@@ -40,33 +40,21 @@ class DataGenerator(Dataset):
 
     """
 
-    def __init__(self):
+    def __init__(self, size):
         super(DataGenerator).__init__()
+        self.size = size
+        self.H = ChannelModel.get_channel(conf.ChannelModel, conf.N, conf.K)
 
-    def generate_symbols(self, batch_size):
+    def generate_symbols(self):
         # generate bits
-        b = np.random.randint(0, 2, size=(batch_size, conf.K))
+        b = np.random.randint(0, 2, size=(self.size, conf.K))
         # generate symbols
         x = (-1) ** b
         # return symbols tensor
         return torch.FloatTensor(x).unsqueeze(-1)
 
-    def __getitem__(self, snr):
-        database = []
-        # do not change max_workers
-        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
-            [executor.submit(self.__call__, snr, database) for snr in [snr]]
-        b, y = (np.concatenate(arrays) for arrays in zip(*database))
-        b, y = torch.Tensor(b).to(device=device), torch.Tensor(y).to(device=device)
-        return b, y
-
     def __call__(self, snr):
-        H = ChannelModel.get_channel(conf.ChannelModel, conf.N, conf.K)
-        m_fStrain = self.generate_symbols(conf.train_size)
-        m_fStest = self.generate_symbols(conf.test_size)
+        m_fStrain = self.generate_symbols()
         s_fSigW = db_to_scalar(snr)
-        m_fYtrain = torch.matmul(H, m_fStrain) + torch.sqrt(s_fSigW) * torch.randn(conf.train_size, conf.N, 1)
-        m_fYtest = torch.matmul(H, m_fStest) + torch.sqrt(s_fSigW) * torch.randn(conf.test_size, conf.N, 1)
-        self.data = {'m_fStrain': m_fStrain.to(device), 'm_fStest': m_fStest.to(device),
-                     'm_fYtrain': m_fYtrain.to(device), 'm_fYtest': m_fYtest.to(device)}
-        return self.data
+        m_fYtrain = torch.matmul(self.H, m_fStrain) + torch.sqrt(s_fSigW) * torch.randn(self.size, conf.N, 1)
+        return m_fStrain.to(device), m_fYtrain.to(device)

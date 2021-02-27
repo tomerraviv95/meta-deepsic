@@ -16,10 +16,11 @@ class Trainer:
     """
 
     def __init__(self):
-        self.DG = DataGenerator()
+        self.train_dg = DataGenerator(conf.train_size)
+        self.test_dg = DataGenerator(conf.test_size)
         self.softmax = torch.nn.Softmax(dim=1)  # Single symbol probability inference
 
-    def GetICNetK(self, data):
+    def GetICNetK(self, x_train, y_train):
         """
         Generates the DeepSIC Networks for Each User for the First Iteration
 
@@ -35,22 +36,23 @@ class Trainer:
         v_cNet_m_fYtrain
             A list of data dictionaries with the prepard training data for each user
             [list_idx][dictionary_key]:
-            [i]['m_fStrain'] --> Training Labels (Symbol probabilities) for the i-th user.
-            [i]['m_fYtrain'] --> Output of the Channel and the Symbol Probs. of the j-th users, where for j != i
+            [i]['x_train_probs'] --> Training Labels (Symbol probabilities) for the i-th user.
+            [i]['y_train_probs'] --> Output of the Channel and the Symbol Probs. of the j-th users, where for j != i
 
         """
         v_cNet = []
-        v_cNet_m_fYtrain = []
+        x_train_probs_all_users = []
+        y_train_probs_all_users = []
         for k in range(conf.K):
             idx = [i for i in range(conf.K) if i != k]
-            m_fStrain = symbol_to_prob(data['m_fStrain'][:, k])
-            m_fYtrain = torch.cat((data['m_fYtrain'], symbol_to_prob(data['m_fStrain'][:, idx])), dim=1)
-            k_data = {'m_fStrain': m_fStrain, 'm_fYtrain': m_fYtrain}
-            v_cNet_m_fYtrain.append(k_data)
+            x_train_probs = symbol_to_prob(x_train[:, k])
+            y_train_probs = torch.cat((y_train, symbol_to_prob(x_train[:, idx])), dim=1)
+            x_train_probs_all_users.append(x_train_probs)
+            y_train_probs_all_users.append(y_train_probs)
             v_cNet.append(DeepSICNet().to(device))
-        return v_cNet, v_cNet_m_fYtrain
+        return v_cNet, x_train_probs_all_users, y_train_probs_all_users
 
-    def GetICNet(self, data):
+    def GetICNet(self, x_train, y_train, m_fP):
         """
         Generates the DeepSIC Networks for Each User for the Iterations>1
 
@@ -66,21 +68,22 @@ class Trainer:
         v_cNet_m_fYtrain
             A list of data dictionaries with the prepard training data for each user
             [list_idx][dictionary_key]:
-            [i]['m_fStrain'] --> Training Labels (Symbol robabilities) for the i-th user.
-            [i]['m_fYtrain'] --> Output of the Channel and the Predicted Symbol Probs. of the j-th users, where for j != i
+            [i]['x_train_probs'] --> Training Labels (Symbol probabilities) for the i-th user.
+            [i]['y_train_probs'] --> Output of the Channel and the Predicted Symbol Probs. of the j-th users, where for j != i
         """
         v_cNet = []
-        v_cNet_m_fYtrain = []
+        x_train_probs_all_users = []
+        y_train_probs_all_users = []
         for k in range(conf.K):
             idx = [i for i in range(conf.K) if i != k]
-            m_fStrain = symbol_to_prob(data['m_fStrain'][:, k])
-            m_fYtrain = torch.cat((data['m_fYtrain'], data['m_fP'][:, idx]), dim=1)
-            k_data = {'m_fStrain': m_fStrain, 'm_fYtrain': m_fYtrain}
-            v_cNet_m_fYtrain.append(k_data)
+            x_train_probs = symbol_to_prob(x_train[:, k])
+            y_train_probs = torch.cat((y_train, m_fP[:, idx]), dim=1)
+            x_train_probs_all_users.append(x_train_probs)
+            y_train_probs_all_users.append(y_train_probs)
             v_cNet.append(DeepSICNet())
-        return v_cNet, v_cNet_m_fYtrain
+        return v_cNet, x_train_probs_all_users, y_train_probs_all_users
 
-    def TrainICNet(self, net, k_m_fYtrain):
+    def TrainICNet(self, net, x_train_probs, y_train_probs):
         """
         Trains a DeepSIC Network
 
@@ -96,15 +99,16 @@ class Trainer:
         """
         opt = torch.optim.Adam(net.parameters(), lr=conf.lr)
         crt = torch.nn.CrossEntropyLoss()
+        net = net.to(device)
         for _ in range(conf.max_epochs):
             opt.zero_grad()
-            out = net.to(device)(k_m_fYtrain['m_fYtrain'])
-            loss = crt(out, k_m_fYtrain['m_fStrain'].squeeze(-1).long())
+            out = net(y_train_probs)
+            loss = crt(out, x_train_probs.squeeze(-1).long())
             loss.backward()
             opt.step()
         return net
 
-    def evaluate(self, conf, DeepSICs, data):
+    def evaluate(self, conf, DeepSICs, SNR):
         """
         Evaluates the performance of the model.
 
@@ -121,8 +125,7 @@ class Trainer:
         m_fShat
             The recovered symbols
         """
-        m_fY = data['m_fYtest']
-        m_fS = data['m_fStest']
+        m_fS, m_fY = self.test_dg(snr=SNR)  # Generating data for the given SNR
         s_nSymbols, s_nK, _ = m_fS.shape
         m_fShat = torch.zeros(m_fS.shape).to(device)
         softmax1 = torch.nn.Softmax(dim=0)
@@ -152,47 +155,42 @@ class Trainer:
 
         for SNR in conf.snr_list:  # Traversing the SNRs
             print(f'SNR {SNR}')
-            data = self.DG(snr=SNR)  # Generating data for the given SNR
-            DeepSICs = [[0] * conf.iterations for i in
-                        range(conf.K)]  # 2D list for Storing the DeepSIC Networks
-            data_new = {}
-            v_cNet, v_cNet_m_fYtrain = self.GetICNetK(
-                data)  # Obtaining the DeepSIC networks and data for the first iteration
+            x_train, y_train = self.train_dg(snr=SNR)  # Generating data for the given SNR
+            DeepSICs = [[0] * conf.iterations for _ in range(conf.K)]  # 2D list for Storing the DeepSIC Networks
+            v_cNet, x_train_probs_all_users, y_train_probs_all_users = self.GetICNetK(x_train,
+                                                                                      y_train)  # Obtaining the DeepSIC networks and data for the first iteration
 
             # Training the DeepSIC network for each user for iteration=1
             for user in range(conf.K):
-                DeepSICs[user][0] = self.TrainICNet(v_cNet[user], v_cNet_m_fYtrain[user])
+                DeepSICs[user][0] = self.TrainICNet(v_cNet[user], x_train_probs_all_users[user],
+                                                    y_train_probs_all_users[user])
 
             # Initializing the probabilities
-            m_fP = 0.5 * torch.ones(data['m_fStrain'].shape).to(device)
+            m_fP = 0.5 * torch.ones(x_train.shape).to(device)
 
             # Training the DeepSICNet for each user-symbol/iteration
             for i in range(1, conf.iterations):
                 print(i)
-                m_fPNext = torch.zeros(data['m_fStrain'].shape).to(device)
+                m_fPNext = torch.zeros(x_train.shape).to(device)
                 # Generating soft symbols for training purposes
                 for users in range(conf.K):
                     idx = [i for i in range(conf.K) if i != user]
-                    m_Input = torch.cat((data['m_fYtrain'], m_fP[:, idx]), dim=1)
+                    m_Input = torch.cat((y_train, m_fP[:, idx]), dim=1)
                     with torch.no_grad():
                         m_fPTemp = self.softmax(DeepSICs[users][i - 1](m_Input))
                     m_fPNext[:, users] = m_fPTemp[:, 1].unsqueeze(-1)
                 m_fP = m_fPNext
 
-                # Preparing the data to be fed into the DeepSIC networks for iteartions>1
-                data_new['m_fStrain'] = data['m_fStrain']
-                data_new['m_fYtrain'] = data['m_fYtrain']
-                data_new['m_fP'] = m_fP
-
                 # Obtaining the DeepSIC networks for each user-symbol and the i-th iteration
-                v_cNet, v_cNet_m_fYtrain = self.GetICNet(data_new)
+                v_cNet, x_train_probs_all_users, y_train_probs_all_users = self.GetICNet(x_train, y_train, m_fP)
 
                 # Training the DeepSIC networks for the iteration>1
                 for user in range(conf.K):
-                    DeepSICs[user][i] = self.TrainICNet(v_cNet[user], v_cNet_m_fYtrain[user])
+                    DeepSICs[user][i] = self.TrainICNet(v_cNet[user], x_train_probs_all_users[user],
+                                                        y_train_probs_all_users[user])
             print('evaluating')
             # Testing the network on the current SNR
-            _, BER = self.evaluate(conf, DeepSICs, data)
+            _, BER = self.evaluate(conf, DeepSICs, SNR)
             ber_list.append(BER.numpy())
             print(f'\nBER :{BER} @ SNR: {SNR} [dB]')
         print(f'Training and Testing Completed\nBERs: {ber_list}')
