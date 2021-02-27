@@ -46,8 +46,8 @@ class Trainer:
         v_cNet_m_fYtrain = []
         for k in range(self.conf.K):
             idx = [i for i in range(self.conf.K) if i != k]
-            m_fStrain = util.fSymToProb(data['m_fStrain'][:, k])
-            m_fYtrain = torch.cat((data['m_fYtrain'], util.fSymToProb(data['m_fStrain'][:, idx])), dim=1)
+            m_fStrain = util.symbol_to_prob(data['m_fStrain'][:, k])
+            m_fYtrain = torch.cat((data['m_fYtrain'], util.symbol_to_prob(data['m_fStrain'][:, idx])), dim=1)
             k_data = {'m_fStrain': m_fStrain, 'm_fYtrain': m_fYtrain}
             v_cNet_m_fYtrain.append(k_data)
             v_cNet.append(DeepSICNet(self.conf, batch_size=self.conf.train_size).to(device))
@@ -77,7 +77,7 @@ class Trainer:
         v_cNet_m_fYtrain = []
         for k in range(self.conf.K):
             idx = [i for i in range(self.conf.K) if i != k]
-            m_fStrain = util.fSymToProb(data['m_fStrain'][:, k])
+            m_fStrain = util.symbol_to_prob(data['m_fStrain'][:, k])
             m_fYtrain = torch.cat((data['m_fYtrain'], data['m_fP'][:, idx]), dim=1)
             k_data = {'m_fStrain': m_fStrain, 'm_fYtrain': m_fYtrain}
             v_cNet_m_fYtrain.append(k_data)
@@ -109,7 +109,7 @@ class Trainer:
             opt.step()
         return k_DeepSICNet
 
-    def s_fDetDeepSIC(self, conf, DeepSICs, data):
+    def evaluate(self, conf, DeepSICs, data):
         """
         Evaluates the performance of the model.
 
@@ -143,7 +143,7 @@ class Trainer:
                         v_fPTemp = softmax1(DeepSICs[kk][ii](v_Input))
                     v_fPnext[kk] = v_fPTemp[1].unsqueeze(-1)
                 v_fP = v_fPnext
-            m_fShat[syms, :] = self.util.fProbToSym(v_fP.float())
+            m_fShat[syms, :] = self.util.prob_to_symbol(v_fP.float())
             if syms % int(s_nSymbols / 20) == 0:
                 print(f'Testing | Symbols: {syms}/{s_nSymbols}', end='\r')
         print(f'Testing |Symbols: {syms}/{s_nSymbols}', end='\r')
@@ -152,10 +152,11 @@ class Trainer:
 
     def train(self):
 
-        BERs = []  # Contains the BER for each SNR
-        print(f'Starting to train')
+        ber_list = []  # Contains the BER for each SNR
+        print(f'training')
 
         for SNR in self.conf.snr_list:  # Traversing the SNRs
+            print(f'SNR {SNR}')
             data = self.DG(snr=SNR)  # Generating data for the given SNR
             DeepSICs = [[0] * self.conf.iterations for i in
                         range(self.conf.K)]  # 2D list for Storing the DeepSIC Networks
@@ -172,6 +173,7 @@ class Trainer:
 
             # Training the DeepSICNet for each user-symbol/iteration
             for i in range(1, self.conf.iterations):
+                print(i)
                 m_fPNext = torch.zeros(data['m_fStrain'].shape).to(device)
                 # Generating soft symbols for training purposes
                 for users in range(self.conf.K):
@@ -193,12 +195,12 @@ class Trainer:
                 # Training the DeepSIC networks for the iteration>1
                 for user in range(self.conf.K):
                     DeepSICs[user][i] = self.TrainICNet(v_cNet[user], v_cNet_m_fYtrain[user], user, i)
-
+            print('evaluating')
             # Testing the network on the current SNR
-            _, BER = self.s_fDetDeepSIC(self.conf, DeepSICs, data)
-            BERs.append(BER.numpy())
+            _, BER = self.evaluate(self.conf, DeepSICs, data)
+            ber_list.append(BER.numpy())
             print(f'\nBER :{BER} @ SNR: {SNR} [dB]')
-        print(f'Training and Testing Completed\nBERs: {BERs}')
+        print(f'Training and Testing Completed\nBERs: {ber_list}')
 
 
 if __name__ == "__main__":

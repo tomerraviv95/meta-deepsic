@@ -1,3 +1,4 @@
+from python_code.data.channel_model import SEDChannel, GaussianChannel, ChannelModel
 from python_code.utils.utils import Utils
 import torch
 import numpy as np
@@ -37,45 +38,21 @@ class DataGenerator(Utils):
     def __init__(self, config):
         super(DataGenerator).__init__()
         self.conf = config
-        self.H = self.getH(channel_mode=self.conf.ChannelModel)
-
-    def getH(self, channel_mode):
-        if channel_mode == 'SED':
-            H_row = torch.FloatTensor([i for i in range(self.conf.N)])
-            H_row = H_row.repeat([self.conf.K, 1]).t()
-            H_column = torch.FloatTensor([i for i in range(self.conf.K)])
-            H_column = H_column.repeat([self.conf.N, 1])
-            H = torch.exp(-torch.abs(H_row - H_column))
-        elif channel_mode == 'Gaussian':
-            H = torch.randn(self.conf.N, self.conf.K)
-        else:
-            raise NotImplementedError
-        return H
 
     def getSymbols(self, batch_size):
-        return torch.FloatTensor([[np.random.choice(self.conf.v_fConst) \
-                                   for _ in range(self.conf.K)] \
-                                  for _ in range(batch_size)]).unsqueeze(-1)
+        return torch.FloatTensor(
+            [[np.random.choice(self.conf.v_fConst) for _ in range(self.conf.K)] for _ in range(batch_size)]).unsqueeze(
+            -1)
 
-    def __call__(self, snr=0.):
+    def __call__(self, snr):
+        H = ChannelModel.get_channel(self.conf.ChannelModel, self.conf.N, self.conf.K)
         m_fStrain = self.getSymbols(self.conf.train_size)
         m_fStest = self.getSymbols(self.conf.test_size)
-        # Generating noisy CSI
-        m_fRtrain = torch.zeros(self.conf.train_size, self.conf.N, 1)
-        for i in range(self.conf.frame_num):
-            frame_idxs = torch.arange(i * self.conf.frame_size, (i + 1) * self.conf.frame_size)
-            curr_H_noise = (1. + torch.sqrt(torch.FloatTensor([self.conf.std]))) * torch.randn(self.H.shape)
-            curr_Hn = torch.mul(self.H, curr_H_noise)
-            curr_x = m_fStrain[frame_idxs, :]
-            m_fRtrain[frame_idxs, :] = torch.matmul(curr_Hn, curr_x)
-        s_fSigW = self.fSNRToW(snr)
-        m_fYtrain = torch.matmul(self.H, m_fStrain) \
-                    + torch.sqrt(s_fSigW) * torch.randn(self.conf.train_size, self.conf.N, 1)
-        m_fYtrainErr = m_fRtrain + torch.sqrt(s_fSigW) * torch.randn(self.conf.train_size, self.conf.N, 1)
-        m_fYtest = torch.matmul(self.H, m_fStest) + torch.sqrt(s_fSigW) * torch.randn(self.conf.test_size,
-                                                                                      self.conf.N, 1)
+        s_fSigW = self.db_to_scalar(snr)
+        m_fYtrain = torch.matmul(H, m_fStrain) + torch.sqrt(s_fSigW) * torch.randn(self.conf.train_size,
+                                                                                   self.conf.N, 1)
+        m_fYtest = torch.matmul(H, m_fStest) + torch.sqrt(s_fSigW) * torch.randn(self.conf.test_size,
+                                                                                 self.conf.N, 1)
         self.data = {'m_fStrain': m_fStrain.to(device), 'm_fStest': m_fStest.to(device),
-                     'm_fRtrain': m_fRtrain.to(device),
-                     'm_fYtrain': m_fYtrain.to(device), 'm_fYtrainErr': m_fYtrainErr.to(device),
-                     'm_fYtest': m_fYtest.to(device)}
+                     'm_fYtrain': m_fYtrain.to(device), 'm_fYtest': m_fYtest.to(device)}
         return self.data

@@ -6,21 +6,21 @@ class Utils():
     Utility class containing neccessary functions.
     Methods
     -------
-    fSymToProb(x:PyTorch/Numpy Tensor/Array)
+    symbol_to_prob(x:PyTorch/Numpy Tensor/Array)
         Converts BPSK Symbols to Probabilities: '-1' -> 0, '+1' -> '1.'
 
-    fProbToSym(x:PyTorch/Numpy Tensor/Array)
+    prob_to_symbol(x:PyTorch/Numpy Tensor/Array)
         Converts Probabilities to BPSK Symbols by Hard Threhsolding: [0,0.5] -> '-1', [0.5,0] -> '+1'
 
-    fSNRToW(SNR:list)
+    db_to_scalar(SNR:list)
         Converts the Desired SNR into the Noise Power (Noise Variance)
     """
 
-    def fSymToProb(self, x):
+    def symbol_to_prob(self, x):
         return 0.5 * (x + 1)
 
-    def fProbToSym(self, x):
+    def prob_to_symbol(self, x):
         return torch.sign(x - 0.5)
 
-    def fSNRToW(self, SNR):
+    def db_to_scalar(self, SNR):
         return torch.FloatTensor([10 ** (-0.1 * SNR)])
