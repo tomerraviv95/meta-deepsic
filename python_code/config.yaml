@@ -34,3 +34,6 @@ frame_size: 500
 
 ChannelModel: 'SED'
 DeepSICArch: 'MLP'
+
+lr: 0.01
+max_epochs: 100

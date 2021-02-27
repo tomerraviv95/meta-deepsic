@@ -1,4 +1,5 @@
 from python_code.data.channel_model import ChannelModel
+from python_code.utils.config_singleton import Config
 from python_code.utils.utils import db_to_scalar
 from torch.utils.data import Dataset
 import concurrent.futures
@@ -6,6 +7,8 @@ import torch
 import numpy as np
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+conf = Config()
 
 
 class DataGenerator(Dataset):
@@ -37,13 +40,12 @@ class DataGenerator(Dataset):
 
     """
 
-    def __init__(self, config):
+    def __init__(self):
         super(DataGenerator).__init__()
-        self.conf = config
 
     def generate_symbols(self, batch_size):
         # generate bits
-        b = np.random.randint(0, 2, size=(batch_size, self.conf.K))
+        b = np.random.randint(0, 2, size=(batch_size, conf.K))
         # generate symbols
         x = (-1) ** b
         # return symbols tensor
@@ -59,14 +61,12 @@ class DataGenerator(Dataset):
         return b, y
 
     def __call__(self, snr):
-        H = ChannelModel.get_channel(self.conf.ChannelModel, self.conf.N, self.conf.K)
-        m_fStrain = self.generate_symbols(self.conf.train_size)
-        m_fStest = self.generate_symbols(self.conf.test_size)
+        H = ChannelModel.get_channel(conf.ChannelModel, conf.N, conf.K)
+        m_fStrain = self.generate_symbols(conf.train_size)
+        m_fStest = self.generate_symbols(conf.test_size)
         s_fSigW = db_to_scalar(snr)
-        m_fYtrain = torch.matmul(H, m_fStrain) + torch.sqrt(s_fSigW) * torch.randn(self.conf.train_size,
-                                                                                   self.conf.N, 1)
-        m_fYtest = torch.matmul(H, m_fStest) + torch.sqrt(s_fSigW) * torch.randn(self.conf.test_size,
-                                                                                 self.conf.N, 1)
+        m_fYtrain = torch.matmul(H, m_fStrain) + torch.sqrt(s_fSigW) * torch.randn(conf.train_size, conf.N, 1)
+        m_fYtest = torch.matmul(H, m_fStest) + torch.sqrt(s_fSigW) * torch.randn(conf.test_size, conf.N, 1)
         self.data = {'m_fStrain': m_fStrain.to(device), 'm_fStest': m_fStest.to(device),
                      'm_fYtrain': m_fYtrain.to(device), 'm_fYtest': m_fYtest.to(device)}
         return self.data

@@ -1,6 +1,11 @@
+from python_code.utils.config_singleton import Config
+
 from torch import nn
 
+conf = Config()
+
 CLASSES_NUM = 2
+HIDDEN_SIZE = 60
 
 
 class DeepSICNet(nn.Module):
@@ -23,20 +28,16 @@ class DeepSICNet(nn.Module):
     probs = torch.softmax(output, dim), for a batch inference, set dim=1; otherwise dim=0.
     """
 
-    def __init__(self, conf, input_size=1):
+    def __init__(self):
         super(DeepSICNet, self).__init__()
-        self.conf = conf
-        self.hidden_size = 60
-        self.input_size = input_size  # Batch_size: training or testing
-        self.fc0 = nn.Linear(self.conf.K + self.conf.N - 1, self.hidden_size)
+        self.fc0 = nn.Linear(conf.K + conf.N - 1, HIDDEN_SIZE)
         self.sigmoid = nn.Sigmoid()
-        self.fc1 = nn.Linear(self.hidden_size, int(self.hidden_size / 2))
+        self.fc1 = nn.Linear(HIDDEN_SIZE, int(HIDDEN_SIZE / 2))
         self.relu = nn.ReLU()
-        self.fc2 = nn.Linear(int(self.hidden_size / 2), CLASSES_NUM)
-        self.identity = nn.Identity()
+        self.fc2 = nn.Linear(int(HIDDEN_SIZE / 2), CLASSES_NUM)
 
     def forward(self, y):
         out0 = self.sigmoid(self.fc0(y.squeeze(-1)))
         fc1_out = self.relu(self.fc1(out0))
-        out = self.identity(self.fc2(fc1_out))
+        out = self.fc2(fc1_out)
         return out

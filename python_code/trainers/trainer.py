@@ -5,6 +5,7 @@ from python_code.utils.utils import symbol_to_prob, prob_to_symbol
 import torch
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+conf = Config()
 
 
 class Trainer:
@@ -15,10 +16,8 @@ class Trainer:
     """
 
     def __init__(self):
-        self.conf = Config()
-        self.DG = DataGenerator(self.conf)
+        self.DG = DataGenerator()
         self.softmax = torch.nn.Softmax(dim=1)  # Single symbol probability inference
-        self.softmax1 = torch.nn.Softmax(dim=0)  # Batch probability inference
 
     def GetICNetK(self, data):
         """
@@ -42,13 +41,13 @@ class Trainer:
         """
         v_cNet = []
         v_cNet_m_fYtrain = []
-        for k in range(self.conf.K):
-            idx = [i for i in range(self.conf.K) if i != k]
+        for k in range(conf.K):
+            idx = [i for i in range(conf.K) if i != k]
             m_fStrain = symbol_to_prob(data['m_fStrain'][:, k])
             m_fYtrain = torch.cat((data['m_fYtrain'], symbol_to_prob(data['m_fStrain'][:, idx])), dim=1)
             k_data = {'m_fStrain': m_fStrain, 'm_fYtrain': m_fYtrain}
             v_cNet_m_fYtrain.append(k_data)
-            v_cNet.append(DeepSICNet(self.conf).to(device))
+            v_cNet.append(DeepSICNet().to(device))
         return v_cNet, v_cNet_m_fYtrain
 
     def GetICNet(self, data):
@@ -72,22 +71,22 @@ class Trainer:
         """
         v_cNet = []
         v_cNet_m_fYtrain = []
-        for k in range(self.conf.K):
-            idx = [i for i in range(self.conf.K) if i != k]
+        for k in range(conf.K):
+            idx = [i for i in range(conf.K) if i != k]
             m_fStrain = symbol_to_prob(data['m_fStrain'][:, k])
             m_fYtrain = torch.cat((data['m_fYtrain'], data['m_fP'][:, idx]), dim=1)
             k_data = {'m_fStrain': m_fStrain, 'm_fYtrain': m_fYtrain}
             v_cNet_m_fYtrain.append(k_data)
-            v_cNet.append(DeepSICNet(self.conf))
+            v_cNet.append(DeepSICNet())
         return v_cNet, v_cNet_m_fYtrain
 
-    def TrainICNet(self, k_DeepSICNet, k_m_fYtrain):
+    def TrainICNet(self, net, k_m_fYtrain):
         """
         Trains a DeepSIC Network
 
         Parameters
         ----------
-        k_DeepSICNet: an instance of the DeepSICNet class to be trained.
+        net: an instance of the DeepSICNet class to be trained.
         k_m_fYtrain:  dictionary
                       The training data dictionary to be used for optimizing the underlying DeepSICNet network.
         Returns
@@ -95,16 +94,15 @@ class Trainer:
         k_DeepSICNet
             The optimized DeepSECNet network.
         """
-        opt = torch.optim.Adam(k_DeepSICNet.parameters(), lr=1e-2)
+        opt = torch.optim.Adam(net.parameters(), lr=conf.lr)
         crt = torch.nn.CrossEntropyLoss()
-        max_epochs = 100
-        for e in range(max_epochs):
+        for _ in range(conf.max_epochs):
             opt.zero_grad()
-            out = k_DeepSICNet.to(device)(k_m_fYtrain['m_fYtrain'])
+            out = net.to(device)(k_m_fYtrain['m_fYtrain'])
             loss = crt(out, k_m_fYtrain['m_fStrain'].squeeze(-1).long())
             loss.backward()
             opt.step()
-        return k_DeepSICNet
+        return net
 
     def evaluate(self, conf, DeepSICs, data):
         """
@@ -152,29 +150,29 @@ class Trainer:
         ber_list = []  # Contains the BER for each SNR
         print(f'training')
 
-        for SNR in self.conf.snr_list:  # Traversing the SNRs
+        for SNR in conf.snr_list:  # Traversing the SNRs
             print(f'SNR {SNR}')
             data = self.DG(snr=SNR)  # Generating data for the given SNR
-            DeepSICs = [[0] * self.conf.iterations for i in
-                        range(self.conf.K)]  # 2D list for Storing the DeepSIC Networks
+            DeepSICs = [[0] * conf.iterations for i in
+                        range(conf.K)]  # 2D list for Storing the DeepSIC Networks
             data_new = {}
             v_cNet, v_cNet_m_fYtrain = self.GetICNetK(
                 data)  # Obtaining the DeepSIC networks and data for the first iteration
 
             # Training the DeepSIC network for each user for iteration=1
-            for user in range(self.conf.K):
-                DeepSICs[user][0] = self.TrainICNet(v_cNet[user], v_cNet_m_fYtrain[user], user, 0)
+            for user in range(conf.K):
+                DeepSICs[user][0] = self.TrainICNet(v_cNet[user], v_cNet_m_fYtrain[user])
 
             # Initializing the probabilities
             m_fP = 0.5 * torch.ones(data['m_fStrain'].shape).to(device)
 
             # Training the DeepSICNet for each user-symbol/iteration
-            for i in range(1, self.conf.iterations):
+            for i in range(1, conf.iterations):
                 print(i)
                 m_fPNext = torch.zeros(data['m_fStrain'].shape).to(device)
                 # Generating soft symbols for training purposes
-                for users in range(self.conf.K):
-                    idx = [i for i in range(self.conf.K) if i != user]
+                for users in range(conf.K):
+                    idx = [i for i in range(conf.K) if i != user]
                     m_Input = torch.cat((data['m_fYtrain'], m_fP[:, idx]), dim=1)
                     with torch.no_grad():
                         m_fPTemp = self.softmax(DeepSICs[users][i - 1](m_Input))
@@ -190,11 +188,11 @@ class Trainer:
                 v_cNet, v_cNet_m_fYtrain = self.GetICNet(data_new)
 
                 # Training the DeepSIC networks for the iteration>1
-                for user in range(self.conf.K):
-                    DeepSICs[user][i] = self.TrainICNet(v_cNet[user], v_cNet_m_fYtrain[user], user, i)
+                for user in range(conf.K):
+                    DeepSICs[user][i] = self.TrainICNet(v_cNet[user], v_cNet_m_fYtrain[user])
             print('evaluating')
             # Testing the network on the current SNR
-            _, BER = self.evaluate(self.conf, DeepSICs, data)
+            _, BER = self.evaluate(conf, DeepSICs, data)
             ber_list.append(BER.numpy())
             print(f'\nBER :{BER} @ SNR: {SNR} [dB]')
         print(f'Training and Testing Completed\nBERs: {ber_list}')
