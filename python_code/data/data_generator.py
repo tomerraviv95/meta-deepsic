@@ -1,12 +1,14 @@
-from python_code.data.channel_model import SEDChannel, GaussianChannel, ChannelModel
-from python_code.utils.utils import Utils
+from python_code.data.channel_model import ChannelModel
+from python_code.utils.utils import db_to_scalar
+from torch.utils.data import Dataset
+import concurrent.futures
 import torch
 import numpy as np
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
-class DataGenerator(Utils):
+class DataGenerator(Dataset):
     """
     The Data Generator Class
 
@@ -39,16 +41,28 @@ class DataGenerator(Utils):
         super(DataGenerator).__init__()
         self.conf = config
 
-    def getSymbols(self, batch_size):
-        return torch.FloatTensor(
-            [[np.random.choice(self.conf.v_fConst) for _ in range(self.conf.K)] for _ in range(batch_size)]).unsqueeze(
-            -1)
+    def generate_symbols(self, batch_size):
+        # generate bits
+        b = np.random.randint(0, 2, size=(batch_size, self.conf.K))
+        # generate symbols
+        x = (-1) ** b
+        # return symbols tensor
+        return torch.FloatTensor(x).unsqueeze(-1)
+
+    def __getitem__(self, snr):
+        database = []
+        # do not change max_workers
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+            [executor.submit(self.__call__, snr, database) for snr in [snr]]
+        b, y = (np.concatenate(arrays) for arrays in zip(*database))
+        b, y = torch.Tensor(b).to(device=device), torch.Tensor(y).to(device=device)
+        return b, y
 
     def __call__(self, snr):
         H = ChannelModel.get_channel(self.conf.ChannelModel, self.conf.N, self.conf.K)
-        m_fStrain = self.getSymbols(self.conf.train_size)
-        m_fStest = self.getSymbols(self.conf.test_size)
-        s_fSigW = self.db_to_scalar(snr)
+        m_fStrain = self.generate_symbols(self.conf.train_size)
+        m_fStest = self.generate_symbols(self.conf.test_size)
+        s_fSigW = db_to_scalar(snr)
         m_fYtrain = torch.matmul(H, m_fStrain) + torch.sqrt(s_fSigW) * torch.randn(self.conf.train_size,
                                                                                    self.conf.N, 1)
         m_fYtest = torch.matmul(H, m_fStest) + torch.sqrt(s_fSigW) * torch.randn(self.conf.test_size,

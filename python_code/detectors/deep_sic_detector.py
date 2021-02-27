@@ -1,5 +1,7 @@
 from torch import nn
 
+CLASSES_NUM = 2
+
 
 class DeepSICNet(nn.Module):
     """
@@ -21,17 +23,16 @@ class DeepSICNet(nn.Module):
     probs = torch.softmax(output, dim), for a batch inference, set dim=1; otherwise dim=0.
     """
 
-    def __init__(self, conf, input_size=1, batch_size=None):
+    def __init__(self, conf, input_size=1):
         super(DeepSICNet, self).__init__()
         self.conf = conf
         self.hidden_size = 60
-        self.out_size = int(len(self.conf.v_fConst))  # = 2 --> Binary Classification
         self.input_size = input_size  # Batch_size: training or testing
         self.fc0 = nn.Linear(self.conf.K + self.conf.N - 1, self.hidden_size)
         self.sigmoid = nn.Sigmoid()
         self.fc1 = nn.Linear(self.hidden_size, int(self.hidden_size / 2))
         self.relu = nn.ReLU()
-        self.fc2 = nn.Linear(int(self.hidden_size / 2), self.out_size)
+        self.fc2 = nn.Linear(int(self.hidden_size / 2), CLASSES_NUM)
         self.identity = nn.Identity()
 
     def forward(self, y):

@@ -1,7 +1,7 @@
 from python_code.data.data_generator import DataGenerator
 from python_code.detectors.deep_sic_detector import DeepSICNet
 from python_code.utils.config_singleton import Config
-from python_code.utils.utils import Utils
+from python_code.utils.utils import symbol_to_prob, prob_to_symbol
 import torch
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -15,7 +15,6 @@ class Trainer:
     """
 
     def __init__(self):
-        self.util = Utils()
         self.conf = Config()
         self.DG = DataGenerator(self.conf)
         self.softmax = torch.nn.Softmax(dim=1)  # Single symbol probability inference
@@ -41,16 +40,15 @@ class Trainer:
             [i]['m_fYtrain'] --> Output of the Channel and the Symbol Probs. of the j-th users, where for j != i
 
         """
-        util = Utils()
         v_cNet = []
         v_cNet_m_fYtrain = []
         for k in range(self.conf.K):
             idx = [i for i in range(self.conf.K) if i != k]
-            m_fStrain = util.symbol_to_prob(data['m_fStrain'][:, k])
-            m_fYtrain = torch.cat((data['m_fYtrain'], util.symbol_to_prob(data['m_fStrain'][:, idx])), dim=1)
+            m_fStrain = symbol_to_prob(data['m_fStrain'][:, k])
+            m_fYtrain = torch.cat((data['m_fYtrain'], symbol_to_prob(data['m_fStrain'][:, idx])), dim=1)
             k_data = {'m_fStrain': m_fStrain, 'm_fYtrain': m_fYtrain}
             v_cNet_m_fYtrain.append(k_data)
-            v_cNet.append(DeepSICNet(self.conf, batch_size=self.conf.train_size).to(device))
+            v_cNet.append(DeepSICNet(self.conf).to(device))
         return v_cNet, v_cNet_m_fYtrain
 
     def GetICNet(self, data):
@@ -72,19 +70,18 @@ class Trainer:
             [i]['m_fStrain'] --> Training Labels (Symbol robabilities) for the i-th user.
             [i]['m_fYtrain'] --> Output of the Channel and the Predicted Symbol Probs. of the j-th users, where for j != i
         """
-        util = Utils()
         v_cNet = []
         v_cNet_m_fYtrain = []
         for k in range(self.conf.K):
             idx = [i for i in range(self.conf.K) if i != k]
-            m_fStrain = util.symbol_to_prob(data['m_fStrain'][:, k])
+            m_fStrain = symbol_to_prob(data['m_fStrain'][:, k])
             m_fYtrain = torch.cat((data['m_fYtrain'], data['m_fP'][:, idx]), dim=1)
             k_data = {'m_fStrain': m_fStrain, 'm_fYtrain': m_fYtrain}
             v_cNet_m_fYtrain.append(k_data)
-            v_cNet.append(DeepSICNet(self.conf, batch_size=self.conf.train_size))
+            v_cNet.append(DeepSICNet(self.conf))
         return v_cNet, v_cNet_m_fYtrain
 
-    def TrainICNet(self, k_DeepSICNet, k_m_fYtrain, user, iter_idx):
+    def TrainICNet(self, k_DeepSICNet, k_m_fYtrain):
         """
         Trains a DeepSIC Network
 
@@ -143,7 +140,7 @@ class Trainer:
                         v_fPTemp = softmax1(DeepSICs[kk][ii](v_Input))
                     v_fPnext[kk] = v_fPTemp[1].unsqueeze(-1)
                 v_fP = v_fPnext
-            m_fShat[syms, :] = self.util.prob_to_symbol(v_fP.float())
+            m_fShat[syms, :] = prob_to_symbol(v_fP.float())
             if syms % int(s_nSymbols / 20) == 0:
                 print(f'Testing | Symbols: {syms}/{s_nSymbols}', end='\r')
         print(f'Testing |Symbols: {syms}/{s_nSymbols}', end='\r')
