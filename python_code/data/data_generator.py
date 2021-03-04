@@ -1,6 +1,6 @@
 from python_code.data.channel_model import ChannelModel
 from python_code.utils.config_singleton import Config
-from python_code.utils.utils import db_to_scalar
+from python_code.utils.utils import calculate_sigma_from_snr
 from torch.utils.data import Dataset
 import concurrent.futures
 import torch
@@ -43,7 +43,7 @@ class DataGenerator(Dataset):
     def __init__(self, size):
         super(DataGenerator).__init__()
         self.size = size
-        self.H = ChannelModel.get_channel(conf.ChannelModel, conf.N, conf.K)
+        self.H = ChannelModel.get_channel(conf.ChannelModel, conf.N, conf.K, conf.csi_noise)
 
     def generate_symbols(self):
         # generate bits
@@ -54,7 +54,7 @@ class DataGenerator(Dataset):
         return torch.FloatTensor(x).unsqueeze(-1)
 
     def __call__(self, snr):
-        m_fStrain = self.generate_symbols()
-        s_fSigW = db_to_scalar(snr)
-        m_fYtrain = torch.matmul(self.H, m_fStrain) + torch.sqrt(s_fSigW) * torch.randn(self.size, conf.N, 1)
-        return m_fStrain.to(device), m_fYtrain.to(device)
+        x = self.generate_symbols()
+        sigma = calculate_sigma_from_snr(snr)
+        y = torch.matmul(self.H, x) + torch.sqrt(sigma) * torch.randn(self.size, conf.N, 1)
+        return x.to(device), y.to(device)

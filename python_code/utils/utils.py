@@ -23,5 +23,5 @@ def prob_to_symbol(x):
     return torch.sign(x - 0.5)
 
 
-def db_to_scalar(SNR):
+def calculate_sigma_from_snr(SNR):
     return torch.FloatTensor([10 ** (-0.1 * SNR)])

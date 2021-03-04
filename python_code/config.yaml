@@ -7,7 +7,7 @@ run_name: 'test'
 #iterations --- Interference Cancellation Iterations
 #train_size --- Training Data Size
 #test_size --- Test Data Size
-#std --- Estimation Error Variance
+#csi_noise --- Estimation Error Variance
 #frame_size --- Frame Size for Generating Noisy Training Data
 #frame_num --- Number of Frames
 #v_nCurves --- A Binary List Indicating the Simulated Algorithms [Soft IC, perfect CSI,
@@ -23,13 +23,13 @@ K: 6
 
 SNR_start: 0
 SNR_step: 2
-SNR_end: 16
+SNR_end: 12
 
 iterations: 5
 train_size: 5000
-test_size: 20000
+test_size: 200
 
-std: 0.1
+csi_noise: 0.1
 frame_size: 500
 
 ChannelModel: 'SED'
