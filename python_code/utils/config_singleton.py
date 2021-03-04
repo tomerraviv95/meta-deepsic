@@ -27,7 +27,6 @@ class Config:
             setattr(self, k, v)
 
         self.snr_list = np.arange(self.SNR_start, self.SNR_end + 1, step=self.SNR_step)
-        self.frame_num = int(self.train_size / self.frame_size)
 
     def get_config(self):
         return self.config

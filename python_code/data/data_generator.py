@@ -11,6 +11,15 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 conf = Config()
 
 
+def generate_symbols():
+    # generate bits
+    b = np.random.randint(0, 2, size=(conf.frame_size, conf.K))
+    # generate symbols
+    x = (-1) ** b
+    # return symbols tensor
+    return torch.FloatTensor(x).unsqueeze(-1)
+
+
 class DataGenerator(Dataset):
     """
     The Data Generator Class
@@ -40,21 +49,23 @@ class DataGenerator(Dataset):
 
     """
 
-    def __init__(self, size):
+    def __init__(self, size, phase):
         super(DataGenerator).__init__()
         self.size = size
-        self.H = ChannelModel.get_channel(conf.ChannelModel, conf.N, conf.K, conf.csi_noise)
-
-    def generate_symbols(self):
-        # generate bits
-        b = np.random.randint(0, 2, size=(self.size, conf.K))
-        # generate symbols
-        x = (-1) ** b
-        # return symbols tensor
-        return torch.FloatTensor(x).unsqueeze(-1)
+        self.phase = phase
 
     def __call__(self, snr):
-        x = self.generate_symbols()
-        sigma = calculate_sigma_from_snr(snr)
-        y = torch.matmul(self.H, x) + torch.sqrt(sigma) * torch.randn(self.size, conf.N, 1)
-        return x.to(device), y.to(device)
+        x_total = torch.empty(0)
+        y_total = torch.empty(0)
+        frame_num = int(self.size / conf.frame_size)
+        if frame_num == 0:
+            raise ValueError("Frame number is zero!!!")
+
+        for i in range(frame_num):
+            H = ChannelModel.get_channel(conf.ChannelModel, conf.N, conf.K, conf.csi_noise,self.phase)
+            x = generate_symbols()
+            sigma = calculate_sigma_from_snr(snr)
+            y = torch.matmul(H, x) + torch.sqrt(sigma) * torch.randn(conf.frame_size, conf.N, 1)
+            x_total = torch.cat([x_total, x])
+            y_total = torch.cat([y_total, y])
+        return x_total.to(device), y_total.to(device)

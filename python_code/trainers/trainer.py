@@ -18,8 +18,8 @@ class Trainer:
     """
 
     def __init__(self):
-        self.train_dg = DataGenerator(conf.train_size)
-        self.test_dg = DataGenerator(conf.test_size)
+        self.train_dg = DataGenerator(conf.train_size, phase='train')
+        self.test_dg = DataGenerator(conf.test_size, phase='test')
         self.softmax = torch.nn.Softmax(dim=1)  # Single symbol probability inference
 
     def prepare_data_for_training(self, xs_train, ys_train, probs_vec):

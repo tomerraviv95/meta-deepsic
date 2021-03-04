@@ -7,14 +7,14 @@ class ChannelModel:
         pass
 
     @staticmethod
-    def get_channel(channel_mode, N, K, csi_noise):
+    def get_channel(channel_mode, N, K, csi_noise,phase):
         if channel_mode == 'SED':
             H = SEDChannel.calculate_channel(N, K)
         elif channel_mode == 'Gaussian':
             H = GaussianChannel.calculate_channel(N, K)
         else:
             raise NotImplementedError
-        if csi_noise > 0:
+        if phase == 'train' and csi_noise > 0:
             curr_H_noise = (1. + torch.sqrt(torch.FloatTensor([csi_noise]))) * torch.randn(H.shape)
             H = torch.mul(H, curr_H_noise)
         return H
