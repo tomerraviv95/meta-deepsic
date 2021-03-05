@@ -1,27 +1,29 @@
 import torch
 
-"""
-Utility class containing neccessary functions.
-Methods
--------
-symbol_to_prob(x:PyTorch/Numpy Tensor/Array)
+def symbol_to_prob(s):
+    """
+    symbol_to_prob(x:PyTorch/Numpy Tensor/Array)
     Converts BPSK Symbols to Probabilities: '-1' -> 0, '+1' -> '1.'
-
-prob_to_symbol(x:PyTorch/Numpy Tensor/Array)
-    Converts Probabilities to BPSK Symbols by Hard Threhsolding: [0,0.5] -> '-1', [0.5,0] -> '+1'
-
-db_to_scalar(SNR:list)
-    Converts the Desired SNR into the Noise Power (Noise Variance)
-"""
+    :param s: symbols vector
+    :return: probabilities vector
+    """
+    return 0.5 * (s + 1)
 
 
-def symbol_to_prob(x):
-    return 0.5 * (x + 1)
-
-
-def prob_to_symbol(x):
-    return torch.sign(x - 0.5)
+def prob_to_symbol(p):
+    """
+    prob_to_symbol(x:PyTorch/Numpy Tensor/Array)
+    Converts Probabilities to BPSK Symbols by hard threshold: [0,0.5] -> '-1', [0.5,0] -> '+1'
+    :param p: probabilities vector
+    :return: symbols vector
+    """
+    return torch.sign(p - 0.5)
 
 
 def calculate_sigma_from_snr(SNR):
+    """
+    converts the Desired SNR into the noise power (noise variance)
+    :param SNR: signal-to-noise ratio
+    :return: noise's sigma
+    """
     return torch.FloatTensor([10 ** (-0.1 * SNR)])
