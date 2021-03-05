@@ -26,7 +26,7 @@ class Trainer:
         return 'trainer'
 
     def initialize_detector(self):
-        self.detector = None
+        pass
 
     def prepare_data_for_training(self, xs_train, ys_train, probs_vec):
         """
@@ -56,7 +56,7 @@ class Trainer:
             y_train = torch.cat((ys_train, probs_vec[:, idx]), dim=1)
             x_train_all.append(x_train)
             y_train_all.append(y_train)
-            nets_list.append(self.detector)
+            nets_list.append(self.initialize_detector())
         return nets_list, x_train_all, y_train_all
 
     def calculate_posteriors(self, trained_nets_list, i, probs_vec, y_train):

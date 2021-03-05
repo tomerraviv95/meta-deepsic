@@ -29,7 +29,7 @@ class DeepSICTrainer(Trainer):
         """
         Loads the DeepSIC detector
         """
-        self.detector = DeepSICDetector()
+        return DeepSICDetector()
 
     def train_model(self, net, x_train, y_train):
         """
