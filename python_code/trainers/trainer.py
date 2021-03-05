@@ -44,8 +44,8 @@ class Trainer:
         nets_list = []
         x_train_all = []
         y_train_all = []
-        for k in range(conf.K):
-            idx = [i for i in range(conf.K) if i != k]
+        for k in range(conf.n_user):
+            idx = [i for i in range(conf.n_user) if i != k]
             x_train = symbol_to_prob(xs_train[:, k])
             y_train = torch.cat((ys_train, probs_vec[:, idx]), dim=1)
             x_train_all.append(x_train)
@@ -55,8 +55,8 @@ class Trainer:
 
     def calculate_posteriors(self, trained_nets_list, i, probs_vec, y_train):
         next_probs_vec = torch.zeros(probs_vec.shape).to(device)
-        for users in range(conf.K):
-            idx = [i for i in range(conf.K) if i != users]
+        for users in range(conf.n_user):
+            idx = [i for i in range(conf.n_user) if i != users]
             input = torch.cat((y_train, probs_vec[:, idx]), dim=1)
             with torch.no_grad():
                 output = self.softmax(trained_nets_list[users][i - 1](input))
@@ -89,7 +89,7 @@ class Trainer:
         return net
 
     def train_models(self, trained_nets_list, i, networks_list, x_train_all, y_train_all):
-        for user in range(conf.K):
+        for user in range(conf.n_user):
             trained_nets_list[user][i] = self.train_model(networks_list[user],
                                                           x_train_all[user],
                                                           y_train_all[user])
@@ -133,7 +133,7 @@ class Trainer:
             print(f'snr {snr}')
             x_train, y_train = self.train_dg(snr=snr)  # Generating data for the given snr
             trained_nets_list = [[0] * conf.iterations for _ in
-                                 range(conf.K)]  # 2D list for Storing the DeepSIC Networks
+                                 range(conf.n_user)]  # 2D list for Storing the DeepSIC Networks
             initial_probs = symbol_to_prob(x_train)
             nets_list, x_train_all, y_train_all = self.prepare_data_for_training(x_train, y_train, initial_probs)
 

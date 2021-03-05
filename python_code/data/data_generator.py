@@ -13,7 +13,7 @@ conf = Config()
 
 def generate_symbols():
     # generate bits
-    b = np.random.randint(0, 2, size=(conf.frame_size, conf.K))
+    b = np.random.randint(0, 2, size=(conf.frame_size, conf.n_user))
     # generate symbols
     x = (-1) ** b
     # return symbols tensor
@@ -62,10 +62,10 @@ class DataGenerator(Dataset):
             raise ValueError("Frame number is zero!!!")
 
         for i in range(frame_num):
-            H = ChannelModel.get_channel(conf.ChannelModel, conf.N, conf.K, conf.csi_noise,self.phase)
+            H = ChannelModel.get_channel(conf.ChannelModel, conf.n_ant, conf.n_user, conf.csi_noise,self.phase)
             x = generate_symbols()
             sigma = calculate_sigma_from_snr(snr)
-            y = torch.matmul(H, x) + torch.sqrt(sigma) * torch.randn(conf.frame_size, conf.N, 1)
+            y = torch.matmul(H, x) + torch.sqrt(sigma) * torch.randn(conf.frame_size, conf.n_ant, 1)
             x_total = torch.cat([x_total, x])
             y_total = torch.cat([y_total, y])
         return x_total.to(device), y_total.to(device)

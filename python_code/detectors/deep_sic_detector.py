@@ -30,7 +30,7 @@ class DeepSICNet(nn.Module):
 
     def __init__(self):
         super(DeepSICNet, self).__init__()
-        self.fc0 = nn.Linear(conf.K + conf.N - 1, HIDDEN_SIZE)
+        self.fc0 = nn.Linear(conf.n_user + conf.n_ant - 1, HIDDEN_SIZE)
         self.sigmoid = nn.Sigmoid()
         self.fc1 = nn.Linear(HIDDEN_SIZE, int(HIDDEN_SIZE / 2))
         self.relu = nn.ReLU()
