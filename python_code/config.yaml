@@ -7,7 +7,7 @@ SNR_end: 8 # last SNR value
 iterations: 5 # number of iterations in the unfolded network
 train_size: 5000 # number of subsequent transmissions
 test_size: 5000 # number of subsequent transmissions
-csi_noise: 0.1 # number of subsequent transmissions
+csi_noise: 0 # number of subsequent transmissions
 frame_size: 500 # coherence-time block size
 ChannelModel: 'SED' # the channel model: set 'SEQ' for the Spatial Exponential Decay Channel Model, i.e. exp(-|i-j|),
 # set 'Gaussian' for a Gaussian Channel, i.e. N(0,1).

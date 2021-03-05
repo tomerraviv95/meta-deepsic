@@ -27,7 +27,6 @@ def get_ser_plot(dec: Trainer, run_over: bool, method_name: str):
 
 
 def plot_ser(snr_list, ser, method_name):
-    plt.figure()
     plt.plot(snr_list, ser,
              label=METHOD_NAMES[method_name],
              color=COLORS_DICT[method_name],
