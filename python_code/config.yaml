@@ -1,39 +1,15 @@
-# general
-run_name: 'test'
-
-#N --- Number of Rx Antennas
-#s_nK --- Number of Transmitted Symbols
-#v_fSNRdB --- SNR Values in dB
-#iterations --- Interference Cancellation Iterations
-#train_size --- Training Data Size
-#test_size --- Test Data Size
-#csi_noise --- Estimation Error Variance
-#frame_size --- Frame Size for Generating Noisy Training Data
-#frame_num --- Number of Frames
-#v_nCurves --- A Binary List Indicating the Simulated Algorithms [Soft IC, perfect CSI,
-#                                                                 Soft IC, CSI uncertainty,
-#                                                                 Sequential DeepSIC, Perfect CSI,
-#                                                                 Sequential DeepSIC, CSI Uncertainty]
-#
-#ChannelModel --- The Channel Model: set 'SEQ' for the Spatial Exponential Decay Channel Model, i.e. exp(-|i-j|),
-#                                    set 'Gaussian' for a Gaussian Channel, i.e. N(0,1).
-
-N: 6
-K: 6
-
-SNR_start: 0
-SNR_step: 2
-SNR_end: 12
-
-iterations: 5
-train_size: 5000
-test_size: 5000
-
-csi_noise: 0.1
-frame_size: 500
-
-ChannelModel: 'SED'
-DeepSICArch: 'MLP'
-
-lr: 0.01
-max_epochs: 100
+run_name: 'test' # run directory
+n_ant: 6 # number of Rx Antennas
+n_user: 6 # number of Transmitted Symbols, users
+SNR_start: 0 # start SNR value
+SNR_step: 2 # increment of SNR values
+SNR_end: 14 # last SNR value
+iterations: 5 # number of iterations in the unfolded network
+train_size: 5000 # number of subsequent transmissions
+test_size: 50000 # number of subsequent transmissions
+csi_noise: 0 # number of subsequent transmissions
+frame_size: 500 # coherence-time block size
+ChannelModel: 'SED' # the channel model: set 'SEQ' for the Spatial Exponential Decay Channel Model, i.e. exp(-|i-j|),
+# set 'Gaussian' for a Gaussian Channel, i.e. N(0,1).
+lr: 0.01 # learning rate
+max_epochs: 100 # number of training epochs
