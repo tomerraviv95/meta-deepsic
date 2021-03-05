@@ -28,11 +28,5 @@ class Config:
 
         self.snr_list = np.arange(self.SNR_start, self.SNR_end + 1, step=self.SNR_step)
 
-    def get_config(self):
-        return self.config
-
-    def get_value(self, value):
-        return self.config[value]
-
-    def get_name(self):
-        return self.config_name
+    def set_value(self, field, value):
+        setattr(self, field, value)

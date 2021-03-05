@@ -1,5 +1,4 @@
 from python_code.utils.config_singleton import Config
-
 from torch import nn
 
 conf = Config()
@@ -8,7 +7,7 @@ CLASSES_NUM = 2
 HIDDEN_SIZE = 60
 
 
-class DeepSICNet(nn.Module):
+class DeepSICDetector(nn.Module):
     """
     The DeepSIC Network Architecture
 
@@ -19,7 +18,6 @@ class DeepSICNet(nn.Module):
       (fullyConnectedLayer): Linear(in_features=60, out_features=30, bias=True)
       (reluLayer): ReLU()
       (fullyConnectedLayer2): Linear(in_features=30, out_features=2, bias=True)
-      (final_layer): Identity()
     ================================
     Note:
     The output of the network is not probabilities,
@@ -29,7 +27,7 @@ class DeepSICNet(nn.Module):
     """
 
     def __init__(self):
-        super(DeepSICNet, self).__init__()
+        super(DeepSICDetector, self).__init__()
         self.fc0 = nn.Linear(conf.n_user + conf.n_ant - 1, HIDDEN_SIZE)
         self.sigmoid = nn.Sigmoid()
         self.fc1 = nn.Linear(HIDDEN_SIZE, int(HIDDEN_SIZE / 2))

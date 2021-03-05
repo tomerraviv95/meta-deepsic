@@ -1,24 +1,26 @@
+import os
+import datetime
+
+from dir_definitions import FIGURES_DIR
+from python_code.plotting.plotter_utils import get_ser_plot, plot_ser
+from python_code.trainers.deep_sic_trainer import DeepSICTrainer
+from python_code.utils.config_singleton import Config
 import matplotlib.pyplot as plt
-from dataclasses import *
-from matplotlib import rc
 
+run_over = False
+csi_noises = [0, 0.1]
+trainer = DeepSICTrainer()
+conf = Config()
 
-fig1 = plt.figure(figsize=(6, 5))
-ax = fig1.gca()
+# path for the saved figure
+current_day_time = datetime.datetime.now()
+folder_name = f'{current_day_time.month}-{current_day_time.day}-{current_day_time.hour}-{current_day_time.minute}'
+if not os.path.isdir(os.path.join(FIGURES_DIR, folder_name)):
+    os.makedirs(os.path.join(FIGURES_DIR, folder_name))
 
-plt.semilogy(conf.snr_list, BERs, linestyle='--', marker='d', color='red', label=r'DeepSIC - Sequential - Perfect CSI',
-             linewidth=2.5, fillstyle='none', markersize=10, markeredgewidth=2)
-
-plt.title(r'DeepSIC: BPSK, $6\times 6$ MIMO System')
-plt.ylabel(r'$\textbf{BER}$', fontsize=20)
-plt.xlabel(r'SNR [dB]', fontsize=20)
-plt.legend(handlelength=5)
-plt.xticks(conf.snr_list)
-plt.grid(True, which='both')
-ax.xaxis.set_tick_params(labelsize=15)
-ax.yaxis.set_tick_params(labelsize=15)
-
-# fig1.savefig('BER_DeepSIC.pdf', dpi=60)
-rc('font',**{'family':'sans-serif','sans-serif':['Helvetica']})
-# rc('text', usetex=True)
-plt.rc('font', weight='bold')
+for csi_noise in csi_noises:
+    conf.set_value('csi_noise', csi_noise)
+    ser = get_ser_plot(trainer, run_over=run_over, method_name=str(trainer))
+    plot_ser(conf.snr_list, ser, str(trainer))
+    plt.savefig(os.path.join(FIGURES_DIR, folder_name, 'SER.png'), bbox_inches='tight')
+    plt.show()

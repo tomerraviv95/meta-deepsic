@@ -1,7 +1,6 @@
-from python_code.data.data_generator import DataGenerator
-from python_code.detectors.deep_sic_detector import DeepSICNet
-from python_code.utils.config_singleton import Config
 from python_code.utils.utils import symbol_to_prob, prob_to_symbol
+from python_code.data.data_generator import DataGenerator
+from python_code.utils.config_singleton import Config
 import torch
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -21,6 +20,13 @@ class Trainer:
         self.train_dg = DataGenerator(conf.train_size, phase='train')
         self.test_dg = DataGenerator(conf.test_size, phase='test')
         self.softmax = torch.nn.Softmax(dim=1)  # Single symbol probability inference
+        self.initialize_detector()
+
+    def __str__(self):
+        return 'trainer'
+
+    def initialize_detector(self):
+        self.detector = None
 
     def prepare_data_for_training(self, xs_train, ys_train, probs_vec):
         """
@@ -50,7 +56,7 @@ class Trainer:
             y_train = torch.cat((ys_train, probs_vec[:, idx]), dim=1)
             x_train_all.append(x_train)
             y_train_all.append(y_train)
-            nets_list.append(DeepSICNet())
+            nets_list.append(self.detector)
         return nets_list, x_train_all, y_train_all
 
     def calculate_posteriors(self, trained_nets_list, i, probs_vec, y_train):
@@ -64,29 +70,7 @@ class Trainer:
         return next_probs_vec
 
     def train_model(self, net, x_train, y_train):
-        """
-        Trains a DeepSIC Network
-
-        Parameters
-        ----------
-        net: an instance of the DeepSICNet class to be trained.
-        k_m_fYtrain:  dictionary
-                      The training data dictionary to be used for optimizing the underlying DeepSICNet network.
-        Returns
-        -------
-        k_DeepSICNet
-            The optimized DeepSECNet network.
-        """
-        opt = torch.optim.Adam(net.parameters(), lr=conf.lr)
-        crt = torch.nn.CrossEntropyLoss()
-        net = net.to(device)
-        for _ in range(conf.max_epochs):
-            opt.zero_grad()
-            out = net(y_train)
-            loss = crt(out, x_train.squeeze(-1).long())
-            loss.backward()
-            opt.step()
-        return net
+        pass
 
     def train_models(self, trained_nets_list, i, networks_list, x_train_all, y_train_all):
         for user in range(conf.n_user):
@@ -94,7 +78,7 @@ class Trainer:
                                                           x_train_all[user],
                                                           y_train_all[user])
 
-    def evaluate(self, conf, trained_nets_list, snr):
+    def evaluate(self, trained_nets_list, snr):
         """
         Evaluates the performance of the model.
 
@@ -155,12 +139,8 @@ class Trainer:
                 self.train_models(trained_nets_list, i, nets_list, x_train_all, y_train_all)
             print('evaluating')
             # Testing the network on the current snr
-            _, ber = self.evaluate(conf, trained_nets_list, snr)
+            _, ber = self.evaluate(trained_nets_list, snr)
             ber_list.append(ber)
             print(f'\nber :{ber} @ snr: {snr} [dB]')
         print(f'Training and Testing Completed\nBERs: {ber_list}')
-
-
-if __name__ == "__main__":
-    deep_sic_trainer = Trainer()
-    deep_sic_trainer.train()
+        return ber_list
