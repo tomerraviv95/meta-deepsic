@@ -26,4 +26,4 @@ def calculate_sigma_from_snr(SNR):
     :param SNR: signal-to-noise ratio
     :return: noise's sigma
     """
-    return torch.FloatTensor([10 ** (-0.1 * SNR)])
+    return 10 ** (-0.1 * SNR)
