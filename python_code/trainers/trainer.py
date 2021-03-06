@@ -98,13 +98,10 @@ class Trainer:
             The recovered symbols
         """
         b_test, x_test, y_test = self.test_dg(snr=snr)  # Generating data for the given SNR
-        c_pred = torch.zeros(y_test.shape).to(device)
-        for symbol in range(y_test.shape[0]):
-            probs_vec = HALF * torch.ones(conf.n_user, 1).unsqueeze(dim=0).to(device)
-            cur_y_test = y_test[symbol].unsqueeze(dim=0)
-            for i in range(conf.iterations):
-                probs_vec = self.calculate_posteriors(trained_nets_list, i + 1, probs_vec, cur_y_test)
-            c_pred[symbol, :] = symbol_to_prob(prob_to_symbol(probs_vec.float()))
+        probs_vec = HALF * torch.ones(y_test.shape).to(device)
+        for i in range(conf.iterations):
+            probs_vec = self.calculate_posteriors(trained_nets_list, i + 1, probs_vec, y_test)
+        c_pred = symbol_to_prob(prob_to_symbol(probs_vec.float()))
         print(f'Finished testing symbols')
 
         if conf.use_ecc:
