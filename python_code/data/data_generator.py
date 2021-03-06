@@ -37,6 +37,7 @@ class DataGenerator(Dataset):
         :return: symbols and received channel values
         """
         b_total = torch.empty(0)
+        x_total = torch.empty(0)
         y_total = torch.empty(0)
 
         if conf.use_ecc and self.phase == 'test':
@@ -49,11 +50,12 @@ class DataGenerator(Dataset):
             H = ChannelModel.get_channel(conf.ChannelModel, conf.n_ant, conf.n_user, conf.csi_noise, self.phase)
             # generate bits
             b = np.random.randint(0, 2, size=(self.frame_size, conf.n_user))
-            c = np.concatenate([encoding(b[:, i]) for i in range(b.shape[1])]).reshape(-1, conf.n_user)
+            c = np.concatenate([encoding(b[:, i]).reshape(-1, 1) for i in range(b.shape[1])], axis=1)
             x = bpsk_modulate(c)
             x = torch.FloatTensor(x).unsqueeze(-1)
             sigma = calculate_sigma_from_snr(snr)
             y = torch.matmul(H, x) + torch.sqrt(sigma) * torch.randn(x.shape[0], conf.n_ant, 1)
             b_total = torch.cat([b_total, torch.FloatTensor(b).unsqueeze(-1)])
+            x_total = torch.cat([x_total, x])
             y_total = torch.cat([y_total, y])
-        return b_total.to(device), y_total.to(device)
+        return b_total.to(device), x_total.to(device), y_total.to(device)

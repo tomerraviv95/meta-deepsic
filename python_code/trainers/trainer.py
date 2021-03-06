@@ -3,6 +3,7 @@ from python_code.utils.metrics import calculate_error_rates
 from python_code.utils.utils import symbol_to_prob, prob_to_symbol
 from python_code.data.data_generator import DataGenerator
 from python_code.utils.config_singleton import Config
+import numpy as np
 import torch
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -96,14 +97,14 @@ class Trainer:
         b_pred
             The recovered symbols
         """
-        b_test, y_test = self.test_dg(snr=snr)  # Generating data for the given SNR
+        b_test, x_test, y_test = self.test_dg(snr=snr)  # Generating data for the given SNR
         c_pred = torch.zeros(y_test.shape).to(device)
         for symbol in range(y_test.shape[0]):
             probs_vec = HALF * torch.ones(conf.n_user, 1).unsqueeze(dim=0).to(device)
             cur_y_test = y_test[symbol].unsqueeze(dim=0)
             for i in range(conf.iterations):
                 probs_vec = self.calculate_posteriors(trained_nets_list, i + 1, probs_vec, cur_y_test)
-            c_pred[symbol, :] = prob_to_symbol(probs_vec.float())
+            c_pred[symbol, :] = symbol_to_prob(prob_to_symbol(probs_vec.float()))
         print(f'Finished testing symbols')
 
         if conf.use_ecc:
@@ -111,7 +112,6 @@ class Trainer:
         else:
             decoding = lambda b: b
 
-        import numpy as np
         b_pred = np.zeros(b_test.shape)
         c_frame_size = c_pred.shape[0] // conf.frame_num
         b_frame_size = b_pred.shape[0] // conf.frame_num
@@ -119,6 +119,7 @@ class Trainer:
             for j in range(conf.n_user):
                 b_pred[i * b_frame_size: (i + 1) * b_frame_size, j] = decoding(
                     c_pred[i * c_frame_size: (i + 1) * c_frame_size, j].cpu().numpy()).reshape(-1, 1)
+
         b_pred = torch.Tensor(b_pred).to(device)
         ber = calculate_error_rates(b_pred, b_test)[0]
         return ber
@@ -129,7 +130,7 @@ class Trainer:
         print(f'training')
         for snr in conf.snr_list:  # Traversing the SNRs
             print(f'snr {snr}')
-            b_train, y_train = self.train_dg(snr=snr)  # Generating data for the given snr
+            b_train, x_train, y_train = self.train_dg(snr=snr)  # Generating data for the given snr
             trained_nets_list = [[0] * conf.iterations for _ in
                                  range(conf.n_user)]  # 2D list for Storing the DeepSIC Networks
             initial_probs = b_train.clone()
