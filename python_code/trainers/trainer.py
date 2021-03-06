@@ -1,3 +1,5 @@
+from python_code.ecc.rs_main import decode
+from python_code.utils.metrics import calculate_error_rates
 from python_code.utils.utils import symbol_to_prob, prob_to_symbol
 from python_code.data.data_generator import DataGenerator
 from python_code.utils.config_singleton import Config
@@ -17,8 +19,8 @@ class Trainer:
     """
 
     def __init__(self):
-        self.train_dg = DataGenerator(conf.train_size, phase='train')
-        self.test_dg = DataGenerator(conf.test_size, phase='test')
+        self.train_dg = DataGenerator(conf.train_frame_size, phase='train')
+        self.test_dg = DataGenerator(conf.test_frame_size, phase='test')
         self.softmax = torch.nn.Softmax(dim=1)  # Single symbol probability inference
         self.initialize_detector()
 
@@ -28,7 +30,7 @@ class Trainer:
     def initialize_detector(self):
         pass
 
-    def prepare_data_for_training(self, xs_train, ys_train, probs_vec):
+    def prepare_data_for_training(self, b_train, ys_train, probs_vec):
         """
         Generates the DeepSIC Networks for Each User for the Iterations>1
 
@@ -48,16 +50,15 @@ class Trainer:
             [i]['y_train'] --> Output of the Channel and the Predicted Symbol Probs. of the j-th users, where for j != i
         """
         nets_list = []
-        x_train_all = []
+        b_train_all = []
         y_train_all = []
         for k in range(conf.n_user):
             idx = [i for i in range(conf.n_user) if i != k]
-            x_train = symbol_to_prob(xs_train[:, k])
             y_train = torch.cat((ys_train, probs_vec[:, idx]), dim=1)
-            x_train_all.append(x_train)
+            b_train_all.append(b_train[:, k])
             y_train_all.append(y_train)
             nets_list.append(self.initialize_detector())
-        return nets_list, x_train_all, y_train_all
+        return nets_list, b_train_all, y_train_all
 
     def calculate_posteriors(self, trained_nets_list, i, probs_vec, y_train):
         next_probs_vec = torch.zeros(probs_vec.shape).to(device)
@@ -92,40 +93,53 @@ class Trainer:
         -------
         BERs
             The Bit Error Rates/Ratios for the specified SNR of the testing dataset
-        predicted_x
+        b_pred
             The recovered symbols
         """
-        x_test, y_test = self.test_dg(snr=snr)  # Generating data for the given SNR
-        test_size, users_n, _ = x_test.shape
-        predicted_x = torch.zeros(x_test.shape).to(device)
-        for symbol in range(test_size):
-            probs_vec = HALF * torch.ones(users_n, 1).unsqueeze(dim=0).to(device)
+        b_test, y_test = self.test_dg(snr=snr)  # Generating data for the given SNR
+        c_pred = torch.zeros(y_test.shape).to(device)
+        for symbol in range(y_test.shape[0]):
+            probs_vec = HALF * torch.ones(conf.n_user, 1).unsqueeze(dim=0).to(device)
             cur_y_test = y_test[symbol].unsqueeze(dim=0)
             for i in range(conf.iterations):
                 probs_vec = self.calculate_posteriors(trained_nets_list, i + 1, probs_vec, cur_y_test)
-            predicted_x[symbol, :] = prob_to_symbol(probs_vec.float())
+            c_pred[symbol, :] = prob_to_symbol(probs_vec.float())
         print(f'Finished testing symbols')
-        ber = (predicted_x != x_test).sum() / (torch.FloatTensor([test_size * users_n]))
-        return predicted_x, ber.numpy()[0]
+
+        if conf.use_ecc:
+            decoding = lambda b: decode(b, conf.n_ecc_symbols)
+        else:
+            decoding = lambda b: b
+
+        import numpy as np
+        b_pred = np.zeros(b_test.shape)
+        c_frame_size = c_pred.shape[0] // conf.frame_num
+        b_frame_size = b_pred.shape[0] // conf.frame_num
+        for i in range(conf.frame_num):
+            for j in range(conf.n_user):
+                b_pred[i * b_frame_size: (i + 1) * b_frame_size, j] = decoding(
+                    c_pred[i * c_frame_size: (i + 1) * c_frame_size, j].cpu().numpy()).reshape(-1, 1)
+        b_pred = torch.Tensor(b_pred).to(device)
+        ber = calculate_error_rates(b_pred, b_test)[0]
+        return ber
 
     def train(self):
 
         ber_list = []  # Contains the ber for each snr
         print(f'training')
-
         for snr in conf.snr_list:  # Traversing the SNRs
             print(f'snr {snr}')
-            x_train, y_train = self.train_dg(snr=snr)  # Generating data for the given snr
+            b_train, y_train = self.train_dg(snr=snr)  # Generating data for the given snr
             trained_nets_list = [[0] * conf.iterations for _ in
                                  range(conf.n_user)]  # 2D list for Storing the DeepSIC Networks
-            initial_probs = symbol_to_prob(x_train)
-            nets_list, x_train_all, y_train_all = self.prepare_data_for_training(x_train, y_train, initial_probs)
+            initial_probs = b_train.clone()
+            nets_list, b_train_all, y_train_all = self.prepare_data_for_training(b_train, y_train, initial_probs)
 
             # Training the DeepSIC network for each user for iteration=1
-            self.train_models(trained_nets_list, 0, nets_list, x_train_all, y_train_all)
+            self.train_models(trained_nets_list, 0, nets_list, b_train_all, y_train_all)
 
             # Initializing the probabilities
-            probs_vec = HALF * torch.ones(x_train.shape).to(device)
+            probs_vec = HALF * torch.ones(b_train.shape).to(device)
 
             # Training the DeepSICNet for each user-symbol/iteration
             for i in range(1, conf.iterations):
@@ -133,13 +147,13 @@ class Trainer:
                 probs_vec = self.calculate_posteriors(trained_nets_list, i, probs_vec, y_train)
 
                 # Obtaining the DeepSIC networks for each user-symbol and the i-th iteration
-                nets_list, x_train_all, y_train_all = self.prepare_data_for_training(x_train, y_train, probs_vec)
+                nets_list, b_train_all, y_train_all = self.prepare_data_for_training(b_train, y_train, probs_vec)
 
                 # Training the DeepSIC networks for the iteration>1
-                self.train_models(trained_nets_list, i, nets_list, x_train_all, y_train_all)
+                self.train_models(trained_nets_list, i, nets_list, b_train_all, y_train_all)
             print('evaluating')
             # Testing the network on the current snr
-            _, ber = self.evaluate(trained_nets_list, snr)
+            ber = self.evaluate(trained_nets_list, snr)
             ber_list.append(ber)
             print(f'\nber :{ber} @ snr: {snr} [dB]')
         print(f'Training and Testing Completed\nBERs: {ber_list}')
