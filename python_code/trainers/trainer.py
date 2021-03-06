@@ -79,6 +79,34 @@ class Trainer:
                                                           x_train_all[user],
                                                           y_train_all[user])
 
+    def online_evaluate(self, trained_nets_list, snr):
+        b_test, y_test = self.test_dg(snr=snr)  # Generating data for the given SNR
+        c_pred = torch.zeros_like(y_test)
+        b_pred = torch.zeros_like(b_test)
+        c_frame_size = c_pred.shape[0] // conf.frame_num
+        b_frame_size = b_pred.shape[0] // conf.frame_num
+        probs_vec = HALF * torch.ones(c_frame_size, y_test.shape[1]).to(device)
+        total_ber = 0
+        for frame in range(conf.frame_num):
+            c_start_ind = frame * c_frame_size
+            b_start_ind = frame * b_frame_size
+            c_end_ind = (frame + 1) * c_frame_size
+            b_end_ind = (frame + 1) * b_frame_size
+            current_y = y_test[c_start_ind:c_end_ind]
+            for i in range(conf.iterations):
+                probs_vec = self.calculate_posteriors(trained_nets_list, i + 1, probs_vec, current_y)
+            c_pred[c_start_ind:c_end_ind] = symbol_to_prob(prob_to_symbol(probs_vec.float()))
+            b_pred[b_start_ind:b_end_ind] = decoder(c_pred[c_start_ind:c_end_ind])
+            ber = calculate_error_rates(b_pred[b_start_ind:b_end_ind], b_test[b_start_ind:b_end_ind])[0]
+            total_ber += ber
+
+            if conf.self_supervised and ber <= conf.ber_thresh:
+                # use last word inserted in the buffer for training
+                self.online_training()
+
+            print(frame, ber)
+        return total_ber / conf.frame_num
+
     def evaluate(self, trained_nets_list, snr):
         """
         Evaluates the performance of the model.
@@ -136,7 +164,7 @@ class Trainer:
                 self.train_models(trained_nets_list, i, nets_list, b_train_all, y_train_all)
             print('evaluating')
             # Testing the network on the current snr
-            ber = self.evaluate(trained_nets_list, snr)
+            ber = self.online_evaluate(trained_nets_list, snr)
             ber_list.append(ber)
             print(f'\nber :{ber} @ snr: {snr} [dB]')
         print(f'Training and Testing Completed\nBERs: {ber_list}')

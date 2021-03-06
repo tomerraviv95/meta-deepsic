@@ -21,12 +21,8 @@ def decoder(c_pred):
         decoding = lambda b: decode(b, conf.n_ecc_symbols)
     else:
         decoding = lambda b: b
-    b_pred = np.zeros([conf.frame_num * conf.test_frame_size, conf.n_user])
-    c_frame_size = c_pred.shape[0] // conf.frame_num
-    b_frame_size = b_pred.shape[0] // conf.frame_num
-    for i in range(conf.frame_num):
-        for j in range(conf.n_user):
-            b_pred[i * b_frame_size: (i + 1) * b_frame_size, j] = decoding(
-                c_pred[i * c_frame_size: (i + 1) * c_frame_size, j].cpu().numpy())
+    b_pred = np.zeros([conf.test_frame_size, conf.n_user])
+    for j in range(conf.n_user):
+        b_pred[:, j] = decoding(c_pred[:, j].cpu().numpy())
     b_pred = torch.Tensor(b_pred).to(device)
     return b_pred
