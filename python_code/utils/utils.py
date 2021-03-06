@@ -1,5 +1,6 @@
 import torch
 
+
 def symbol_to_prob(s):
     """
     symbol_to_prob(x:PyTorch/Numpy Tensor/Array)
@@ -18,6 +19,15 @@ def prob_to_symbol(p):
     :return: symbols vector
     """
     return torch.sign(p - 0.5)
+
+
+def bpsk_modulate(b):
+    """
+    Generates a Tensor of Uniformly Distributed BPSK Symbols
+    :return: a Tensor of Size: [Batch_Size, <# of RX_Antennas>, <# of Users>]
+    """
+    # generate symbols
+    return (-1) ** b
 
 
 def calculate_sigma_from_snr(SNR):
