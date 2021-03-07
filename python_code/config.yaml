@@ -9,6 +9,7 @@ train_frame_size: 1784 # number of subsequent transmissions
 test_frame_size: 1784 # number of subsequent transmissions
 frame_num: 50 # coherence-time block size
 csi_noise: 0 # number of subsequent transmissions
+fading: True # whether to use fading
 ChannelModel: 'SED' # the channel model: set 'SEQ' for the Spatial Exponential Decay Channel Model, i.e. exp(-|i-j|),
 # set 'Gaussian' for a Gaussian Channel, i.e. N(0,1).
 lr: 0.01 # learning rate

@@ -1,4 +1,4 @@
-from python_code.ecc.wrappers import decoder
+from python_code.ecc.wrappers import decoder, encoder
 from python_code.utils.metrics import calculate_error_rates
 from python_code.utils.utils import symbol_to_prob, prob_to_symbol
 from python_code.data.data_generator import DataGenerator
@@ -79,6 +79,9 @@ class Trainer:
                                                           x_train_all[user],
                                                           y_train_all[user])
 
+    def online_training(self, tx, rx):
+        pass
+
     def online_evaluate(self, trained_nets_list, snr):
         b_test, y_test = self.test_dg(snr=snr)  # Generating data for the given SNR
         c_pred = torch.zeros_like(y_test)
@@ -88,21 +91,28 @@ class Trainer:
         probs_vec = HALF * torch.ones(c_frame_size, y_test.shape[1]).to(device)
         total_ber = 0
         for frame in range(conf.frame_num):
+            # current word
             c_start_ind = frame * c_frame_size
-            b_start_ind = frame * b_frame_size
             c_end_ind = (frame + 1) * c_frame_size
-            b_end_ind = (frame + 1) * b_frame_size
             current_y = y_test[c_start_ind:c_end_ind]
+            # detect and decode
             for i in range(conf.iterations):
                 probs_vec = self.calculate_posteriors(trained_nets_list, i + 1, probs_vec, current_y)
-            c_pred[c_start_ind:c_end_ind] = symbol_to_prob(prob_to_symbol(probs_vec.float()))
-            b_pred[b_start_ind:b_end_ind] = decoder(c_pred[c_start_ind:c_end_ind])
-            ber = calculate_error_rates(b_pred[b_start_ind:b_end_ind], b_test[b_start_ind:b_end_ind])[0]
+            detected_word = symbol_to_prob(prob_to_symbol(probs_vec.float()))
+            decoded_word = decoder(detected_word)
+            # encode word again
+            decoded_word_array = decoded_word.int().cpu().numpy()
+            encoded_word = torch.Tensor(encoder(decoded_word_array, 'test').reshape(1, -1)).to(device)
+            # calculate error rate
+            b_start_ind = frame * b_frame_size
+            b_end_ind = (frame + 1) * b_frame_size
+            ber = calculate_error_rates(decoded_word, b_test[b_start_ind:b_end_ind])[0]
             total_ber += ber
 
+            tx = detected_word.reshape(1, -1) if ber > 0 else encoded_word.reshape(1, -1)
             if conf.self_supervised and ber <= conf.ber_thresh:
                 # use last word inserted in the buffer for training
-                self.online_training()
+                self.online_training(tx, current_y)
 
             print(frame, ber)
         return total_ber / conf.frame_num
