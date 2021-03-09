@@ -14,13 +14,24 @@ mpl.rcParams['mathtext.fontset'] = 'stix'
 mpl.rcParams['font.family'] = 'STIXGeneral'
 
 COLORS_DICT = {'Seq. DeepSIC, CSI uncertainty': 'pink',
-               'Seq. DeepSIC, perfect CSI': 'pink'}
+               'Seq. DeepSIC, perfect CSI': 'pink',
+               'DeepSIC': 'blue',
+               'Online DeepSIC': 'black'}
 
 MARKERS_DICT = {'Seq. DeepSIC, CSI uncertainty': 'x',
-                'Seq. DeepSIC, perfect CSI': 'o'}
+                'Seq. DeepSIC, perfect CSI': 'o',
+                'DeepSIC': 'x',
+                'Online DeepSIC': 'o'
+                }
 
 LINESTYLES_DICT = {'Seq. DeepSIC, CSI uncertainty': 'dotted',
-                   'Seq. DeepSIC, perfect CSI': 'solid'}
+                   'Seq. DeepSIC, perfect CSI': 'solid',
+                   'DeepSIC': 'dotted',
+                   'Online DeepSIC': 'dotted'
+                   }
 
 METHOD_NAMES = {'Seq. DeepSIC, CSI uncertainty': 'Seq. DeepSIC, CSI uncertainty',
-                'Seq. DeepSIC, perfect CSI': 'Seq. DeepSIC, perfect CSI'}
+                'Seq. DeepSIC, perfect CSI': 'Seq. DeepSIC, perfect CSI',
+                'DeepSIC': 'DeepSIC',
+                'Online DeepSIC': 'Online DeepSIC'
+                }

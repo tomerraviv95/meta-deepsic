@@ -1,3 +1,5 @@
+from typing import List
+
 from python_code.ecc.wrappers import decoder, encoder
 from python_code.utils.metrics import calculate_error_rates
 from python_code.utils.utils import symbol_to_prob, prob_to_symbol
@@ -82,14 +84,14 @@ class Trainer:
     def online_training(self, tx, rx):
         pass
 
-    def online_evaluate(self, trained_nets_list, snr):
+    def online_evaluate(self, trained_nets_list, snr) -> List[float]:
         b_test, y_test = self.test_dg(snr=snr)  # Generating data for the given SNR
         c_pred = torch.zeros_like(y_test)
         b_pred = torch.zeros_like(b_test)
         c_frame_size = c_pred.shape[0] // conf.test_frame_num
         b_frame_size = b_pred.shape[0] // conf.test_frame_num
         probs_vec = HALF * torch.ones(c_frame_size, y_test.shape[1]).to(device)
-        total_ber = 0
+        ber_list = []
         for frame in range(conf.test_frame_num):
             # current word
             c_start_ind = frame * c_frame_size
@@ -107,7 +109,7 @@ class Trainer:
             b_start_ind = frame * b_frame_size
             b_end_ind = (frame + 1) * b_frame_size
             ber = calculate_error_rates(decoded_word, b_test[b_start_ind:b_end_ind])[0]
-            total_ber += ber
+            ber_list.append(ber)
 
             tx = detected_word if ber > 0 else encoded_word
             if conf.self_supervised and ber <= conf.ber_thresh:
@@ -115,7 +117,7 @@ class Trainer:
                 self.train_loop(tx, trained_nets_list, current_y)
 
             print(frame, ber)
-        return total_ber / conf.test_frame_num
+        return ber_list
 
     def evaluate(self, trained_nets_list, snr):
         """
@@ -146,7 +148,7 @@ class Trainer:
 
     def train(self):
 
-        ber_list = []  # Contains the ber for each snr
+        all_bers = []  # Contains the ber
         print(f'training')
         for snr in conf.snr_list:  # Traversing the SNRs
             print(f'snr {snr}')
@@ -157,10 +159,10 @@ class Trainer:
             print('evaluating')
             # Testing the network on the current snr
             ber = self.online_evaluate(trained_nets_list, snr)
-            ber_list.append(ber)
+            all_bers.append(ber)
             print(f'\nber :{ber} @ snr: {snr} [dB]')
-        print(f'Training and Testing Completed\nBERs: {ber_list}')
-        return ber_list
+        print(f'Training and Testing Completed\nBERs: {all_bers}')
+        return all_bers
 
     def train_loop(self, b_train, trained_nets_list, y_train):
         initial_probs = b_train.clone()

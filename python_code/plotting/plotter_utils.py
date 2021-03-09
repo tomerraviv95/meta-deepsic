@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import os
 
 
-def get_ser_plot(dec: Trainer, run_over: bool, method_name: str):
+def get_ber_plot(dec: Trainer, run_over: bool, method_name: str):
     print(method_name)
     # set the path to saved plot results for a single method (so we do not need to run anew each time)
     if not os.path.exists(PLOTS_DIR):
