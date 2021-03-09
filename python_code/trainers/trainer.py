@@ -19,8 +19,8 @@ class Trainer:
     """
 
     def __init__(self):
-        self.train_dg = DataGenerator(conf.train_frame_size, phase='train')
-        self.test_dg = DataGenerator(conf.test_frame_size, phase='test')
+        self.train_dg = DataGenerator(conf.train_frame_size, phase='train', frame_num=conf.train_frame_num)
+        self.test_dg = DataGenerator(conf.test_frame_size, phase='test', frame_num=conf.test_frame_num)
         self.softmax = torch.nn.Softmax(dim=1)  # Single symbol probability inference
         self.initialize_detector()
 
@@ -86,11 +86,11 @@ class Trainer:
         b_test, y_test = self.test_dg(snr=snr)  # Generating data for the given SNR
         c_pred = torch.zeros_like(y_test)
         b_pred = torch.zeros_like(b_test)
-        c_frame_size = c_pred.shape[0] // conf.frame_num
-        b_frame_size = b_pred.shape[0] // conf.frame_num
+        c_frame_size = c_pred.shape[0] // conf.test_frame_num
+        b_frame_size = b_pred.shape[0] // conf.test_frame_num
         probs_vec = HALF * torch.ones(c_frame_size, y_test.shape[1]).to(device)
         total_ber = 0
-        for frame in range(conf.frame_num):
+        for frame in range(conf.test_frame_num):
             # current word
             c_start_ind = frame * c_frame_size
             c_end_ind = (frame + 1) * c_frame_size
@@ -102,20 +102,20 @@ class Trainer:
             decoded_word = decoder(detected_word)
             # encode word again
             decoded_word_array = decoded_word.int().cpu().numpy()
-            encoded_word = torch.Tensor(encoder(decoded_word_array, 'test').reshape(1, -1)).to(device)
+            encoded_word = torch.Tensor(encoder(decoded_word_array, 'test')).to(device)
             # calculate error rate
             b_start_ind = frame * b_frame_size
             b_end_ind = (frame + 1) * b_frame_size
             ber = calculate_error_rates(decoded_word, b_test[b_start_ind:b_end_ind])[0]
             total_ber += ber
 
-            tx = detected_word.reshape(1, -1) if ber > 0 else encoded_word.reshape(1, -1)
+            tx = detected_word if ber > 0 else encoded_word
             if conf.self_supervised and ber <= conf.ber_thresh:
                 # use last word inserted in the buffer for training
-                self.online_training(tx, current_y)
+                self.train_loop(tx, trained_nets_list, current_y)
 
             print(frame, ber)
-        return total_ber / conf.frame_num
+        return total_ber / conf.test_frame_num
 
     def evaluate(self, trained_nets_list, snr):
         """
@@ -153,25 +153,7 @@ class Trainer:
             b_train, y_train = self.train_dg(snr=snr)  # Generating data for the given snr
             trained_nets_list = [[0] * conf.iterations for _ in
                                  range(conf.n_user)]  # 2D list for Storing the DeepSIC Networks
-            initial_probs = b_train.clone()
-            nets_list, b_train_all, y_train_all = self.prepare_data_for_training(b_train, y_train, initial_probs)
-
-            # Training the DeepSIC network for each user for iteration=1
-            self.train_models(trained_nets_list, 0, nets_list, b_train_all, y_train_all)
-
-            # Initializing the probabilities
-            probs_vec = HALF * torch.ones(b_train.shape).to(device)
-
-            # Training the DeepSICNet for each user-symbol/iteration
-            for i in range(1, conf.iterations):
-                # Generating soft symbols for training purposes
-                probs_vec = self.calculate_posteriors(trained_nets_list, i, probs_vec, y_train)
-
-                # Obtaining the DeepSIC networks for each user-symbol and the i-th iteration
-                nets_list, b_train_all, y_train_all = self.prepare_data_for_training(b_train, y_train, probs_vec)
-
-                # Training the DeepSIC networks for the iteration>1
-                self.train_models(trained_nets_list, i, nets_list, b_train_all, y_train_all)
+            self.train_loop(b_train, trained_nets_list, y_train)
             print('evaluating')
             # Testing the network on the current snr
             ber = self.online_evaluate(trained_nets_list, snr)
@@ -179,3 +161,21 @@ class Trainer:
             print(f'\nber :{ber} @ snr: {snr} [dB]')
         print(f'Training and Testing Completed\nBERs: {ber_list}')
         return ber_list
+
+    def train_loop(self, b_train, trained_nets_list, y_train):
+        initial_probs = b_train.clone()
+        nets_list, b_train_all, y_train_all = self.prepare_data_for_training(b_train, y_train, initial_probs)
+        # Training the DeepSIC network for each user for iteration=1
+        self.train_models(trained_nets_list, 0, nets_list, b_train_all, y_train_all)
+        # Initializing the probabilities
+        probs_vec = HALF * torch.ones(b_train.shape).to(device)
+        # Training the DeepSICNet for each user-symbol/iteration
+        for i in range(1, conf.iterations):
+            # Generating soft symbols for training purposes
+            probs_vec = self.calculate_posteriors(trained_nets_list, i, probs_vec, y_train)
+
+            # Obtaining the DeepSIC networks for each user-symbol and the i-th iteration
+            nets_list, b_train_all, y_train_all = self.prepare_data_for_training(b_train, y_train, probs_vec)
+
+            # Training the DeepSIC networks for the iteration>1
+            self.train_models(trained_nets_list, i, nets_list, b_train_all, y_train_all)

@@ -15,10 +15,11 @@ class DataGenerator(Dataset):
     The Data Generator Class
     """
 
-    def __init__(self, frame_size, phase):
+    def __init__(self, frame_size, phase, frame_num):
         super(DataGenerator).__init__()
         self.frame_size = frame_size
         self.phase = phase
+        self.frame_num = frame_num
 
     def __call__(self, snr):
         """
@@ -30,7 +31,7 @@ class DataGenerator(Dataset):
         x_total = torch.empty(0)
         y_total = torch.empty(0)
 
-        for i in range(conf.frame_num):
+        for i in range(self.frame_num):
             # get channel
             H = ChannelModel.get_channel(conf.ChannelModel, conf.n_ant, conf.n_user, conf.csi_noise, self.phase,
                                          conf.fading, i)
