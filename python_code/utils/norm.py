@@ -7,9 +7,9 @@ n_ant = 4
 n_user = 4
 H_0 = ChannelModel.calculate_channel_wrapper(channel_mode, n_ant, n_user)
 norms = []
-degs_array = np.array([51, 39, 33, 21]) / 5
+degs_array = np.array([51, 39, 33, 21])
 for iteration in range(50):
-    fade_mat = np.cos(np.deg2rad(iteration * degs_array))
+    fade_mat = (0.8 + 0.2 * np.cos(2 * np.pi * iteration / degs_array))
     fade_mat = np.tile(fade_mat.reshape(1, -1), [n_user, 1])
     H = H_0 * fade_mat
     sub = H - H_0
@@ -17,4 +17,6 @@ for iteration in range(50):
     norms.append(norm)
 
 plt.plot(norms)
+plt.ylabel('Magnitude')
+plt.xlabel('Block index')
 plt.show()

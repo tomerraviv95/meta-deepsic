@@ -34,7 +34,6 @@ def plot_ser(snr_list, ser, method_name):
              linestyle=LINESTYLES_DICT[method_name],
              linewidth=2.2)
     plt.ylabel(r'BER', fontsize=20)
-    plt.xlabel(r'SNR [dB]', fontsize=20)
-    plt.yscale('log')
+    plt.xlabel(r'block index', fontsize=20)
     plt.grid(True, which='both')
     plt.legend(loc='upper left', prop={'size': 15})

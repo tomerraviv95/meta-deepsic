@@ -33,8 +33,8 @@ class ChannelModel:
     @staticmethod
     def add_fading(H, fading, phase, n_user, iteration):
         if phase == 'test' and fading:
-            degs_array = np.array([51, 39, 33, 21]) / 20
-            fade_mat = np.cos(np.deg2rad(iteration * degs_array))
+            degs_array = np.array([51, 39, 33, 21])
+            fade_mat = (0.8 + 0.2 * np.cos(2 * np.pi * iteration / degs_array))
             fade_mat = np.tile(fade_mat.reshape(1, -1), [n_user, 1]).T
             H = H * fade_mat
         return H
