@@ -1,7 +1,7 @@
-import torch
-
 from python_code.utils.config_singleton import Config
+from torch.nn import functional as F
 from torch import nn
+import torch
 
 conf = Config()
 
@@ -9,9 +9,9 @@ CLASSES_NUM = 2
 HIDDEN_SIZE = 60
 
 
-class DeepSICDetector(nn.Module):
+class MetaDeepSICDetector(nn.Module):
     """
-    The DeepSIC Network Architecture
+    The Meta DeepSIC Network Architecture
 
     ===========Architecture=========
     DeepSICNet(
@@ -29,15 +29,17 @@ class DeepSICDetector(nn.Module):
     """
 
     def __init__(self):
-        super(DeepSICDetector, self).__init__()
+        super(MetaDeepSICDetector, self).__init__()
         self.fc0 = nn.Linear(conf.n_user + conf.n_ant - 1, HIDDEN_SIZE)
         self.sigmoid = nn.Sigmoid()
         self.fc1 = nn.Linear(HIDDEN_SIZE, int(HIDDEN_SIZE / 2))
         self.relu = nn.ReLU()
         self.fc2 = nn.Linear(int(HIDDEN_SIZE / 2), CLASSES_NUM)
 
-    def forward(self, y: torch.Tensor) -> torch.Tensor:
-        out0 = self.sigmoid(self.fc0(y.squeeze(-1)))
-        fc1_out = self.relu(self.fc1(out0))
-        out = self.fc2(fc1_out)
-        return out
+    def forward(self, y: torch.Tensor, var: list) -> torch.Tensor:
+        fc_out0 = F.linear(y.squeeze(-1), var[0], var[1])
+        out0 = torch.sigmoid(fc_out0)
+        fc_out1 = F.linear(out0, var[2], var[3])
+        out1 = nn.functional.relu(fc_out1)
+        fc_out2 = F.linear(out1, var[4], var[5])
+        return fc_out2

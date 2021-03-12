@@ -146,25 +146,7 @@ class Trainer:
         ber = calculate_error_rates(b_pred, b_test)[0]
         return ber
 
-    def train(self):
-
-        all_bers = []  # Contains the ber
-        print(f'training')
-        for snr in conf.snr_list:  # Traversing the SNRs
-            print(f'snr {snr}')
-            b_train, y_train = self.train_dg(snr=snr)  # Generating data for the given snr
-            trained_nets_list = [[0] * conf.iterations for _ in
-                                 range(conf.n_user)]  # 2D list for Storing the DeepSIC Networks
-            self.train_loop(b_train, trained_nets_list, y_train)
-            print('evaluating')
-            # Testing the network on the current snr
-            ber = self.online_evaluate(trained_nets_list, snr)
-            all_bers.append(ber)
-            print(f'\nber :{ber} @ snr: {snr} [dB]')
-        print(f'Training and Testing Completed\nBERs: {all_bers}')
-        return all_bers
-
-    def train_loop(self, b_train, trained_nets_list, y_train):
+    def train_loop(self, b_train, y_train, trained_nets_list):
         initial_probs = b_train.clone()
         nets_list, b_train_all, y_train_all = self.prepare_data_for_training(b_train, y_train, initial_probs)
         # Training the DeepSIC network for each user for iteration=1
@@ -181,3 +163,20 @@ class Trainer:
 
             # Training the DeepSIC networks for the iteration>1
             self.train_models(trained_nets_list, i, nets_list, b_train_all, y_train_all)
+
+    def train(self):
+        all_bers = []  # Contains the ber
+        print(f'training')
+        for snr in conf.snr_list:  # Traversing the SNRs
+            print(f'snr {snr}')
+            b_train, y_train = self.train_dg(snr=snr)  # Generating data for the given snr
+            trained_nets_list = [[0] * conf.iterations for _ in
+                                 range(conf.n_user)]  # 2D list for Storing the DeepSIC Networks
+            self.train_loop(b_train, y_train, trained_nets_list)
+            print('evaluating')
+            # Testing the network on the current snr
+            ber = self.online_evaluate(trained_nets_list, snr)
+            all_bers.append(ber)
+            print(f'\nber :{ber} @ snr: {snr} [dB]')
+        print(f'Training and Testing Completed\nBERs: {all_bers}')
+        return all_bers
