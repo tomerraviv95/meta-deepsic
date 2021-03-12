@@ -11,10 +11,6 @@ MAML_FLAG = True
 META_LR = 0.1
 
 
-class MetaDeepSIC(object):
-    pass
-
-
 class MetaDeepSICTrainer(Trainer):
     """
     Trainer for the DeepSIC model.
