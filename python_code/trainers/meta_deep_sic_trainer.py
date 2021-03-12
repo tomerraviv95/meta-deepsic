@@ -8,7 +8,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 conf = Config()
 
 MAML_FLAG = True
-META_LR = 1e-3
+META_LR = 0.1
 
 
 class MetaDeepSIC(object):
@@ -42,20 +42,11 @@ class MetaDeepSICTrainer(Trainer):
         opt = torch.optim.Adam(net.parameters(), lr=conf.lr)
         crt = torch.nn.CrossEntropyLoss()
         net = net.to(device)
-
-        # for _ in range(conf.max_epochs):
-
-        support_idx = torch.arange(-2, -1).long().to(device)
-        query_idx = -1 * torch.ones(1).long().to(device)
-        j_hat_values = torch.unique(torch.randint(low=1,
-                                                  high=b_train.shape[0],
-                                                  size=[100])).to(device)
         meta_detector = MetaDeepSICDetector()
-
-        for j_hat in j_hat_values:
+        for _ in range(conf.max_epochs):
             opt.zero_grad()
-            cur_support_idx = j_hat + support_idx + 1
-            cur_query_idx = j_hat + query_idx + 1
+            cur_support_idx = torch.arange(b_train.shape[0] - 1)
+            cur_query_idx = torch.arange(1, b_train.shape[0])
 
             # divide the words to following pairs - (support,query)
             support_b, support_y = b_train[cur_support_idx], y_train[cur_support_idx]
