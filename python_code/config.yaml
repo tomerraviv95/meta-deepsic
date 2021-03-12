@@ -13,9 +13,10 @@ csi_noise: 0 # number of subsequent transmissions
 fading: True # whether to use fading
 ChannelModel: 'SED' # the channel model: set 'SEQ' for the Spatial Exponential Decay Channel Model, i.e. exp(-|i-j|),
 # set 'Gaussian' for a Gaussian Channel, i.e. N(0,1).
+eval_mode: 'by_word' # Type of evaluation. Per snr - 'aggregated', Per block - 'by_word'.
 lr: 0.01 # learning rate
 max_epochs: 60 # number of training epochs
 use_ecc: True # whether to encode with error correction codes
 n_ecc_symbols: 32 # number of sumbols in ecc
-self_supervised: False
-ber_thresh: 0.02
+self_supervised: True # whether to train in an online fashion
+ber_thresh: 0.02 # threshold for self-supervised training

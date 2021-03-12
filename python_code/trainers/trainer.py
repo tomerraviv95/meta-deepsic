@@ -119,7 +119,7 @@ class Trainer:
             print(frame, ber)
         return ber_list
 
-    def evaluate(self, trained_nets_list, snr):
+    def agg_evaluate(self, trained_nets_list, snr):
         """
         Evaluates the performance of the model.
 
@@ -144,6 +144,17 @@ class Trainer:
         print(f'Finished testing symbols')
         b_pred = decoder(c_pred)
         ber = calculate_error_rates(b_pred, b_test)[0]
+        return ber
+
+    def evaluate(self, snr, trained_nets_list):
+        print('evaluating')
+        # Testing the network on the current snr
+        if conf.eval_mode == 'by_word':
+            ber = self.online_evaluate(trained_nets_list, snr)
+        elif conf.eval_mode == 'aggregated':
+            ber = self.agg_evaluate(trained_nets_list, snr)
+        else:
+            raise ValueError('No such evaluation mode!!!')
         return ber
 
     def train_loop(self, b_train, y_train, trained_nets_list):
@@ -173,10 +184,9 @@ class Trainer:
             trained_nets_list = [[0] * conf.iterations for _ in
                                  range(conf.n_user)]  # 2D list for Storing the DeepSIC Networks
             self.train_loop(b_train, y_train, trained_nets_list)
-            print('evaluating')
-            # Testing the network on the current snr
-            ber = self.online_evaluate(trained_nets_list, snr)
+            ber = self.evaluate(snr, trained_nets_list)
             all_bers.append(ber)
             print(f'\nber :{ber} @ snr: {snr} [dB]')
         print(f'Training and Testing Completed\nBERs: {all_bers}')
         return all_bers
+
