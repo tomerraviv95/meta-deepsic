@@ -1,9 +1,9 @@
 run_name: 'test' # run directory
 n_ant: 4 # number of Rx Antennas
 n_user: 4 # number of Transmitted Symbols, users
-SNR_start: 14 # start SNR value
+SNR_start: 10 # start SNR value
 SNR_step: 2 # increment of SNR values
-SNR_end: 14 # last SNR value
+SNR_end: 10 # last SNR value
 iterations: 5 # number of iterations in the unfolded network
 train_frame_size: 500 # number of subsequent transmissions
 test_frame_size: 1784 # number of subsequent transmissions
@@ -16,9 +16,9 @@ ChannelModel: 'SED' # the channel model: set 'SEQ' for the Spatial Exponential D
 eval_mode: 'by_word' # Type of evaluation. Per snr - 'aggregated', Per block - 'by_word'.
 lr: 0.01 # learning rate
 max_epochs: 60 # number of training epochs
-self_supervised_epochs: 30 # number of self-supervised epochs
+self_supervised_epochs: 50 # number of self-supervised epochs
 use_ecc: True # whether to encode with error correction codes
 n_ecc_symbols: 32 # number of symbols in ecc
-self_supervised: True # whether to train in an online fashion
+self_supervised: False # whether to train in an online fashion
 ber_thresh: 0.02 # threshold for self-supervised training
 online_meta: False # whether to meta-train in an online fashion

@@ -13,25 +13,14 @@ mpl.rcParams['legend.fontsize'] = 20
 mpl.rcParams['mathtext.fontset'] = 'stix'
 mpl.rcParams['font.family'] = 'STIXGeneral'
 
-COLORS_DICT = {'Seq. DeepSIC, CSI uncertainty': 'pink',
-               'Seq. DeepSIC, perfect CSI': 'pink',
-               'DeepSIC': 'blue',
-               'Online DeepSIC': 'black'}
+COLORS_DICT = {'DeepSIC': 'blue',
+               'Online DeepSIC': 'black',
+               'Meta-DeepSIC': 'green'}
 
-MARKERS_DICT = {'Seq. DeepSIC, CSI uncertainty': 'x',
-                'Seq. DeepSIC, perfect CSI': 'o',
-                'DeepSIC': 'x',
-                'Online DeepSIC': 'o'
-                }
+MARKERS_DICT = {'DeepSIC': 'x',
+                'Online DeepSIC': 'o',
+                'Meta-DeepSIC': '+'}
 
-LINESTYLES_DICT = {'Seq. DeepSIC, CSI uncertainty': 'dotted',
-                   'Seq. DeepSIC, perfect CSI': 'solid',
-                   'DeepSIC': 'dotted',
-                   'Online DeepSIC': 'dotted'
-                   }
-
-METHOD_NAMES = {'Seq. DeepSIC, CSI uncertainty': 'Seq. DeepSIC, CSI uncertainty',
-                'Seq. DeepSIC, perfect CSI': 'Seq. DeepSIC, perfect CSI',
-                'DeepSIC': 'DeepSIC',
-                'Online DeepSIC': 'Online DeepSIC'
-                }
+LINESTYLES_DICT = {'DeepSIC': 'dotted',
+                   'Online DeepSIC': 'dotted',
+                   'Meta-DeepSIC': 'dotted'}

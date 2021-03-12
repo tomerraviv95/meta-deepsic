@@ -16,14 +16,7 @@ class DeepSICTrainer(Trainer):
         super().__init__()
 
     def __str__(self):
-        if conf.csi_noise > 0:
-            channel_state = ', CSI uncertainty'
-        else:
-            channel_state = ', perfect CSI'
-
-        training = 'Seq.'
-
-        return training + ' DeepSIC' + channel_state
+        return 'DeepSIC'
 
     def initialize_detector(self):
         """
@@ -57,7 +50,7 @@ class DeepSICTrainer(Trainer):
         return net
 
     def online_train_loop(self, b_train, y_train, trained_nets_list, max_epochs):
-        self.train_loop(self, b_train, y_train, trained_nets_list, max_epochs)
+        self.train_loop(b_train, y_train, trained_nets_list, max_epochs)
 
 
 if __name__ == "__main__":

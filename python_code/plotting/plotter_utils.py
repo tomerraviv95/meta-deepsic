@@ -28,7 +28,7 @@ def get_ber_plot(dec: Trainer, run_over: bool, method_name: str):
 
 def plot_ser(snr_list, ser, method_name):
     plt.plot(snr_list, ser,
-             label=METHOD_NAMES[method_name],
+             label=method_name,
              color=COLORS_DICT[method_name],
              marker=MARKERS_DICT[method_name],
              linestyle=LINESTYLES_DICT[method_name],
