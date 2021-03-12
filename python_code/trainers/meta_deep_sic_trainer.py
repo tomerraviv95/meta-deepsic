@@ -9,6 +9,7 @@ conf = Config()
 
 MAML_FLAG = True
 META_LR = 0.1
+HALF = 0.5
 
 
 class MetaDeepSICTrainer(Trainer):
@@ -20,7 +21,7 @@ class MetaDeepSICTrainer(Trainer):
         super().__init__()
 
     def __str__(self):
-        return 'Meta DeepSIC'
+        return 'Meta-DeepSIC'
 
     def initialize_detector(self):
         """
@@ -28,7 +29,7 @@ class MetaDeepSICTrainer(Trainer):
         """
         return DeepSICDetector()
 
-    def train_model(self, net, b_train, y_train):
+    def train_model(self, net, b_train, y_train, max_epochs):
         """
         Main meta-training loop. Runs in minibatches, each minibatch is split to pairs of following words.
         The pairs are comprised of (support,query) words.
@@ -39,7 +40,7 @@ class MetaDeepSICTrainer(Trainer):
         crt = torch.nn.CrossEntropyLoss()
         net = net.to(device)
         meta_detector = MetaDeepSICDetector()
-        for _ in range(conf.max_epochs):
+        for _ in range(max_epochs):
             opt.zero_grad()
             cur_support_idx = torch.arange(b_train.shape[0] - 1)
             cur_query_idx = torch.arange(1, b_train.shape[0])
@@ -71,6 +72,43 @@ class MetaDeepSICTrainer(Trainer):
 
             opt.step()
 
+        return net
+
+    def online_train_loop(self, b_train, y_train, trained_nets_list, max_epochs):
+        initial_probs = b_train.clone()
+        nets_list, b_train_all, y_train_all = self.prepare_data_for_training(b_train, y_train, initial_probs)
+        # Training the DeepSIC network for each user for iteration=1
+        self.online_train_models(trained_nets_list, 0, nets_list, b_train_all, y_train_all, max_epochs)
+        # Initializing the probabilities
+        probs_vec = HALF * torch.ones(b_train.shape).to(device)
+        # Training the DeepSICNet for each user-symbol/iteration
+        for i in range(1, conf.iterations):
+            # Generating soft symbols for training purposes
+            probs_vec = self.calculate_posteriors(trained_nets_list, i, probs_vec, y_train)
+
+            # Obtaining the DeepSIC networks for each user-symbol and the i-th iteration
+            nets_list, b_train_all, y_train_all = self.prepare_data_for_training(b_train, y_train, probs_vec)
+
+            # Training the DeepSIC networks for the iteration>1
+            self.online_train_models(trained_nets_list, i, nets_list, b_train_all, y_train_all, max_epochs)
+
+    def online_train_models(self, trained_nets_list, i, networks_list, x_train_all, y_train_all, max_epochs):
+        for user in range(conf.n_user):
+            trained_nets_list[user][i] = self.online_train_model(networks_list[user],
+                                                                 x_train_all[user],
+                                                                 y_train_all[user],
+                                                                 max_epochs)
+
+    def online_train_model(self, net, x_train, y_train, max_epochs):
+        opt = torch.optim.Adam(net.parameters(), lr=conf.lr)
+        crt = torch.nn.CrossEntropyLoss()
+        net = net.to(device)
+        for _ in range(max_epochs):
+            opt.zero_grad()
+            out = net(y_train)
+            loss = crt(out, x_train.squeeze(-1).long())
+            loss.backward()
+            opt.step()
         return net
 
 

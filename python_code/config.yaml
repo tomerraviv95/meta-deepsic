@@ -16,7 +16,9 @@ ChannelModel: 'SED' # the channel model: set 'SEQ' for the Spatial Exponential D
 eval_mode: 'by_word' # Type of evaluation. Per snr - 'aggregated', Per block - 'by_word'.
 lr: 0.01 # learning rate
 max_epochs: 60 # number of training epochs
+self_supervised_epochs: 30 # number of self-supervised epochs
 use_ecc: True # whether to encode with error correction codes
-n_ecc_symbols: 32 # number of sumbols in ecc
+n_ecc_symbols: 32 # number of symbols in ecc
 self_supervised: True # whether to train in an online fashion
 ber_thresh: 0.02 # threshold for self-supervised training
+online_meta: False # whether to meta-train in an online fashion

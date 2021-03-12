@@ -31,7 +31,7 @@ class DeepSICTrainer(Trainer):
         """
         return DeepSICDetector()
 
-    def train_model(self, net, x_train, y_train):
+    def train_model(self, net, x_train, y_train, max_epochs):
         """
         Trains a DeepSIC Network
 
@@ -48,13 +48,16 @@ class DeepSICTrainer(Trainer):
         opt = torch.optim.Adam(net.parameters(), lr=conf.lr)
         crt = torch.nn.CrossEntropyLoss()
         net = net.to(device)
-        for _ in range(conf.max_epochs):
+        for _ in range(max_epochs):
             opt.zero_grad()
             out = net(y_train)
             loss = crt(out, x_train.squeeze(-1).long())
             loss.backward()
             opt.step()
         return net
+
+    def online_train_loop(self, b_train, y_train, trained_nets_list, max_epochs):
+        self.train_loop(self, b_train, y_train, trained_nets_list, max_epochs)
 
 
 if __name__ == "__main__":
