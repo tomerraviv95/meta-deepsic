@@ -49,7 +49,7 @@ class MetaDeepSICTrainer(Trainer):
         query_idx = -1 * torch.ones(1).long().to(device)
         j_hat_values = torch.unique(torch.randint(low=1,
                                                   high=b_train.shape[0],
-                                                  size=[10])).to(device)
+                                                  size=[100])).to(device)
         meta_detector = MetaDeepSICDetector()
 
         for j_hat in j_hat_values:

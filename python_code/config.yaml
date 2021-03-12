@@ -17,5 +17,5 @@ lr: 0.01 # learning rate
 max_epochs: 60 # number of training epochs
 use_ecc: True # whether to encode with error correction codes
 n_ecc_symbols: 32 # number of sumbols in ecc
-self_supervised: True
+self_supervised: False
 ber_thresh: 0.02

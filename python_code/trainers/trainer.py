@@ -114,7 +114,7 @@ class Trainer:
             tx = detected_word if ber > 0 else encoded_word
             if conf.self_supervised and ber <= conf.ber_thresh:
                 # use last word inserted in the buffer for training
-                self.train_loop(tx, trained_nets_list, current_y)
+                self.train_loop(tx, current_y, trained_nets_list)
 
             print(frame, ber)
         return ber_list
