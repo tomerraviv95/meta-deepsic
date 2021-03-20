@@ -25,7 +25,6 @@ class Trainer:
         self.train_dg = DataGenerator(conf.train_frame_size, phase='train', frame_num=conf.train_frame_num)
         self.test_dg = DataGenerator(conf.test_frame_size, phase='test', frame_num=conf.test_frame_num)
         self.softmax = torch.nn.Softmax(dim=1)  # Single symbol probability inference
-        self.initialize_detector()
 
     def __str__(self):
         return 'trainer'
@@ -52,7 +51,6 @@ class Trainer:
             [i]['x_train'] --> Training Labels (Symbol probabilities) for the i-th user.
             [i]['y_train'] --> Output of the Channel and the Predicted Symbol Probs. of the j-th users, where for j != i
         """
-        nets_list = []
         b_train_all = []
         y_train_all = []
         for k in range(conf.n_user):
@@ -60,8 +58,7 @@ class Trainer:
             y_train = torch.cat((ys_train, probs_vec[:, idx]), dim=1)
             b_train_all.append(b_train[:, k])
             y_train_all.append(y_train)
-            nets_list.append(self.initialize_detector())
-        return nets_list, b_train_all, y_train_all
+        return b_train_all, y_train_all
 
     def calculate_posteriors(self, trained_nets_list, i, probs_vec, y_train):
         next_probs_vec = torch.zeros(probs_vec.shape).to(device)
@@ -76,12 +73,9 @@ class Trainer:
     def train_model(self, net, x_train, y_train, max_epochs):
         pass
 
-    def train_models(self, trained_nets_list, i, networks_list, x_train_all, y_train_all, max_epochs):
+    def train_models(self, trained_nets_list, i, x_train_all, y_train_all, max_epochs):
         for user in range(conf.n_user):
-            trained_nets_list[user][i] = self.train_model(networks_list[user],
-                                                          x_train_all[user],
-                                                          y_train_all[user],
-                                                          max_epochs)
+            self.train_model(trained_nets_list[user][i], x_train_all[user], y_train_all[user], max_epochs)
 
     def online_train_loop(self, b_train, y_train, trained_nets_list, max_epochs):
         pass
@@ -95,7 +89,7 @@ class Trainer:
         probs_vec = HALF * torch.ones(c_frame_size, y_test.shape[1]).to(device)
 
         # saved detector is used to initialize the decoder in meta learning loops
-        saved_nets_list = [copy.deepcopy(net) for net in trained_nets_list]
+        self.saved_nets_list = [copy.deepcopy(net) for net in trained_nets_list]
 
         # query for all detected words
         buffer_b = torch.empty([0, b_test.shape[1]]).to(device)
@@ -133,10 +127,10 @@ class Trainer:
 
             # meta-learning main function
             if conf.online_meta and (frame + 1) % META_TRAIN_FRAMES == 0:
+                print('Meta')
                 # initialize from trained weights
-                trained_nets_list = [copy.deepcopy(net) for net in saved_nets_list]
-                self.train_loop(buffer_b, buffer_y, trained_nets_list, conf.max_epochs)
-                saved_nets_list = [copy.deepcopy(net) for net in trained_nets_list]
+                self.train_loop(buffer_b, buffer_y, self.saved_nets_list, conf.max_epochs)
+                trained_nets_list = [copy.deepcopy(net) for net in self.saved_nets_list]
 
             # use last word inserted in the buffer for training
             if conf.self_supervised and ber <= conf.ber_thresh:
@@ -185,21 +179,19 @@ class Trainer:
 
     def train_loop(self, b_train, y_train, trained_nets_list, max_epochs):
         initial_probs = b_train.clone()
-        nets_list, b_train_all, y_train_all = self.prepare_data_for_training(b_train, y_train, initial_probs)
+        b_train_all, y_train_all = self.prepare_data_for_training(b_train, y_train, initial_probs)
         # Training the DeepSIC network for each user for iteration=1
-        self.train_models(trained_nets_list, 0, nets_list, b_train_all, y_train_all, max_epochs)
+        self.train_models(trained_nets_list, 0, b_train_all, y_train_all, max_epochs)
         # Initializing the probabilities
         probs_vec = HALF * torch.ones(b_train.shape).to(device)
         # Training the DeepSICNet for each user-symbol/iteration
         for i in range(1, conf.iterations):
             # Generating soft symbols for training purposes
             probs_vec = self.calculate_posteriors(trained_nets_list, i, probs_vec, y_train)
-
             # Obtaining the DeepSIC networks for each user-symbol and the i-th iteration
-            nets_list, b_train_all, y_train_all = self.prepare_data_for_training(b_train, y_train, probs_vec)
-
+            b_train_all, y_train_all = self.prepare_data_for_training(b_train, y_train, probs_vec)
             # Training the DeepSIC networks for the iteration>1
-            self.train_models(trained_nets_list, i, nets_list, b_train_all, y_train_all, max_epochs)
+            self.train_models(trained_nets_list, i, b_train_all, y_train_all, max_epochs)
 
     def train(self):
         all_bers = []  # Contains the ber
@@ -207,11 +199,11 @@ class Trainer:
         for snr in conf.snr_list:  # Traversing the SNRs
             print(f'snr {snr}')
             b_train, y_train = self.train_dg(snr=snr)  # Generating data for the given snr
-            trained_nets_list = [[0] * conf.iterations for _ in
-                                 range(conf.n_user)]  # 2D list for Storing the DeepSIC Networks
+            trained_nets_list = [[self.initialize_detector() for _ in range(conf.iterations)]
+                                 for _ in range(conf.n_user)]  # 2D list for Storing the DeepSIC Networks
             self.train_loop(b_train, y_train, trained_nets_list, conf.max_epochs)
             ber = self.evaluate(snr, trained_nets_list)
             all_bers.append(ber)
-            print(f'\nber :{ber} @ snr: {snr} [dB]')
+            print(f'\nber :{sum(ber) / len(ber)} @ snr: {snr} [dB]')
         print(f'Training and Testing Completed\nBERs: {all_bers}')
         return all_bers

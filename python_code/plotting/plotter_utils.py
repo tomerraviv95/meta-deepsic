@@ -3,6 +3,7 @@ from dir_definitions import PLOTS_DIR
 from python_code.plotting.plotter_config import *
 from python_code.trainers.trainer import Trainer
 import matplotlib.pyplot as plt
+import numpy as np
 import os
 
 
@@ -26,8 +27,8 @@ def get_ber_plot(dec: Trainer, run_over: bool, method_name: str):
     return ser_total
 
 
-def plot_ser(snr_list, ser, method_name):
-    plt.plot(snr_list, ser,
+def plot_ser(blocks_ind, ser, method_name):
+    plt.plot(blocks_ind, np.cumsum(np.array(ser)),
              label=method_name,
              color=COLORS_DICT[method_name],
              marker=MARKERS_DICT[method_name],

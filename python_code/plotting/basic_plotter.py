@@ -12,7 +12,6 @@ run_over = True
 all_runs_params = [(DeepSICTrainer(), {'self_supervised': False, 'online_meta': False}, 'DeepSIC'),
                    (DeepSICTrainer(), {'self_supervised': True, 'online_meta': False}, 'Online DeepSIC'),
                    (MetaDeepSICTrainer(), {'self_supervised': True, 'online_meta': True}, 'Meta-DeepSIC')]
-
 conf = Config()
 
 # path for the saved figure

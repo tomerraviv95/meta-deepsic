@@ -3,6 +3,7 @@ from python_code.detectors.deep_sic_detector import DeepSICDetector
 from python_code.utils.config_singleton import Config
 from python_code.trainers.trainer import Trainer
 import torch
+import copy
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 conf = Config()
@@ -72,32 +73,31 @@ class MetaDeepSICTrainer(Trainer):
 
             opt.step()
 
-        return net
-
     def online_train_loop(self, b_train, y_train, trained_nets_list, max_epochs):
+        trained_nets_list = [copy.deepcopy(net) for net in self.saved_nets_list]
         initial_probs = b_train.clone()
-        nets_list, b_train_all, y_train_all = self.prepare_data_for_training(b_train, y_train, initial_probs)
+        b_train_all, y_train_all = self.prepare_data_for_training(b_train, y_train, initial_probs)
+
         # Training the DeepSIC network for each user for iteration=1
-        self.online_train_models(trained_nets_list, 0, nets_list, b_train_all, y_train_all, max_epochs)
+        self.online_train_models(trained_nets_list, 0, b_train_all, y_train_all, max_epochs)
+
         # Initializing the probabilities
         probs_vec = HALF * torch.ones(b_train.shape).to(device)
+
         # Training the DeepSICNet for each user-symbol/iteration
         for i in range(1, conf.iterations):
             # Generating soft symbols for training purposes
             probs_vec = self.calculate_posteriors(trained_nets_list, i, probs_vec, y_train)
 
             # Obtaining the DeepSIC networks for each user-symbol and the i-th iteration
-            nets_list, b_train_all, y_train_all = self.prepare_data_for_training(b_train, y_train, probs_vec)
+            b_train_all, y_train_all = self.prepare_data_for_training(b_train, y_train, probs_vec)
 
             # Training the DeepSIC networks for the iteration>1
-            self.online_train_models(trained_nets_list, i, nets_list, b_train_all, y_train_all, max_epochs)
+            self.online_train_models(trained_nets_list, i, b_train_all, y_train_all, max_epochs)
 
-    def online_train_models(self, trained_nets_list, i, networks_list, x_train_all, y_train_all, max_epochs):
+    def online_train_models(self, trained_nets_list, i, x_train_all, y_train_all, max_epochs):
         for user in range(conf.n_user):
-            trained_nets_list[user][i] = self.online_train_model(networks_list[user],
-                                                                 x_train_all[user],
-                                                                 y_train_all[user],
-                                                                 max_epochs)
+            self.online_train_model(trained_nets_list[user][i], x_train_all[user], y_train_all[user], max_epochs)
 
     def online_train_model(self, net, x_train, y_train, max_epochs):
         opt = torch.optim.Adam(net.parameters(), lr=conf.lr)
@@ -109,7 +109,6 @@ class MetaDeepSICTrainer(Trainer):
             loss = crt(out, x_train.squeeze(-1).long())
             loss.backward()
             opt.step()
-        return net
 
 
 if __name__ == "__main__":

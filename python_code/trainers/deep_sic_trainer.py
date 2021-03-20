@@ -47,7 +47,6 @@ class DeepSICTrainer(Trainer):
             loss = crt(out, x_train.squeeze(-1).long())
             loss.backward()
             opt.step()
-        return net
 
     def online_train_loop(self, b_train, y_train, trained_nets_list, max_epochs):
         self.train_loop(b_train, y_train, trained_nets_list, max_epochs)
