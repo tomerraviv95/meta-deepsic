@@ -32,6 +32,6 @@ for current_run_params in all_runs_params:
     print(name)
     print(conf.self_supervised, conf.online_meta)
     all_bers = get_ber_plot(trainer, run_over=run_over, method_name=name)
-    plot_ser(range(conf.test_frame_num), all_bers[0], name)
+    plot_ser(range(conf.test_frame_num - 1), all_bers[0], name)
 plt.savefig(os.path.join(FIGURES_DIR, folder_name, 'SER.png'), bbox_inches='tight')
 plt.show()

@@ -96,7 +96,7 @@ class Trainer:
         buffer_y = torch.empty([0, y_test.shape[1]]).to(device)
 
         ber_list = []
-        for frame in range(conf.test_frame_num):
+        for frame in range(conf.test_frame_num - 1):
             # current word
             c_start_ind = frame * c_frame_size
             c_end_ind = (frame + 1) * c_frame_size

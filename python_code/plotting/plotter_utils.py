@@ -28,7 +28,7 @@ def get_ber_plot(dec: Trainer, run_over: bool, method_name: str):
 
 
 def plot_ser(blocks_ind, ser, method_name):
-    plt.plot(blocks_ind, np.cumsum(np.array(ser)),
+    plt.plot(blocks_ind, np.cumsum(np.array(ser)) / len(ser),
              label=method_name,
              color=COLORS_DICT[method_name],
              marker=MARKERS_DICT[method_name],
