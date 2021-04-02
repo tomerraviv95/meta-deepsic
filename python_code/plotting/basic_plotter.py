@@ -1,37 +1,75 @@
-from python_code.plotting.plotter_utils import get_ber_plot, plot_ser
-from python_code.trainers.deep_sic_trainer import DeepSICTrainer
-from python_code.trainers.meta_deep_sic_trainer import MetaDeepSICTrainer
+from python_code.plotting.plotter_utils import get_deepsic
 from python_code.utils.config_singleton import Config
-from dir_definitions import FIGURES_DIR
+from python_code.utils.python_utils import load_pkl, save_pkl
+from python_code.plotting.plotter_config import *
+from python_code.trainers.trainer import Trainer
+from dir_definitions import PLOTS_DIR, FIGURES_DIR
 import matplotlib.pyplot as plt
+import numpy as np
 import datetime
 import os
 
-run_over = True
-
-all_runs_params = [(DeepSICTrainer(), {'self_supervised': False, 'online_meta': False}, 'DeepSIC'),
-                   (DeepSICTrainer(), {'self_supervised': True, 'online_meta': False}, 'Online DeepSIC'),
-                   (MetaDeepSICTrainer(), {'self_supervised': True, 'online_meta': True}, 'Meta-DeepSIC')]
 conf = Config()
 
-# path for the saved figure
-current_day_time = datetime.datetime.now()
-folder_name = f'{current_day_time.month}-{current_day_time.day}-{current_day_time.hour}-{current_day_time.minute}'
-if not os.path.isdir(os.path.join(FIGURES_DIR, folder_name)):
-    os.makedirs(os.path.join(FIGURES_DIR, folder_name))
 
-plt.figure()
-for current_run_params in all_runs_params:
-    # get trainer
-    trainer = current_run_params[0]
-    # set all parameters based on dict
-    for k, v in current_run_params[1].items():
-        conf.set_value(k, v)
-    # name of detector
-    name = current_run_params[2]
-    print(name)
-    print(conf.self_supervised, conf.online_meta)
-    all_bers = get_ber_plot(trainer, run_over=run_over, method_name=name)
-    plot_ser(range(conf.test_frame_num - 1), all_bers[0], name)
-plt.savefig(os.path.join(FIGURES_DIR, folder_name, 'SER.png'), bbox_inches='tight')
-plt.show()
+class Plotter:
+
+    def __init__(self, run_over):
+        self.run_over = run_over
+        self.init_save_folder()
+
+    def init_save_folder(self):
+        # path for the saved figure
+        current_day_time = datetime.datetime.now()
+        self.folder_name = f'{current_day_time.month}-{current_day_time.day}-{current_day_time.hour}-{current_day_time.minute}'
+        if not os.path.isdir(os.path.join(FIGURES_DIR, self.folder_name)):
+            os.makedirs(os.path.join(FIGURES_DIR, self.folder_name))
+
+    def get_ber_plot(self, dec: Trainer, run_over: bool, method_name: str):
+        print(method_name)
+        # set the path to saved plot results for a single method (so we do not need to run anew each time)
+        if not os.path.exists(PLOTS_DIR):
+            os.makedirs(PLOTS_DIR)
+        file_name = '_'.join([method_name])
+        plots_path = os.path.join(PLOTS_DIR, file_name + '.pkl')
+        print(plots_path)
+        # if plot already exists, and the run_over flag is false - load the saved plot
+        if os.path.isfile(plots_path) and not run_over:
+            print("Loading plots")
+            ser_total = load_pkl(plots_path)
+        else:
+            # otherwise - run again
+            print("calculating fresh")
+            ser_total = dec.train()
+            save_pkl(plots_path, ser_total)
+        return ser_total
+
+    def plot_ser(self, blocks_ind, ser, method_name):
+        plt.plot(blocks_ind, np.cumsum(np.array(ser)) / len(ser),
+                 label=method_name,
+                 color=COLORS_DICT[method_name],
+                 marker=MARKERS_DICT[method_name],
+                 linestyle=LINESTYLES_DICT[method_name],
+                 linewidth=2.2)
+        plt.ylabel(r'BER', fontsize=20)
+        plt.xlabel(r'block index', fontsize=20)
+        plt.grid(True, which='both')
+        plt.legend(loc='upper left', prop={'size': 15})
+
+    def main(self, current_run_params):
+        # get trainer
+        trainer = current_run_params[0]
+        # set all parameters based on dict
+        for k, v in current_run_params[1].items():
+            conf.set_value(k, v)
+        # name of detector
+        name = current_run_params[2]
+        all_bers = self.get_ber_plot(trainer, run_over=self.run_over, method_name=name)
+        self.plot_ser(range(conf.test_frame_num - 1), all_bers[0], name)
+        plt.savefig(os.path.join(FIGURES_DIR, self.folder_name, 'SER.png'), bbox_inches='tight')
+
+
+if __name__ == "__main__":
+    plotter = Plotter(run_over=True)
+    plotter.main(current_run_params=get_deepsic())
+    plt.show()
