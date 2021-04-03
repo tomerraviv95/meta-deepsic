@@ -20,6 +20,7 @@ class MetaDeepSICTrainer(Trainer):
 
     def __init__(self):
         super().__init__()
+        self.online_meta = True
 
     def __str__(self):
         return 'Meta-DeepSIC'

@@ -33,7 +33,7 @@ class DataGenerator(Dataset):
 
         for i in range(self.frame_num):
             # get channel
-            H = ChannelModel.get_channel(conf.ChannelModel, conf.n_ant, conf.n_user, conf.csi_noise, self.phase,
+            H = ChannelModel.get_channel(conf.channel_mode, conf.n_ant, conf.n_user, conf.csi_noise, self.phase,
                                          conf.fading, i)
             # generate bits
             b = np.random.randint(0, 2, size=(self.frame_size, conf.n_user))

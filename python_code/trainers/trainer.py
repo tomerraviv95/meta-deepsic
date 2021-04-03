@@ -25,6 +25,7 @@ class Trainer:
         self.train_dg = DataGenerator(conf.train_frame_size, phase='train', frame_num=conf.train_frame_num)
         self.test_dg = DataGenerator(conf.test_frame_size, phase='test', frame_num=conf.test_frame_num)
         self.softmax = torch.nn.Softmax(dim=1)  # Single symbol probability inference
+        self.online_meta = False
 
     def __str__(self):
         return 'trainer'
@@ -126,7 +127,7 @@ class Trainer:
                 buffer_y = torch.cat([buffer_y, current_y])
 
             # meta-learning main function
-            if conf.online_meta and (frame + 1) % META_TRAIN_FRAMES == 0:
+            if self.online_meta and (frame + 1) % META_TRAIN_FRAMES == 0:
                 print('Meta')
                 # initialize from trained weights
                 self.train_loop(buffer_b, buffer_y, self.saved_nets_list, conf.max_epochs)

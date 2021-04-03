@@ -1,4 +1,4 @@
-from python_code.plotting.plotter_utils import get_deepsic
+from python_code.plotting.plotter_utils import get_deepsic, get_meta_deepsic, get_online_deepsic
 from python_code.utils.config_singleton import Config
 from python_code.utils.python_utils import load_pkl, save_pkl
 from python_code.plotting.plotter_config import *
@@ -72,4 +72,6 @@ class Plotter:
 if __name__ == "__main__":
     plotter = Plotter(run_over=True)
     plotter.main(current_run_params=get_deepsic())
+    plotter.main(current_run_params=get_online_deepsic())
+    plotter.main(current_run_params=get_meta_deepsic())
     plt.show()
