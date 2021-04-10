@@ -1,4 +1,5 @@
 from python_code.utils.config_singleton import Config
+from python_code.plotting.plotter_config import *
 from dir_definitions import RESOURCES_DIR
 import matplotlib.pyplot as plt
 import numpy as np
@@ -17,9 +18,9 @@ class ChannelModel:
             H = SEDChannel.calculate_channel(n_ant, n_user, iteration)
         elif channel_mode == 'Gaussian':
             H = GaussianChannel.calculate_channel(n_ant, n_user, iteration)
-        # elif channel_mode == 'COST' and phase == 'train':
-        #     H = SEDChannel.calculate_channel(n_ant, n_user, iteration)
-        elif channel_mode == 'COST':  # and phase == 'test'
+        elif channel_mode == 'COST' and phase == 'train':
+            H = SEDChannel.calculate_channel(n_ant, n_user, iteration)
+        elif channel_mode == 'COST' and phase == 'test':
             H = COSTChannel.calculate_channel(n_ant, n_user, iteration)
         else:
             raise NotImplementedError
@@ -76,10 +77,17 @@ class COSTChannel(ChannelModel):
             norm_h_user = (h_user - h_user.min()) / (h_user.max() - h_user.min())
             sampled_h_user = norm_h_user[np.linspace(0, norm_h_user.shape[0] - 1, n_ant, dtype=int), iteration]
             reshaped_sampled_h = sampled_h_user.reshape(-1, n_ant)
-            # reshaped_sampled_h[0, :] /= 2
-            # reshaped_sampled_h[0, i - 1] = 1
+            reshaped_sampled_h[0, :] *= 0.5
+            reshaped_sampled_h[0, i - 1] = 1
             total_h = np.concatenate([total_h, reshaped_sampled_h], axis=0)
-        return total_h
+
+        H_row = np.array([i for i in range(n_ant)])
+        H_row = np.tile(H_row, [n_user, 1]).T
+        H_column = np.array([i for i in range(n_user)])
+        H_column = np.tile(H_column, [n_ant, 1])
+        H = np.exp(-np.abs(H_row - H_column) / (iteration + 1))
+
+        return total_h * H
 
 
 if __name__ == "__main__":
@@ -91,8 +99,12 @@ if __name__ == "__main__":
                                       conf.csi_noise, 'test', conf.fading, iteration)
         total_h = np.concatenate([total_h, np.expand_dims(h, axis=2)], axis=2)
 
-    i = 1
+    i = 0
     for j in range(conf.n_user):
         plt.plot(total_h[i, j], label=f'{j}')
-    plt.legend()
+    plt.ylabel(r'magnitude', fontsize=20)
+    plt.xlabel(r'block index', fontsize=20)
+    plt.ylim([-0.1, 1.1])
+    plt.grid(True, which='both')
+    plt.legend(loc='upper left', prop={'size': 15})
     plt.show()
