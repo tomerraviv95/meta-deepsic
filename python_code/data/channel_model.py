@@ -9,19 +9,17 @@ import os
 
 class ChannelModel:
     @staticmethod
-    def calculate_channel(n_ant, n_user, iteration) -> np.ndarray:
+    def calculate_channel(n_ant, n_user, iteration, phase) -> np.ndarray:
         pass
 
     @staticmethod
     def calculate_channel_wrapper(channel_mode, n_ant, n_user, phase, iteration) -> np.ndarray:
         if channel_mode == 'SED':
-            H = SEDChannel.calculate_channel(n_ant, n_user, iteration)
+            H = SEDChannel.calculate_channel(n_ant, n_user, iteration, phase)
         elif channel_mode == 'Gaussian':
-            H = GaussianChannel.calculate_channel(n_ant, n_user, iteration)
-        elif channel_mode == 'COST' and phase == 'train':
-            H = SEDChannel.calculate_channel(n_ant, n_user, iteration)
-        elif channel_mode == 'COST' and phase == 'test':
-            H = COSTChannel.calculate_channel(n_ant, n_user, iteration)
+            H = GaussianChannel.calculate_channel(n_ant, n_user, iteration, phase)
+        elif channel_mode == 'COST':
+            H = COSTChannel.calculate_channel(n_ant, n_user, iteration, phase)
         else:
             raise NotImplementedError
         return H
@@ -52,7 +50,7 @@ class ChannelModel:
 
 class SEDChannel(ChannelModel):
     @staticmethod
-    def calculate_channel(n_ant, n_user, iteration) -> np.ndarray:
+    def calculate_channel(n_ant, n_user, iteration, phase) -> np.ndarray:
         H_row = np.array([i for i in range(n_ant)])
         H_row = np.tile(H_row, [n_user, 1]).T
         H_column = np.array([i for i in range(n_user)])
@@ -63,22 +61,22 @@ class SEDChannel(ChannelModel):
 
 class GaussianChannel(ChannelModel):
     @staticmethod
-    def calculate_channel(n_ant, n_user, iteration) -> np.ndarray:
+    def calculate_channel(n_ant, n_user, iteration, phase) -> np.ndarray:
         return np.random.randn(n_ant, n_user)
 
 
 class COSTChannel(ChannelModel):
     @staticmethod
-    def calculate_channel(n_ant, n_user, iteration) -> np.ndarray:
+    def calculate_channel(n_ant, n_user, iteration, phase) -> np.ndarray:
         total_h = np.empty([0, n_ant])
         for i in range(1, n_user + 1):
-            path_to_mat = os.path.join(RESOURCES_DIR, f'h_omni_{i}.mat')
+            path_to_mat = os.path.join(RESOURCES_DIR, phase, f'h_omni_{i}.mat')
             h_user = scipy.io.loadmat(path_to_mat)['h_channel_response_mag'].T
             norm_h_user = (h_user - h_user.min()) / (h_user.max() - h_user.min())
             sampled_h_user = norm_h_user[np.linspace(0, norm_h_user.shape[0] - 1, n_ant, dtype=int), iteration]
             reshaped_sampled_h = sampled_h_user.reshape(-1, n_ant)
-            reshaped_sampled_h[0, :] *= 0.5
-            reshaped_sampled_h[0, i - 1] = 1
+            # reshaped_sampled_h[0, :] *= 0.5
+            # reshaped_sampled_h[0, i - 1] = 1
             total_h = np.concatenate([total_h, reshaped_sampled_h], axis=0)
 
         H_row = np.array([i for i in range(n_ant)])
@@ -86,6 +84,7 @@ class COSTChannel(ChannelModel):
         H_column = np.array([i for i in range(n_user)])
         H_column = np.tile(H_column, [n_ant, 1])
         H = np.exp(-np.abs(H_row - H_column) / (iteration + 1))
+        H = 1
 
         return total_h * H
 
@@ -94,12 +93,12 @@ if __name__ == "__main__":
     channel_model = ChannelModel()
     conf = Config()
     total_h = np.empty([conf.n_ant, conf.n_user, 0])
-    for iteration in range(conf.test_frame_num):
+    for iteration in range(conf.train_frame_num):
         h = channel_model.get_channel(conf.channel_mode, conf.n_ant, conf.n_user,
-                                      conf.csi_noise, 'test', conf.fading, iteration)
+                                      conf.csi_noise, 'train', conf.fading, iteration)
         total_h = np.concatenate([total_h, np.expand_dims(h, axis=2)], axis=2)
 
-    i = 0
+    i = 6
     for j in range(conf.n_user):
         plt.plot(total_h[i, j], label=f'{j}')
     plt.ylabel(r'magnitude', fontsize=20)
