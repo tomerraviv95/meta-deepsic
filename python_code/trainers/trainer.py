@@ -1,14 +1,18 @@
-import copy
-from typing import List
 from python_code.ecc.wrappers import decoder, encoder
 from python_code.utils.metrics import calculate_error_rates
 from python_code.utils.utils import symbol_to_prob, prob_to_symbol
 from python_code.data.data_generator import DataGenerator
 from python_code.utils.config_singleton import Config
+from typing import List
+import numpy as np
 import torch
+import copy
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 conf = Config()
+
+torch.manual_seed(0)
+np.random.seed(0)
 
 HALF = 0.5
 META_TRAIN_FRAMES = 5

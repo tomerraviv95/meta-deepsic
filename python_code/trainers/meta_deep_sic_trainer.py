@@ -9,7 +9,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 conf = Config()
 
 MAML_FLAG = True
-META_LR = 0.1
+META_LR = 0.01
 HALF = 0.5
 
 
