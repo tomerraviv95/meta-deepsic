@@ -11,6 +11,7 @@ conf = Config()
 MAML_FLAG = True
 META_LR = 0.01
 HALF = 0.5
+META_SAMPLES = 1024
 
 
 class MetaDeepSICTrainer(Trainer):
@@ -42,10 +43,15 @@ class MetaDeepSICTrainer(Trainer):
         crt = torch.nn.CrossEntropyLoss()
         net = net.to(device)
         meta_detector = MetaDeepSICDetector()
+        support_idx = torch.arange(b_train.shape[0] - conf.train_frame_size)
+        query_idx = torch.arange(conf.train_frame_size, b_train.shape[0])
+
         for _ in range(max_epochs):
             opt.zero_grad()
-            cur_support_idx = torch.arange(b_train.shape[0] - 1)
-            cur_query_idx = torch.arange(1, b_train.shape[0])
+
+            # choose only META_SAMPLES samples from the entire support, query to use for current epoch
+            cur_idx = torch.randperm(len(support_idx))[:META_SAMPLES]
+            cur_support_idx, cur_query_idx = support_idx[cur_idx], query_idx[cur_idx]
 
             # divide the words to following pairs - (support,query)
             support_b, support_y = b_train[cur_support_idx], y_train[cur_support_idx]

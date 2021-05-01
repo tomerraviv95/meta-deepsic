@@ -71,8 +71,8 @@ class COSTChannel(ChannelModel):
     @staticmethod
     def calculate_channel(n_ant, n_user, frame_num, iteration, phase) -> np.ndarray:
         total_h = np.empty([n_user, n_ant])
-        # current_channel = np.math.floor((iteration * COST_CHANNELS) / frame_num)
-        current_channel = 0
+        current_channel = np.math.floor((iteration * COST_CHANNELS) / frame_num)
+        current_channel = 1
         if phase == 'train':
             phase_shift = 0
         else:

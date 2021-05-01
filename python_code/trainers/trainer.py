@@ -127,14 +127,15 @@ class Trainer:
             # save the encoded word in the buffer
             if ber <= conf.ber_thresh:
                 to_buffer_word = detected_word if ber > 0 else encoded_word
-                buffer_b = torch.cat([buffer_b[-conf.test_frame_num:], to_buffer_word], dim=0)
-                buffer_y = torch.cat([buffer_y[-conf.test_frame_num:], current_y])
+                buffer_b = torch.cat([buffer_b[conf.test_frame_size + 8 * conf.n_ecc_symbols:], to_buffer_word], dim=0)
+                buffer_y = torch.cat([buffer_y[conf.test_frame_size + 8 * conf.n_ecc_symbols:], current_y], dim=0)
 
             # meta-learning main function
             if self.online_meta and (frame + 1) % META_TRAIN_FRAMES == 0:
                 print('Meta')
                 # initialize from trained weights
-                self.train_loop(buffer_b, buffer_y, self.saved_nets_list, conf.max_epochs)
+                # self.train_loop(buffer_b, buffer_y, self.saved_nets_list, conf.max_epochs)
+                self.train_loop(buffer_b, buffer_y, self.saved_nets_list, conf.self_supervised_epochs)
                 trained_nets_list = [copy.deepcopy(net) for net in self.saved_nets_list]
 
             # use last word inserted in the buffer for training
