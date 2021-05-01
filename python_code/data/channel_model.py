@@ -76,7 +76,7 @@ class COSTChannel(ChannelModel):
         if phase == 'train':
             phase_shift = 0
         else:
-            phase_shift = 30
+            phase_shift = 0
         for i in range(1, n_user // 2 + 1):
             path_to_mat = os.path.join(RESOURCES_DIR, phase,
                                        f'h_link_{(COST_CHANNELS - 1) * current_channel + i}.mat')

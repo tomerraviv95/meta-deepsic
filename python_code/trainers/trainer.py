@@ -97,8 +97,8 @@ class Trainer:
         self.saved_nets_list = [copy.deepcopy(net) for net in trained_nets_list]
 
         # query for all detected words
-        buffer_b = torch.empty([0, b_test.shape[1]]).to(device)
-        buffer_y = torch.empty([0, y_test.shape[1]]).to(device)
+        # buffer_b, buffer_y = torch.empty([0, b_test.shape[1]]).to(device), torch.empty([0, y_test.shape[1]]).to(device)
+        buffer_b, buffer_y = self.train_dg(snr=snr)
 
         ber_list = []
         for frame in range(conf.test_frame_num - 1):
@@ -127,8 +127,8 @@ class Trainer:
             # save the encoded word in the buffer
             if ber <= conf.ber_thresh:
                 to_buffer_word = detected_word if ber > 0 else encoded_word
-                buffer_b = torch.cat([buffer_b, to_buffer_word], dim=0)
-                buffer_y = torch.cat([buffer_y, current_y])
+                buffer_b = torch.cat([buffer_b[-conf.test_frame_num:], to_buffer_word], dim=0)
+                buffer_y = torch.cat([buffer_y[-conf.test_frame_num:], current_y])
 
             # meta-learning main function
             if self.online_meta and (frame + 1) % META_TRAIN_FRAMES == 0:
