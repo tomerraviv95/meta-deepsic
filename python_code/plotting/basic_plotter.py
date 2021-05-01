@@ -59,11 +59,8 @@ class Plotter:
     def main(self, current_run_params):
         # get trainer
         trainer = current_run_params[0]
-        # set all parameters based on dict
-        for k, v in current_run_params[1].items():
-            conf.set_value(k, v)
         # name of detector
-        name = current_run_params[2]
+        name = current_run_params[1]
         all_bers = self.get_ber_plot(trainer, run_over=self.run_over, method_name=name)
         self.plot_ser(range(conf.test_frame_num - 1), all_bers[0], name)
         plt.savefig(os.path.join(FIGURES_DIR, self.folder_name, 'SER.png'), bbox_inches='tight')

@@ -8,6 +8,9 @@ import os
 
 COST_CHANNELS = 5
 MAX_FRAMES = 50
+MIN_COST_VAL = -0.0011940332244104606
+MAX_COST_VAL = 0.0016165160263559176
+
 
 class ChannelModel:
     @staticmethod
@@ -71,16 +74,15 @@ class COSTChannel(ChannelModel):
     @staticmethod
     def calculate_channel(n_ant, n_user, frame_num, iteration, phase) -> np.ndarray:
         total_h = np.empty([n_user, n_ant])
-        current_channel = np.math.floor((iteration * COST_CHANNELS) / frame_num)
-        current_channel = 1
         if phase == 'train':
             phase_shift = 0
         else:
-            phase_shift = 0
+            phase_shift = frame_num
+
         for i in range(1, n_user // 2 + 1):
             path_to_mat = os.path.join(RESOURCES_DIR, phase,
-                                       f'h_link_{(COST_CHANNELS - 1) * current_channel + i}.mat')
-            h_user = scipy.io.loadmat(path_to_mat)['h1'][(iteration + phase_shift) % MAX_FRAMES]
+                                       f'h_link_{i}.mat')
+            h_user = scipy.io.loadmat(path_to_mat)['h1'][iteration + phase_shift]
             h_users1 = np.concatenate([np.real(h_user), np.imag(h_user)], axis=1)
             h_users2 = np.concatenate([-np.imag(h_user), np.real(h_user)], axis=1)
             h_users = np.concatenate([h_users1, h_users2], axis=0)
@@ -89,7 +91,7 @@ class COSTChannel(ChannelModel):
             total_h[row_ind * n_ant // 2:(row_ind + 1) * n_ant // 2,
             column_ind * n_ant // 2:(column_ind + 1) * n_ant // 2] = h_users
 
-        total_h = (total_h - total_h.min()) / (total_h.max() - total_h.min())
+        total_h = (total_h - MIN_COST_VAL) / (MAX_COST_VAL - MIN_COST_VAL)
         return total_h
 
 

@@ -13,14 +13,14 @@ mpl.rcParams['legend.fontsize'] = 20
 mpl.rcParams['mathtext.fontset'] = 'stix'
 mpl.rcParams['font.family'] = 'STIXGeneral'
 
-COLORS_DICT = {'DeepSIC': 'blue',
+COLORS_DICT = {'Joint DeepSIC': 'blue',
                'Online DeepSIC': 'black',
                'Meta-DeepSIC': 'green'}
 
-MARKERS_DICT = {'DeepSIC': 'x',
+MARKERS_DICT = {'Joint DeepSIC': 'x',
                 'Online DeepSIC': 'o',
                 'Meta-DeepSIC': '+'}
 
-LINESTYLES_DICT = {'DeepSIC': 'dotted',
+LINESTYLES_DICT = {'Joint DeepSIC': 'dotted',
                    'Online DeepSIC': 'dotted',
                    'Meta-DeepSIC': 'dotted'}

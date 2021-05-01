@@ -22,6 +22,7 @@ class MetaDeepSICTrainer(Trainer):
     def __init__(self):
         super().__init__()
         self.online_meta = True
+        self.self_supervised = True
 
     def __str__(self):
         return 'Meta-DeepSIC'
@@ -84,21 +85,16 @@ class MetaDeepSICTrainer(Trainer):
         trained_nets_list = [copy.deepcopy(net) for net in self.saved_nets_list]
         initial_probs = b_train.clone()
         b_train_all, y_train_all = self.prepare_data_for_training(b_train, y_train, initial_probs)
-
         # Training the DeepSIC network for each user for iteration=1
         self.online_train_models(trained_nets_list, 0, b_train_all, y_train_all, max_epochs)
-
         # Initializing the probabilities
         probs_vec = HALF * torch.ones(b_train.shape).to(device)
-
         # Training the DeepSICNet for each user-symbol/iteration
         for i in range(1, conf.iterations):
             # Generating soft symbols for training purposes
             probs_vec = self.calculate_posteriors(trained_nets_list, i, probs_vec, y_train)
-
             # Obtaining the DeepSIC networks for each user-symbol and the i-th iteration
             b_train_all, y_train_all = self.prepare_data_for_training(b_train, y_train, probs_vec)
-
             # Training the DeepSIC networks for the iteration>1
             self.online_train_models(trained_nets_list, i, b_train_all, y_train_all, max_epochs)
 

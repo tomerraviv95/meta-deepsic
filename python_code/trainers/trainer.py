@@ -30,6 +30,7 @@ class Trainer:
         self.test_dg = DataGenerator(conf.test_frame_size, phase='test', frame_num=conf.test_frame_num)
         self.softmax = torch.nn.Softmax(dim=1)  # Single symbol probability inference
         self.online_meta = False
+        self.self_supervised = False
 
     def __str__(self):
         return 'trainer'
@@ -134,12 +135,11 @@ class Trainer:
             if self.online_meta and (frame + 1) % META_TRAIN_FRAMES == 0:
                 print('Meta')
                 # initialize from trained weights
-                # self.train_loop(buffer_b, buffer_y, self.saved_nets_list, conf.max_epochs)
                 self.train_loop(buffer_b, buffer_y, self.saved_nets_list, conf.self_supervised_epochs)
                 trained_nets_list = [copy.deepcopy(net) for net in self.saved_nets_list]
 
             # use last word inserted in the buffer for training
-            if conf.self_supervised and ber <= conf.ber_thresh:
+            if self.self_supervised and ber <= conf.ber_thresh:
                 # use last word inserted in the buffer for training
                 self.online_train_loop(to_buffer_word, current_y, trained_nets_list, conf.self_supervised_epochs)
 

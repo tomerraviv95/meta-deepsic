@@ -7,13 +7,14 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 conf = Config()
 
 
-class DeepSICTrainer(Trainer):
+class JointDeepSICTrainer(Trainer):
     """
     Trainer for the DeepSIC model.
     """
 
     def __init__(self):
         super().__init__()
+        self.self_supervised = False
 
     def __str__(self):
         return 'DeepSIC'
@@ -53,5 +54,5 @@ class DeepSICTrainer(Trainer):
 
 
 if __name__ == "__main__":
-    deep_sic_trainer = DeepSICTrainer()
+    deep_sic_trainer = JointDeepSICTrainer()
     deep_sic_trainer.train()
