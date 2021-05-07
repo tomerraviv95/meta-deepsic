@@ -5,6 +5,8 @@ from python_code.ecc.rs_decoder import rs_calc_syndromes, rs_find_error_locator,
 from python_code.ecc.rs_encoder import rs_encode_msg
 import numpy as np
 
+ECC_BITS_PER_SYMBOL = 8
+
 
 def encode(binary_word: np.ndarray, nsym: int):
     """
@@ -41,7 +43,7 @@ if __name__ == "__main__":
     ## simple testing
     block_length = 480
     n_errors = 4
-    nsym = 8
+    nsym = ECC_BITS_PER_SYMBOL
     words = np.random.randint(0, 2, [block_length])
     tx = encode(words, nsym)
     errors = np.zeros(block_length + nsym * 8).astype(int)

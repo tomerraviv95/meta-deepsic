@@ -1,3 +1,4 @@
+from python_code.ecc.rs_main import ECC_BITS_PER_SYMBOL
 from python_code.ecc.wrappers import decoder, encoder
 from python_code.utils.metrics import calculate_error_rates
 from python_code.utils.utils import symbol_to_prob, prob_to_symbol
@@ -26,8 +27,9 @@ class Trainer:
     """
 
     def __init__(self):
-        self.train_dg = DataGenerator(conf.train_frame_size, phase='train', frame_num=conf.train_frame_num)
-        self.test_dg = DataGenerator(conf.test_frame_size, phase='test', frame_num=conf.test_frame_num)
+        self.total_frame_size = conf.info_frame_size + ECC_BITS_PER_SYMBOL * conf.n_ecc_symbols
+        self.train_dg = DataGenerator(self.total_frame_size, phase='train', frame_num=conf.train_frame_num)
+        self.test_dg = DataGenerator(conf.info_frame_size, phase='test', frame_num=conf.test_frame_num)
         self.softmax = torch.nn.Softmax(dim=1)  # Single symbol probability inference
         self.online_meta = False
         self.self_supervised = False
@@ -128,8 +130,8 @@ class Trainer:
             # save the encoded word in the buffer
             if ber <= conf.ber_thresh:
                 to_buffer_word = detected_word if ber > 0 else encoded_word
-                buffer_b = torch.cat([buffer_b[conf.test_frame_size + 8 * conf.n_ecc_symbols:], to_buffer_word], dim=0)
-                buffer_y = torch.cat([buffer_y[conf.test_frame_size + 8 * conf.n_ecc_symbols:], current_y], dim=0)
+                buffer_b = torch.cat([buffer_b[self.total_frame_size:], to_buffer_word], dim=0)
+                buffer_y = torch.cat([buffer_y[self.total_frame_size:], current_y], dim=0)
 
             # meta-learning main function
             if self.online_meta and (frame + 1) % META_TRAIN_FRAMES == 0:
@@ -202,14 +204,13 @@ class Trainer:
     def train(self):
         all_bers = []  # Contains the ber
         print(f'training')
-        for snr in conf.snr_list:  # Traversing the SNRs
-            print(f'snr {snr}')
-            b_train, y_train = self.train_dg(snr=snr)  # Generating data for the given snr
-            trained_nets_list = [[self.initialize_detector() for _ in range(conf.iterations)]
-                                 for _ in range(conf.n_user)]  # 2D list for Storing the DeepSIC Networks
-            self.train_loop(b_train, y_train, trained_nets_list, conf.max_epochs)
-            ber = self.evaluate(snr, trained_nets_list)
-            all_bers.append(ber)
-            print(f'\nber :{sum(ber) / len(ber)} @ snr: {snr} [dB]')
+        print(f'snr {conf.snr}')
+        b_train, y_train = self.train_dg(snr=conf.snr)  # Generating data for the given snr
+        trained_nets_list = [[self.initialize_detector() for _ in range(conf.iterations)]
+                             for _ in range(conf.n_user)]  # 2D list for Storing the DeepSIC Networks
+        self.train_loop(b_train, y_train, trained_nets_list, conf.max_epochs)
+        ber = self.evaluate(conf.snr, trained_nets_list)
+        all_bers.append(ber)
+        print(f'\nber :{sum(ber) / len(ber)} @ snr: {conf.snr} [dB]')
         print(f'Training and Testing Completed\nBERs: {all_bers}')
         return all_bers

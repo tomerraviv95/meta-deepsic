@@ -25,12 +25,16 @@ class Plotter:
         if not os.path.isdir(os.path.join(FIGURES_DIR, self.folder_name)):
             os.makedirs(os.path.join(FIGURES_DIR, self.folder_name))
 
-    def get_ber_plot(self, dec: Trainer, run_over: bool, method_name: str):
+    def get_ber_plot(self, trainer: Trainer, run_over: bool, method_name: str):
         print(method_name)
         # set the path to saved plot results for a single method (so we do not need to run anew each time)
         if not os.path.exists(PLOTS_DIR):
             os.makedirs(PLOTS_DIR)
-        file_name = '_'.join([method_name,conf.train_frame_size,conf.SNR_start,conf.n_ecc_symbols])
+        file_name = '_'.join([method_name,
+                              conf.channel_mode,
+                              str(trainer.total_frame_size),
+                              str(conf.info_frame_size),
+                              str(conf.snr), 'dB'])
         plots_path = os.path.join(PLOTS_DIR, file_name + '.pkl')
         print(plots_path)
         # if plot already exists, and the run_over flag is false - load the saved plot
@@ -40,7 +44,7 @@ class Plotter:
         else:
             # otherwise - run again
             print("calculating fresh")
-            ser_total = dec.train()
+            ser_total = trainer.train()
             save_pkl(plots_path, ser_total)
         return ser_total
 
@@ -64,7 +68,8 @@ class Plotter:
         name = current_run_params[1]
         all_bers = self.get_ber_plot(trainer, run_over=self.run_over, method_name=name)
         self.plot_ser(range(conf.test_frame_num - 1), all_bers[0], name)
-        plt.savefig(os.path.join(FIGURES_DIR, self.folder_name, f'SER_{conf.train_frame_size}.png'), bbox_inches='tight')
+        plt.savefig(os.path.join(FIGURES_DIR, self.folder_name, f'SER_{trainer.total_frame_size}.png'),
+                    bbox_inches='tight')
 
 
 if __name__ == "__main__":

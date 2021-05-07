@@ -44,8 +44,8 @@ class MetaDeepSICTrainer(Trainer):
         crt = torch.nn.CrossEntropyLoss()
         net = net.to(device)
         meta_detector = MetaDeepSICDetector()
-        support_idx = torch.arange(b_train.shape[0] - conf.train_frame_size)
-        query_idx = torch.arange(conf.train_frame_size, b_train.shape[0])
+        support_idx = torch.arange(b_train.shape[0] - self.total_frame_size)
+        query_idx = torch.arange(self.total_frame_size, b_train.shape[0])
 
         for _ in range(max_epochs):
             opt.zero_grad()

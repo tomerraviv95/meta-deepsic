@@ -26,7 +26,5 @@ class Config:
         for k, v in self.config.items():
             setattr(self, k, v)
 
-        self.snr_list = np.arange(self.SNR_start, self.SNR_end + 1, step=self.SNR_step)
-
     def set_value(self, field, value):
         setattr(self, field, value)

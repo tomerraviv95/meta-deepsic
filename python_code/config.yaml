@@ -1,12 +1,9 @@
 run_name: 'test' # run directory
 n_ant: 8 # number of Rx Antennas
 n_user: 8 # number of Transmitted Symbols, users
-SNR_start: 22 # start SNR value
-SNR_step: 2 # increment of SNR values
-SNR_end: 22 # last SNR value
+snr: 22 # SNR value
 iterations: 5 # number of iterations in the unfolded network
-train_frame_size: 440 # number of subsequent transmissions
-test_frame_size: 400 # number of subsequent transmissions
+info_frame_size: 80 # number of subsequent transmissions
 train_frame_num: 50 # coherence-time block size
 test_frame_num: 50 # coherence-time block size
 fading: False # whether to use fading
