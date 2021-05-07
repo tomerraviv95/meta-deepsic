@@ -8,7 +8,7 @@ conf = Config()
 
 
 def encoder(b, phase):
-    if conf.use_ecc and phase == 'test':
+    if phase == 'test':
         encoding = lambda b: encode(b, conf.n_ecc_symbols)
     else:
         encoding = lambda b: b
@@ -17,10 +17,7 @@ def encoder(b, phase):
 
 
 def decoder(c_pred):
-    if conf.use_ecc:
-        decoding = lambda b: decode(b, conf.n_ecc_symbols)
-    else:
-        decoding = lambda b: b
+    decoding = lambda b: decode(b, conf.n_ecc_symbols)
     b_pred = np.zeros([conf.test_frame_size, conf.n_user])
     for j in range(conf.n_user):
         b_pred[:, j] = decoding(c_pred[:, j].cpu().numpy())

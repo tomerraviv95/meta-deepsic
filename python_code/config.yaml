@@ -1,15 +1,14 @@
 run_name: 'test' # run directory
 n_ant: 8 # number of Rx Antennas
 n_user: 8 # number of Transmitted Symbols, users
-SNR_start: 16 # start SNR value
+SNR_start: 22 # start SNR value
 SNR_step: 2 # increment of SNR values
-SNR_end: 16 # last SNR value
+SNR_end: 22 # last SNR value
 iterations: 5 # number of iterations in the unfolded network
-train_frame_size: 960 # number of subsequent transmissions
-test_frame_size: 800 # number of subsequent transmissions
+train_frame_size: 440 # number of subsequent transmissions
+test_frame_size: 400 # number of subsequent transmissions
 train_frame_num: 50 # coherence-time block size
 test_frame_num: 50 # coherence-time block size
-csi_noise: 0 # number of subsequent transmissions
 fading: False # whether to use fading
 channel_mode: 'COST' # the channel model: set 'SED' for the Spatial Exponential Decay Channel Model, i.e. exp(-|i-j|),
 # set 'Gaussian' for a Gaussian Channel, i.e. N(0,1).
@@ -18,6 +17,5 @@ eval_mode: 'by_word' # Type of evaluation. Per snr - 'aggregated', Per block - '
 lr: 0.01 # learning rate
 max_epochs: 350 # number of training epochs
 self_supervised_epochs: 50 # number of self-supervised epochs
-use_ecc: True # whether to encode with error correction codes
-n_ecc_symbols: 20 # number of symbols in ecc
+n_ecc_symbols: 5 # number of symbols in ecc
 ber_thresh: 0.03 # threshold for self-supervised training

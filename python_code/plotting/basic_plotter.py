@@ -30,7 +30,7 @@ class Plotter:
         # set the path to saved plot results for a single method (so we do not need to run anew each time)
         if not os.path.exists(PLOTS_DIR):
             os.makedirs(PLOTS_DIR)
-        file_name = '_'.join([method_name])
+        file_name = '_'.join([method_name,conf.train_frame_size,conf.SNR_start,conf.n_ecc_symbols])
         plots_path = os.path.join(PLOTS_DIR, file_name + '.pkl')
         print(plots_path)
         # if plot already exists, and the run_over flag is false - load the saved plot
@@ -54,6 +54,7 @@ class Plotter:
         plt.ylabel(r'BER', fontsize=20)
         plt.xlabel(r'block index', fontsize=20)
         plt.grid(True, which='both')
+        plt.yscale('log')
         plt.legend(loc='upper left', prop={'size': 15})
 
     def main(self, current_run_params):
@@ -63,11 +64,11 @@ class Plotter:
         name = current_run_params[1]
         all_bers = self.get_ber_plot(trainer, run_over=self.run_over, method_name=name)
         self.plot_ser(range(conf.test_frame_num - 1), all_bers[0], name)
-        plt.savefig(os.path.join(FIGURES_DIR, self.folder_name, 'SER.png'), bbox_inches='tight')
+        plt.savefig(os.path.join(FIGURES_DIR, self.folder_name, f'SER_{conf.train_frame_size}.png'), bbox_inches='tight')
 
 
 if __name__ == "__main__":
-    plotter = Plotter(run_over=True)
+    plotter = Plotter(run_over=False)
     plotter.main(current_run_params=get_deepsic())
     plotter.main(current_run_params=get_online_deepsic())
     plotter.main(current_run_params=get_meta_deepsic())

@@ -8,8 +8,11 @@ import os
 
 COST_CHANNELS = 5
 MAX_FRAMES = 50
-MIN_COST_VAL = -0.0011940332244104606
-MAX_COST_VAL = 0.0016165160263559176
+# MIN_COST_VAL = -0.0011940332244104606 # slow
+MIN_COST_VAL = -0.002187582111148217  # fast
+
+# MAX_COST_VAL = 0.0016165160263559176 # slow
+MAX_COST_VAL = 0.002073063725906618  # fast
 
 
 class ChannelModel:
@@ -30,17 +33,9 @@ class ChannelModel:
         return H
 
     @staticmethod
-    def get_channel(channel_mode, n_ant, n_user, csi_noise, phase, fading, frame_num, iteration):
+    def get_channel(channel_mode, n_ant, n_user, phase, fading, frame_num, iteration):
         H = ChannelModel.calculate_channel_wrapper(channel_mode, n_ant, n_user, phase, frame_num, iteration)
-        H = ChannelModel.noising_channel(H, csi_noise, phase)
         H = ChannelModel.add_fading(H, fading, phase, n_user, iteration)
-        return H
-
-    @staticmethod
-    def noising_channel(H, csi_noise, phase):
-        if phase == 'test' and csi_noise > 0:
-            curr_H_noise = (1. + np.sqrt(csi_noise)) * np.random.randn(H.shape)
-            H = np.dot(H, curr_H_noise)
         return H
 
     @staticmethod
@@ -102,13 +97,13 @@ if __name__ == "__main__":
     total_h_train = np.empty([conf.n_ant, conf.n_user, 0])
     for iteration in range(conf.train_frame_num):
         h = channel_model.get_channel(conf.channel_mode, conf.n_ant, conf.n_user,
-                                      conf.csi_noise, 'train', conf.fading, conf.train_frame_num, iteration)
+                                      'train', conf.fading, conf.train_frame_num, iteration)
         total_h_train = np.concatenate([total_h_train, np.expand_dims(h, axis=2)], axis=2)
 
     total_h_test = np.empty([conf.n_ant, conf.n_user, 0])
     for iteration in range(conf.test_frame_num):
         h = channel_model.get_channel(conf.channel_mode, conf.n_ant, conf.n_user,
-                                      conf.csi_noise, 'test', conf.fading, conf.test_frame_num, iteration)
+                                      'test', conf.fading, conf.test_frame_num, iteration)
         total_h_test = np.concatenate([total_h_test, np.expand_dims(h, axis=2)], axis=2)
 
     for i in range(conf.n_ant):
@@ -118,7 +113,7 @@ if __name__ == "__main__":
             plt.plot(total_h_train[i, j], label=f'{j}')
         plt.ylabel(r'magnitude', fontsize=20)
         plt.xlabel(r'block index', fontsize=20)
-        plt.title('Train Channel')
+        # plt.title('Train Channel')
         plt.ylim([-0.1, 1.1])
         plt.grid(True, which='both')
         plt.legend(loc='upper left', prop={'size': 15})
@@ -129,7 +124,7 @@ if __name__ == "__main__":
             plt.plot(total_h_test[i, j], label=f'{j}')
         plt.ylabel(r'magnitude', fontsize=20)
         plt.xlabel(r'block index', fontsize=20)
-        plt.title('Test Channel')
+        # plt.title('Test Channel')
         plt.ylim([-0.1, 1.1])
         plt.grid(True, which='both')
         plt.legend(loc='upper left', prop={'size': 15})
