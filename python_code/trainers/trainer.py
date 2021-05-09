@@ -16,7 +16,7 @@ torch.manual_seed(0)
 np.random.seed(0)
 
 HALF = 0.5
-META_TRAIN_FRAMES = 5
+SUBFRAMES_IN_FRAME = 1
 
 
 class Trainer:
@@ -27,9 +27,9 @@ class Trainer:
     """
 
     def __init__(self):
-        self.total_frame_size = conf.info_frame_size + ECC_BITS_PER_SYMBOL * conf.n_ecc_symbols
+        self.total_frame_size = conf.test_info_size + ECC_BITS_PER_SYMBOL * conf.n_ecc_symbols if conf.use_ecc else conf.test_info_size
         self.train_dg = DataGenerator(self.total_frame_size, phase='train', frame_num=conf.train_frame_num)
-        self.test_dg = DataGenerator(conf.info_frame_size, phase='test', frame_num=conf.test_frame_num)
+        self.test_dg = DataGenerator(conf.test_info_size, phase='test', frame_num=conf.test_frame_num)
         self.softmax = torch.nn.Softmax(dim=1)  # Single symbol probability inference
         self.online_meta = False
         self.self_supervised = False
@@ -88,6 +88,13 @@ class Trainer:
     def online_train_loop(self, b_train, y_train, trained_nets_list, max_epochs):
         pass
 
+    def get_word(self, current_x, ber, detected_word, encoded_word):
+        if not conf.use_ecc:
+            return current_x
+        elif ber > 0:
+            return detected_word
+        return encoded_word
+
     def online_evaluate(self, trained_nets_list, snr) -> List[float]:
         b_test, y_test = self.test_dg(snr=snr)  # Generating data for the given SNR
         c_pred = torch.zeros_like(y_test)
@@ -109,32 +116,34 @@ class Trainer:
             c_start_ind = frame * c_frame_size
             c_end_ind = (frame + 1) * c_frame_size
             current_y = y_test[c_start_ind:c_end_ind]
+            b_start_ind = frame * b_frame_size
+            b_end_ind = (frame + 1) * b_frame_size
+            current_x = b_test[b_start_ind:b_end_ind]
 
             # detect and decode
             for i in range(conf.iterations):
                 probs_vec = self.calculate_posteriors(trained_nets_list, i + 1, probs_vec, current_y)
             detected_word = symbol_to_prob(prob_to_symbol(probs_vec.float()))
-            decoded_word = decoder(detected_word)
 
+            # decode
+            decoded_word = decoder(detected_word, 'test')
             # encode word again
             decoded_word_array = decoded_word.int().cpu().numpy()
             encoded_word = torch.Tensor(encoder(decoded_word_array, 'test')).to(device)
 
             # calculate error rate
-            b_start_ind = frame * b_frame_size
-            b_end_ind = (frame + 1) * b_frame_size
-            ber = calculate_error_rates(decoded_word, b_test[b_start_ind:b_end_ind])[0]
+            ber = calculate_error_rates(decoded_word, current_x)[0]
             ber_list.append(ber)
             print(frame, ber)
 
             # save the encoded word in the buffer
             if ber <= conf.ber_thresh:
-                to_buffer_word = detected_word if ber > 0 else encoded_word
+                to_buffer_word = self.get_word(current_x, ber, detected_word, encoded_word)
                 buffer_b = torch.cat([buffer_b[self.total_frame_size:], to_buffer_word], dim=0)
                 buffer_y = torch.cat([buffer_y[self.total_frame_size:], current_y], dim=0)
 
             # meta-learning main function
-            if self.online_meta and (frame + 1) % META_TRAIN_FRAMES == 0:
+            if self.online_meta and (frame + 1) % SUBFRAMES_IN_FRAME == 0:
                 print('Meta')
                 # initialize from trained weights
                 self.train_loop(buffer_b, buffer_y, self.saved_nets_list, conf.self_supervised_epochs)
@@ -170,9 +179,17 @@ class Trainer:
             probs_vec = self.calculate_posteriors(trained_nets_list, i + 1, probs_vec, y_test)
         c_pred = symbol_to_prob(prob_to_symbol(probs_vec.float()))
         print(f'Finished testing symbols')
-        b_pred = decoder(c_pred)
+        b_pred = torch.zeros_like(b_test)
+        c_frame_size = c_pred.shape[0] // conf.test_frame_num
+        b_frame_size = b_pred.shape[0] // conf.test_frame_num
+        for frame in range(conf.test_frame_num - 1):
+            c_start_ind = frame * c_frame_size
+            c_end_ind = (frame + 1) * c_frame_size
+            b_start_ind = frame * b_frame_size
+            b_end_ind = (frame + 1) * b_frame_size
+            b_pred[b_start_ind:b_end_ind] = decoder(c_pred[c_start_ind:c_end_ind], 'test')
         ber = calculate_error_rates(b_pred, b_test)[0]
-        return ber
+        return [ber]
 
     def evaluate(self, snr, trained_nets_list):
         print('evaluating')

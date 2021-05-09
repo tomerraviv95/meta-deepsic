@@ -25,7 +25,7 @@ class Plotter:
         if not os.path.isdir(os.path.join(FIGURES_DIR, self.folder_name)):
             os.makedirs(os.path.join(FIGURES_DIR, self.folder_name))
 
-    def get_ber_plot(self, trainer: Trainer, run_over: bool, method_name: str):
+    def get_ser_plot(self, trainer: Trainer, run_over: bool, method_name: str):
         print(method_name)
         # set the path to saved plot results for a single method (so we do not need to run anew each time)
         if not os.path.exists(PLOTS_DIR):
@@ -33,48 +33,79 @@ class Plotter:
         file_name = '_'.join([method_name,
                               conf.channel_mode,
                               str(trainer.total_frame_size),
-                              str(conf.info_frame_size),
+                              str(conf.test_info_size),
                               str(conf.snr), 'dB'])
         plots_path = os.path.join(PLOTS_DIR, file_name + '.pkl')
         print(plots_path)
         # if plot already exists, and the run_over flag is false - load the saved plot
         if os.path.isfile(plots_path) and not run_over:
             print("Loading plots")
-            ser_total = load_pkl(plots_path)
+            ser = load_pkl(plots_path)
         else:
             # otherwise - run again
             print("calculating fresh")
-            ser_total = trainer.train()
-            save_pkl(plots_path, ser_total)
-        return ser_total
+            ser = trainer.train()
+            save_pkl(plots_path, ser)
+        return ser
 
-    def plot_ser(self, blocks_ind, ser, method_name):
+    def plot_ser_versus_block(self, blocks_ind, ser, method_name):
         plt.plot(blocks_ind, np.cumsum(np.array(ser)) / len(ser),
                  label=method_name,
                  color=COLORS_DICT[method_name],
                  marker=MARKERS_DICT[method_name],
                  linestyle=LINESTYLES_DICT[method_name],
                  linewidth=2.2)
-        plt.ylabel(r'BER', fontsize=20)
+        plt.ylabel(r'Coded BER', fontsize=20)
         plt.xlabel(r'block index', fontsize=20)
         plt.grid(True, which='both')
         plt.yscale('log')
         plt.legend(loc='upper left', prop={'size': 15})
 
-    def main(self, current_run_params):
+    def plot_ser_versus_blocks_num(self, blocks_ind, ser, method_name):
+        plt.plot(blocks_ind, ser,
+                 label=method_name,
+                 color=COLORS_DICT[method_name],
+                 marker=MARKERS_DICT[method_name],
+                 linestyle=LINESTYLES_DICT[method_name],
+                 linewidth=2.2)
+        plt.ylabel(r'Coded BER', fontsize=20)
+        plt.xlabel(r'Information Block Size', fontsize=20)
+        plt.grid(True, which='both')
+        plt.yscale('log')
+        plt.legend(loc='upper left', prop={'size': 15})
+
+    def ser_versus_block(self, current_run_params):
         # get trainer
         trainer = current_run_params[0]
         # name of detector
         name = current_run_params[1]
-        all_bers = self.get_ber_plot(trainer, run_over=self.run_over, method_name=name)
-        self.plot_ser(range(conf.test_frame_num - 1), all_bers[0], name)
+        ser = self.get_ser_plot(trainer, run_over=self.run_over, method_name=name)
+        self.plot_ser_versus_block(range(conf.test_frame_num - 1), ser[0], name)
         plt.savefig(os.path.join(FIGURES_DIR, self.folder_name, f'SER_{trainer.total_frame_size}.png'),
+                    bbox_inches='tight')
+
+    def ser_versus_blocks_num(self, current_run_params):
+        # get trainer
+        trainer = current_run_params[0]
+        # name of detector
+        name = current_run_params[1]
+        info_frame_sizes = [40, 80, 120, 160, 200, 240, 280]
+
+        total_sers = []
+        for test_info_size in info_frame_sizes:
+            conf.set_value('test_info_size', test_info_size)
+            trainer.__init__()
+            ser = self.get_ser_plot(trainer, run_over=self.run_over, method_name=name)
+            total_sers.append(sum(ser[0]) / len(ser[0]))
+
+        self.plot_ser_versus_blocks_num(info_frame_sizes, total_sers, name)
+        plt.savefig(os.path.join(FIGURES_DIR, self.folder_name, f'SER_versus_Blocks.png'),
                     bbox_inches='tight')
 
 
 if __name__ == "__main__":
     plotter = Plotter(run_over=False)
-    plotter.main(current_run_params=get_deepsic())
-    plotter.main(current_run_params=get_online_deepsic())
-    plotter.main(current_run_params=get_meta_deepsic())
+    plotter.ser_versus_blocks_num(current_run_params=get_deepsic())
+    plotter.ser_versus_blocks_num(current_run_params=get_online_deepsic())
+    plotter.ser_versus_blocks_num(current_run_params=get_meta_deepsic())
     plt.show()
