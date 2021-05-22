@@ -68,8 +68,8 @@ class Plotter:
                  marker=MARKERS_DICT[method_name],
                  linestyle=LINESTYLES_DICT[method_name],
                  linewidth=2.2)
-        plt.ylabel(r'Coded BER', fontsize=20)
-        plt.xlabel(r'Information Block Size', fontsize=20)
+        plt.ylabel(r'SER', fontsize=20)
+        plt.xlabel(r'Data Block Size', fontsize=20)
         plt.grid(True, which='both')
         plt.yscale('log')
         plt.legend(loc='upper left', prop={'size': 15})
@@ -81,7 +81,7 @@ class Plotter:
         name = current_run_params[1]
         ser = self.get_ser_plot(trainer, run_over=self.run_over, method_name=name)
         self.plot_ser_versus_block(range(conf.test_frame_num - 1), ser[0], name)
-        plt.savefig(os.path.join(FIGURES_DIR, self.folder_name, f'SER_{trainer.total_frame_size}.png'),
+        plt.savefig(os.path.join(FIGURES_DIR, self.folder_name, f'SER_versus_block_{trainer.total_frame_size}.png'),
                     bbox_inches='tight')
 
     def ser_versus_blocks_num(self, current_run_params):
@@ -89,17 +89,19 @@ class Plotter:
         trainer = current_run_params[0]
         # name of detector
         name = current_run_params[1]
-        info_frame_sizes = [40, 80, 120, 160, 200, 240, 280]
-
+        test_pilot_sizes = [20, 40, 60, 80, 100, 140, 180, 220, 250]
+        data_frame_size = 300
         total_sers = []
-        for test_info_size in info_frame_sizes:
+        for test_pilot_size in test_pilot_sizes:
+            conf.set_value('test_pilot_size', test_pilot_size)
+            test_info_size = test_pilot_size + data_frame_size
             conf.set_value('test_info_size', test_info_size)
             trainer.__init__()
             ser = self.get_ser_plot(trainer, run_over=self.run_over, method_name=name)
             total_sers.append(sum(ser[0]) / len(ser[0]))
 
-        self.plot_ser_versus_blocks_num(info_frame_sizes, total_sers, name)
-        plt.savefig(os.path.join(FIGURES_DIR, self.folder_name, f'SER_versus_Blocks.png'),
+        self.plot_ser_versus_blocks_num(test_pilot_sizes, total_sers, name)
+        plt.savefig(os.path.join(FIGURES_DIR, self.folder_name, f'SER_versus_pilot_size_{data_frame_size}_data.png'),
                     bbox_inches='tight')
 
 

@@ -15,6 +15,7 @@ class OnlineDeepSICTrainer(Trainer):
     def __init__(self):
         super().__init__()
         self.self_supervised = True
+        self.from_scratch = True
 
     def __str__(self):
         return 'DeepSIC'
@@ -50,6 +51,9 @@ class OnlineDeepSICTrainer(Trainer):
             opt.step()
 
     def online_train_loop(self, b_train, y_train, trained_nets_list, max_epochs):
+        # start from scratch
+        if self.from_scratch:
+            self.initialize_detector()
         self.train_loop(b_train, y_train, trained_nets_list, max_epochs)
 
 

@@ -16,7 +16,7 @@ torch.manual_seed(0)
 np.random.seed(0)
 
 HALF = 0.5
-SUBFRAMES_IN_FRAME = 1
+SUBFRAMES_IN_FRAME = 5
 
 
 class Trainer:
@@ -27,7 +27,8 @@ class Trainer:
     """
 
     def __init__(self):
-        self.total_frame_size = conf.test_info_size + ECC_BITS_PER_SYMBOL * conf.n_ecc_symbols if conf.use_ecc else conf.test_info_size
+        self.total_frame_size = conf.test_pilot_size + ECC_BITS_PER_SYMBOL * conf.n_ecc_symbols if \
+            conf.use_ecc else conf.test_pilot_size
         self.train_dg = DataGenerator(self.total_frame_size, phase='train', frame_num=conf.train_frame_num)
         self.test_dg = DataGenerator(conf.test_info_size, phase='test', frame_num=conf.test_frame_num)
         self.softmax = torch.nn.Softmax(dim=1)  # Single symbol probability inference
@@ -96,6 +97,60 @@ class Trainer:
         return encoded_word
 
     def online_evaluate(self, trained_nets_list, snr) -> List[float]:
+        b_test, y_test = self.test_dg(snr=snr)  # Generating data for the given SNR
+        c_pred = torch.zeros_like(y_test)
+        b_pred = torch.zeros_like(b_test)
+        c_frame_size = c_pred.shape[0] // conf.test_frame_num
+        b_frame_size = b_pred.shape[0] // conf.test_frame_num
+        probs_vec = HALF * torch.ones(c_frame_size - conf.test_pilot_size, y_test.shape[1]).to(device)
+
+        # saved detector is used to initialize the decoder in meta learning loops
+        self.saved_nets_list = [copy.deepcopy(net) for net in trained_nets_list]
+
+        # query for all detected words
+        buffer_b, buffer_y = torch.empty([0, b_test.shape[1]]).to(device), torch.empty([0, y_test.shape[1]]).to(device)
+
+        ber_list = []
+        for frame in range(conf.test_frame_num - 1):
+            # current word
+            c_start_ind = frame * c_frame_size
+            c_end_ind = (frame + 1) * c_frame_size
+            current_y = y_test[c_start_ind:c_end_ind]
+            b_start_ind = frame * b_frame_size
+            b_end_ind = (frame + 1) * b_frame_size
+            current_x = b_test[b_start_ind:b_end_ind]
+            x_pilot, x_data = current_x[:conf.test_pilot_size], current_x[conf.test_pilot_size:]
+            y_pilot, y_data = current_y[:conf.test_pilot_size], current_y[conf.test_pilot_size:]
+            # save the encoded word in the buffer
+            buffer_b = torch.cat([buffer_b, x_pilot], dim=0)
+            buffer_y = torch.cat([buffer_y, y_pilot], dim=0)
+
+            # meta-learning main function
+            if self.online_meta and (frame + 1) % SUBFRAMES_IN_FRAME == 0:
+                print('Meta')
+                # initialize from trained weights
+                self.train_loop(buffer_b, buffer_y, self.saved_nets_list, conf.self_supervised_epochs)
+                trained_nets_list = [copy.deepcopy(net) for net in self.saved_nets_list]
+
+            # use last word inserted in the buffer for training
+            if self.self_supervised:
+                # use last word inserted in the buffer for training
+                self.online_train_loop(x_pilot, y_pilot, trained_nets_list,
+                                       conf.self_supervised_epochs)
+
+            # detect and decode
+            for i in range(conf.iterations):
+                probs_vec = self.calculate_posteriors(trained_nets_list, i + 1, probs_vec, y_data)
+            detected_word = symbol_to_prob(prob_to_symbol(probs_vec.float()))
+
+            # calculate error rate
+            ber = calculate_error_rates(detected_word, x_data)[0]
+            ber_list.append(ber)
+            print(frame, ber)
+
+        return ber_list
+
+    def online_evaluate2(self, trained_nets_list, snr) -> List[float]:
         b_test, y_test = self.test_dg(snr=snr)  # Generating data for the given SNR
         c_pred = torch.zeros_like(y_test)
         b_pred = torch.zeros_like(b_test)
