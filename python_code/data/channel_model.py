@@ -14,6 +14,7 @@ MIN_COST_VAL = -0.002187582111148217  # fast
 # MAX_COST_VAL = 0.0016165160263559176 # slow
 MAX_COST_VAL = 0.002073063725906618  # fast
 
+conf = Config()
 
 class ChannelModel:
     @staticmethod
@@ -43,6 +44,9 @@ class ChannelModel:
         if phase == 'test' and fading:
             degs_array = np.array([51, 39, 33, 21])
             fade_mat = (0.8 + 0.2 * np.cos(2 * np.pi * iteration / degs_array))
+            if conf.change_user_only:
+                remaining_indices = list(set(list(range(n_user))) - set([conf.change_user_only]))
+                fade_mat[remaining_indices] = 1
             fade_mat = np.tile(fade_mat.reshape(1, -1), [n_user, 1]).T
             H = H * fade_mat
         return H
@@ -92,7 +96,6 @@ class COSTChannel(ChannelModel):
 
 if __name__ == "__main__":
     channel_model = ChannelModel()
-    conf = Config()
 
     total_h_train = np.empty([conf.n_ant, conf.n_user, 0])
     for iteration in range(conf.train_frame_num):

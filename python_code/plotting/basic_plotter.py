@@ -25,7 +25,7 @@ class Plotter:
         if not os.path.isdir(os.path.join(FIGURES_DIR, self.folder_name)):
             os.makedirs(os.path.join(FIGURES_DIR, self.folder_name))
 
-    def get_ser_plot(self, trainer: Trainer, run_over: bool, method_name: str):
+    def get_ser_plot(self, trainer: Trainer, run_over: bool, method_name: str, trial: int = None):
         print(method_name)
         # set the path to saved plot results for a single method (so we do not need to run anew each time)
         if not os.path.exists(PLOTS_DIR):
@@ -35,6 +35,8 @@ class Plotter:
                               str(trainer.total_frame_size),
                               str(conf.test_info_size),
                               str(conf.snr), 'dB'])
+        if trial is not None:
+            file_name = file_name + '_' + str(trial)
         plots_path = os.path.join(PLOTS_DIR, file_name + '.pkl')
         print(plots_path)
         # if plot already exists, and the run_over flag is false - load the saved plot
@@ -69,7 +71,7 @@ class Plotter:
                  linestyle=LINESTYLES_DICT[method_name],
                  linewidth=2.2)
         plt.ylabel(r'SER', fontsize=20)
-        plt.xlabel(r'Data Block Size', fontsize=20)
+        plt.xlabel(r'Pilot Block Size', fontsize=20)
         plt.grid(True, which='both')
         plt.yscale('log')
         plt.legend(loc='upper left', prop={'size': 15})
@@ -89,16 +91,20 @@ class Plotter:
         trainer = current_run_params[0]
         # name of detector
         name = current_run_params[1]
-        test_pilot_sizes = [20, 40, 60, 80, 100, 140, 180, 220, 250]
-        data_frame_size = 300
+        test_pilot_sizes = [20, 60, 100, 140, 180, 260, 350, 500]
+        data_frame_size = 5000
         total_sers = []
+        trial_num = 5
         for test_pilot_size in test_pilot_sizes:
             conf.set_value('test_pilot_size', test_pilot_size)
             test_info_size = test_pilot_size + data_frame_size
             conf.set_value('test_info_size', test_info_size)
-            trainer.__init__()
-            ser = self.get_ser_plot(trainer, run_over=self.run_over, method_name=name)
-            total_sers.append(sum(ser[0]) / len(ser[0]))
+            ser = 0
+            for trial in range(trial_num):
+                trainer.__init__()
+                ser_plot = self.get_ser_plot(trainer, run_over=self.run_over, method_name=name, trial=trial)
+                ser += sum(ser_plot[0]) / len(ser_plot[0])
+            total_sers.append(ser / trial_num)
 
         self.plot_ser_versus_blocks_num(test_pilot_sizes, total_sers, name)
         plt.savefig(os.path.join(FIGURES_DIR, self.folder_name, f'SER_versus_pilot_size_{data_frame_size}_data.png'),
@@ -106,7 +112,7 @@ class Plotter:
 
 
 if __name__ == "__main__":
-    plotter = Plotter(run_over=False)
+    plotter = Plotter(run_over=True)
     plotter.ser_versus_blocks_num(current_run_params=get_deepsic())
     plotter.ser_versus_blocks_num(current_run_params=get_online_deepsic())
     plotter.ser_versus_blocks_num(current_run_params=get_meta_deepsic())
