@@ -36,18 +36,18 @@ class ChannelModel:
     @staticmethod
     def get_channel(channel_mode, n_ant, n_user, phase, fading, frame_num, iteration):
         H = ChannelModel.calculate_channel_wrapper(channel_mode, n_ant, n_user, phase, frame_num, iteration)
-        H = ChannelModel.add_fading(H, fading, phase, n_user, iteration)
+        H = ChannelModel.add_fading(H, fading, phase, n_ant, iteration)
         return H
 
     @staticmethod
-    def add_fading(H, fading, phase, n_user, iteration):
+    def add_fading(H, fading, phase, n_ant, iteration):
         if phase == 'test' and fading:
             degs_array = np.array([51, 39, 33, 21])
             fade_mat = (0.8 + 0.2 * np.cos(2 * np.pi * iteration / degs_array))
             if conf.change_user_only:
-                remaining_indices = list(set(list(range(n_user))) - set([conf.change_user_only]))
+                remaining_indices = list(set(list(range(n_ant))) - set([conf.change_user_only]))
                 fade_mat[remaining_indices] = 1
-            fade_mat = np.tile(fade_mat.reshape(1, -1), [n_user, 1]).T
+            fade_mat = np.tile(fade_mat.reshape(1, -1), [n_ant, 1])
             H = H * fade_mat
         return H
 
@@ -132,3 +132,6 @@ if __name__ == "__main__":
         plt.grid(True, which='both')
         plt.legend(loc='upper left', prop={'size': 15})
         plt.show()
+
+        if i == 2:
+            break
