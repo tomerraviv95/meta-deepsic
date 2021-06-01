@@ -16,6 +16,6 @@ eval_mode: 'by_word' # Type of evaluation. Per snr - 'aggregated', Per block - '
 lr: 0.01 # learning rate
 max_epochs: 300 # number of training epochs
 self_supervised_epochs: 50 # number of self-supervised epochs
-use_ecc: False # whether to use ecc (corrupted data blocks) for training, or use the genie aided blocks
-n_ecc_symbols: 1 # number of symbols in ecc
-ber_thresh: 1 # threshold for self-supervised training
+use_ecc: True # whether to use ecc (corrupted data blocks) for training, or use the genie aided blocks
+n_ecc_symbols: 2 # number of symbols in ecc
+ber_thresh: 0.02 # threshold for self-supervised training
