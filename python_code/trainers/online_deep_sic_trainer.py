@@ -50,11 +50,11 @@ class OnlineDeepSICTrainer(Trainer):
             loss.backward()
             opt.step()
 
-    def online_train_loop(self, b_train, y_train, trained_nets_list, max_epochs):
+    def online_train_loop(self, b_train, y_train, trained_nets_list, max_epochs, phase):
         # start from scratch
         if self.from_scratch:
             self.initialize_detector()
-        self.train_loop(b_train, y_train, trained_nets_list, max_epochs)
+        self.train_loop(b_train, y_train, trained_nets_list, max_epochs, phase)
 
 
 if __name__ == "__main__":

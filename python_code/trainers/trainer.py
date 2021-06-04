@@ -27,8 +27,7 @@ class Trainer:
     """
 
     def __init__(self):
-        self.total_frame_size = conf.test_pilot_size + ECC_BITS_PER_SYMBOL * conf.n_ecc_symbols if \
-            conf.use_ecc else conf.test_pilot_size
+        self.total_frame_size = conf.test_info_size + ECC_BITS_PER_SYMBOL * conf.n_ecc_symbols
         self.train_dg = DataGenerator(self.total_frame_size, phase='train', frame_num=conf.train_frame_num)
         self.test_dg = DataGenerator(conf.test_info_size, phase='test', frame_num=conf.test_frame_num)
         self.softmax = torch.nn.Softmax(dim=1)  # Single symbol probability inference
@@ -82,11 +81,14 @@ class Trainer:
     def train_model(self, net, x_train, y_train, max_epochs):
         pass
 
-    def train_models(self, trained_nets_list, i, x_train_all, y_train_all, max_epochs):
+    def train_models(self, trained_nets_list, i, x_train_all, y_train_all, max_epochs, phase):
         for user in range(conf.n_user):
+            if phase == 'test' and conf.retrain_user is not None:
+                if not conf.retrain_user == user:
+                    continue
             self.train_model(trained_nets_list[user][i], x_train_all[user], y_train_all[user], max_epochs)
 
-    def online_train_loop(self, b_train, y_train, trained_nets_list, max_epochs):
+    def online_train_loop(self, b_train, y_train, trained_nets_list, max_epochs, phase):
         pass
 
     def get_word(self, current_x, ber, detected_word, encoded_word):
@@ -102,7 +104,10 @@ class Trainer:
         b_pred = torch.zeros_like(b_test)
         c_frame_size = c_pred.shape[0] // conf.test_frame_num
         b_frame_size = b_pred.shape[0] // conf.test_frame_num
-        probs_vec = HALF * torch.ones(c_frame_size - conf.test_pilot_size, y_test.shape[1]).to(device)
+        if conf.use_ecc:
+            probs_vec = HALF * torch.ones(c_frame_size, y_test.shape[1]).to(device)
+        else:
+            probs_vec = HALF * torch.ones(c_frame_size - conf.test_pilot_size, y_test.shape[1]).to(device)
 
         # saved detector is used to initialize the decoder in meta learning loops
         self.saved_nets_list = [copy.deepcopy(net) for net in trained_nets_list]
@@ -121,9 +126,11 @@ class Trainer:
             current_x = b_test[b_start_ind:b_end_ind]
 
             if conf.use_ecc:
-                self.ecc_eval(buffer_b, buffer_y, probs_vec, ber_list, current_y, current_x, trained_nets_list, frame)
+                buffer_b, buffer_y = self.ecc_eval(buffer_b, buffer_y, probs_vec, ber_list, current_y, current_x,
+                                                   trained_nets_list, frame)
             else:
-                self.pilot_eval(buffer_b, buffer_y, probs_vec, ber_list, current_y, current_x, trained_nets_list, frame)
+                buffer_b, buffer_y = self.pilot_eval(buffer_b, buffer_y, probs_vec, ber_list, current_y, current_x,
+                                                     trained_nets_list, frame)
 
         return ber_list
 
@@ -131,6 +138,7 @@ class Trainer:
 
         x_pilot, x_data = current_x[:conf.test_pilot_size], current_x[conf.test_pilot_size:]
         y_pilot, y_data = current_y[:conf.test_pilot_size], current_y[conf.test_pilot_size:]
+
         # save the encoded word in the buffer
         buffer_b = torch.cat([buffer_b, x_pilot], dim=0)
         buffer_y = torch.cat([buffer_y, y_pilot], dim=0)
@@ -139,14 +147,14 @@ class Trainer:
         if self.online_meta and (frame + 1) % SUBFRAMES_IN_FRAME == 0:
             print('Meta')
             # initialize from trained weights
-            self.train_loop(buffer_b, buffer_y, self.saved_nets_list, conf.self_supervised_epochs)
+            self.train_loop(buffer_b, buffer_y, self.saved_nets_list, conf.self_supervised_epochs, 'test')
             trained_nets_list = [copy.deepcopy(net) for net in self.saved_nets_list]
 
         # use last word inserted in the buffer for training
         if self.self_supervised:
             # use last word inserted in the buffer for training
             self.online_train_loop(x_pilot, y_pilot, trained_nets_list,
-                                   conf.self_supervised_epochs)
+                                   conf.self_supervised_epochs, 'test')
 
         # detect and decode
         for i in range(conf.iterations):
@@ -158,6 +166,8 @@ class Trainer:
         ber_list.append(ber)
         print(frame, ber)
 
+        return buffer_b, buffer_y
+
     def ecc_eval(self, buffer_b, buffer_y, probs_vec, ber_list, current_y, current_x, trained_nets_list, frame):
 
         # detect and decode
@@ -167,6 +177,7 @@ class Trainer:
 
         # decode
         decoded_word = decoder(detected_word, 'test')
+
         # encode word again
         decoded_word_array = decoded_word.int().cpu().numpy()
         encoded_word = torch.Tensor(encoder(decoded_word_array, 'test')).to(device)
@@ -179,20 +190,22 @@ class Trainer:
         # save the encoded word in the buffer
         if ber <= conf.ber_thresh:
             to_buffer_word = self.get_word(current_x, ber, detected_word, encoded_word)
-            buffer_b = torch.cat([buffer_b[self.total_frame_size:], to_buffer_word], dim=0)
-            buffer_y = torch.cat([buffer_y[self.total_frame_size:], current_y], dim=0)
+            buffer_b = torch.cat([buffer_b, to_buffer_word], dim=0)
+            buffer_y = torch.cat([buffer_y, current_y], dim=0)
 
         # meta-learning main function
         if self.online_meta and (frame + 1) % SUBFRAMES_IN_FRAME == 0:
             print('Meta')
             # initialize from trained weights
-            self.train_loop(buffer_b, buffer_y, self.saved_nets_list, conf.self_supervised_epochs)
+            self.train_loop(buffer_b, buffer_y, self.saved_nets_list, conf.self_supervised_epochs, 'test')
             trained_nets_list = [copy.deepcopy(net) for net in self.saved_nets_list]
 
         # use last word inserted in the buffer for training
         if self.self_supervised and ber <= conf.ber_thresh:
             # use last word inserted in the buffer for training
-            self.online_train_loop(to_buffer_word, current_y, trained_nets_list, conf.self_supervised_epochs)
+            self.online_train_loop(to_buffer_word, current_y, trained_nets_list, conf.self_supervised_epochs, 'test')
+
+        return buffer_b, buffer_y
 
     def agg_evaluate(self, trained_nets_list, snr):
         """
@@ -240,11 +253,11 @@ class Trainer:
             raise ValueError('No such evaluation mode!!!')
         return ber
 
-    def train_loop(self, b_train, y_train, trained_nets_list, max_epochs):
+    def train_loop(self, b_train, y_train, trained_nets_list, max_epochs, phase):
         initial_probs = b_train.clone()
         b_train_all, y_train_all = self.prepare_data_for_training(b_train, y_train, initial_probs)
         # Training the DeepSIC network for each user for iteration=1
-        self.train_models(trained_nets_list, 0, b_train_all, y_train_all, max_epochs)
+        self.train_models(trained_nets_list, 0, b_train_all, y_train_all, max_epochs, phase)
         # Initializing the probabilities
         probs_vec = HALF * torch.ones(b_train.shape).to(device)
         # Training the DeepSICNet for each user-symbol/iteration
@@ -254,7 +267,7 @@ class Trainer:
             # Obtaining the DeepSIC networks for each user-symbol and the i-th iteration
             b_train_all, y_train_all = self.prepare_data_for_training(b_train, y_train, probs_vec)
             # Training the DeepSIC networks for the iteration>1
-            self.train_models(trained_nets_list, i, b_train_all, y_train_all, max_epochs)
+            self.train_models(trained_nets_list, i, b_train_all, y_train_all, max_epochs, phase)
 
     def train(self):
         all_bers = []  # Contains the ber
@@ -263,7 +276,7 @@ class Trainer:
         b_train, y_train = self.train_dg(snr=conf.snr)  # Generating data for the given snr
         trained_nets_list = [[self.initialize_detector() for _ in range(conf.iterations)]
                              for _ in range(conf.n_user)]  # 2D list for Storing the DeepSIC Networks
-        self.train_loop(b_train, y_train, trained_nets_list, conf.max_epochs)
+        self.train_loop(b_train, y_train, trained_nets_list, conf.max_epochs, 'train')
         ber = self.evaluate(conf.snr, trained_nets_list)
         all_bers.append(ber)
         print(f'\nber :{sum(ber) / len(ber)} @ snr: {conf.snr} [dB]')

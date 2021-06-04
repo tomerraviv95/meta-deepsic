@@ -81,12 +81,12 @@ class MetaDeepSICTrainer(Trainer):
 
             opt.step()
 
-    def online_train_loop(self, b_train, y_train, trained_nets_list, max_epochs):
+    def online_train_loop(self, b_train, y_train, trained_nets_list, max_epochs, phase):
         trained_nets_list = [copy.deepcopy(net) for net in self.saved_nets_list]
         initial_probs = b_train.clone()
         b_train_all, y_train_all = self.prepare_data_for_training(b_train, y_train, initial_probs)
         # Training the DeepSIC network for each user for iteration=1
-        self.online_train_models(trained_nets_list, 0, b_train_all, y_train_all, max_epochs)
+        self.online_train_models(trained_nets_list, 0, b_train_all, y_train_all, max_epochs, phase)
         # Initializing the probabilities
         probs_vec = HALF * torch.ones(b_train.shape).to(device)
         # Training the DeepSICNet for each user-symbol/iteration
@@ -96,10 +96,13 @@ class MetaDeepSICTrainer(Trainer):
             # Obtaining the DeepSIC networks for each user-symbol and the i-th iteration
             b_train_all, y_train_all = self.prepare_data_for_training(b_train, y_train, probs_vec)
             # Training the DeepSIC networks for the iteration>1
-            self.online_train_models(trained_nets_list, i, b_train_all, y_train_all, max_epochs)
+            self.online_train_models(trained_nets_list, i, b_train_all, y_train_all, max_epochs, phase)
 
-    def online_train_models(self, trained_nets_list, i, x_train_all, y_train_all, max_epochs):
+    def online_train_models(self, trained_nets_list, i, x_train_all, y_train_all, max_epochs, phase):
         for user in range(conf.n_user):
+            if phase == 'test' and conf.retrain_user is not None:
+                if not conf.retrain_user == user:
+                    continue
             self.online_train_model(trained_nets_list[user][i], x_train_all[user], y_train_all[user], max_epochs)
 
     def online_train_model(self, net, x_train, y_train, max_epochs):
