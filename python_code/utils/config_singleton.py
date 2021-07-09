@@ -1,5 +1,4 @@
 from dir_definitions import CONFIG_PATH
-import numpy as np
 import yaml
 import os
 

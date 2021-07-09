@@ -6,7 +6,7 @@ iterations: 5 # number of iterations in the unfolded network
 train_frame_num: 10 # coherence-time block size
 test_frame_num: 10 # coherence-time block size
 test_info_size: 80 # number of subsequent transmissions
-test_pilot_size: 50 # number of subsequent pilot transmissions
+test_pilot_size: 0 # number of subsequent pilot transmissions
 fading: True # whether to use fading
 channel_mode: 'SED' # the channel model: set 'SED' for the Spatial Exponential Decay Channel Model, i.e. exp(-|i-j|),
 # set 'Gaussian' for a Gaussian Channel, i.e. N(0,1).
@@ -19,4 +19,4 @@ use_ecc: True # whether to use ecc (corrupted data blocks) for training, or use 
 n_ecc_symbols: 2 # number of symbols in ecc
 ber_thresh: 0.02 # threshold for self-supervised training
 change_user_only: 2 # index of single fading user
-retrain_user: # index of specific user-networks that need retraining
+retrain_user: 2 # index of specific user-networks that need retraining

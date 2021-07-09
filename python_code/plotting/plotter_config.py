@@ -15,18 +15,12 @@ mpl.rcParams['font.family'] = 'STIXGeneral'
 
 COLORS_DICT = {'Joint DeepSIC': 'blue',
                'Online DeepSIC': 'black',
-               'Online DeepSIC - All users': 'black',
-               'Online DeepSIC - User 2': 'black',
                'Meta-DeepSIC': 'green'}
 
 MARKERS_DICT = {'Joint DeepSIC': 'x',
                 'Online DeepSIC': 'o',
-                'Online DeepSIC - All users': 'o',
-                'Online DeepSIC - User 2': 'p',
                 'Meta-DeepSIC': '+'}
 
 LINESTYLES_DICT = {'Joint DeepSIC': 'dotted',
                    'Online DeepSIC': 'dotted',
-                   'Online DeepSIC - All users': 'dotted',
-                   'Online DeepSIC - User 2': 'dotted',
                    'Meta-DeepSIC': 'dotted'}

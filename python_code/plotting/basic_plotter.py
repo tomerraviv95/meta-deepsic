@@ -1,5 +1,5 @@
 from python_code.plotting.plotter_utils import get_deepsic, get_meta_deepsic, get_online_deepsic, \
-    get_online_deepsic_user_dependent
+    get_online_deepsic_single, get_meta_deepsic_single
 from python_code.utils.config_singleton import Config
 from python_code.utils.python_utils import load_pkl, save_pkl
 from python_code.plotting.plotter_config import *
@@ -95,7 +95,7 @@ class Plotter:
         test_pilot_sizes = [20, 60, 100, 140, 180, 260, 350, 500]
         data_frame_size = 5000
         total_sers = []
-        trial_num = 5
+        trial_num = 1
         for test_pilot_size in test_pilot_sizes:
             conf.set_value('test_pilot_size', test_pilot_size)
             test_info_size = test_pilot_size + data_frame_size
@@ -114,14 +114,11 @@ class Plotter:
 
 if __name__ == "__main__":
     plotter = Plotter(run_over=True)
-    # plotter.ser_versus_blocks_num(current_run_params=get_deepsic())
-    # plotter.ser_versus_blocks_num(current_run_params=get_online_deepsic())
-    # plotter.ser_versus_blocks_num(current_run_params=get_meta_deepsic())
 
-    # plotter.ser_versus_block(current_run_params=get_deepsic())
+    plotter.ser_versus_block(current_run_params=get_deepsic())
     plotter.ser_versus_block(current_run_params=get_online_deepsic())
-    plotter.ser_versus_block(current_run_params=get_online_deepsic_user_dependent())
-
-    # plotter.ser_versus_block(current_run_params=get_meta_deepsic())
+    plotter.ser_versus_block(current_run_params=get_meta_deepsic())
+    plotter.ser_versus_block(current_run_params=get_online_deepsic_single())
+    plotter.ser_versus_block(current_run_params=get_meta_deepsic_single())
 
     plt.show()
