@@ -113,7 +113,7 @@ class Plotter:
 
 
 if __name__ == "__main__":
-    plotter = Plotter(run_over=True)
+    plotter = Plotter(run_over=False)
 
     plotter.ser_versus_block(current_run_params=get_deepsic())
     plotter.ser_versus_block(current_run_params=get_online_deepsic())
