@@ -70,6 +70,7 @@ class Trainer:
         b_pred = torch.zeros_like(b_test)
         c_frame_size = c_pred.shape[0] // conf.test_frame_num
         b_frame_size = b_pred.shape[0] // conf.test_frame_num
+        self.prepare_for_eval(c_frame_size, y_test)
 
         # saved detector is used to initialize the decoder in meta learning loops
         self.saved_detector = self.copy_detector(self.detector)
@@ -79,7 +80,6 @@ class Trainer:
 
         ber_list = []
         for frame in range(conf.test_frame_num - 1):
-            self.eval_setup(c_frame_size, y_test.shape[1])
             # current word
             c_start_ind = frame * c_frame_size
             c_end_ind = (frame + 1) * c_frame_size
@@ -127,7 +127,6 @@ class Trainer:
         return buffer_b, buffer_y
 
     def ecc_eval(self, buffer_b, buffer_y, ber_list, current_y, current_x, frame):
-
         # detect
         detected_word = self.predict(current_y)
 

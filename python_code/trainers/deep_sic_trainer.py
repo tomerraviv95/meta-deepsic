@@ -85,7 +85,6 @@ class DeepSICTrainer(Trainer):
             self.train_models(self.detector, i, b_train_all, y_train_all, max_epochs, phase)
 
     def initialize_detector(self):
-        self.probs_vec = HALF * torch.ones(conf.test_info_size).to(device)
         self.detector = [[self.initialize_single_detector() for _ in range(conf.iterations)]
                          for _ in range(conf.n_user)]  # 2D list for Storing the DeepSIC Networks
 
@@ -95,8 +94,8 @@ class DeepSICTrainer(Trainer):
         c_pred = symbol_to_prob(prob_to_symbol(self.probs_vec.float()))
         return c_pred
 
-    def eval_setup(self, c_frame_size, y_test_column_shape):
+    def prepare_for_eval(self, c_frame_size, y_test):
         if conf.use_ecc:
-            self.probs_vec = HALF * torch.ones(c_frame_size, y_test_column_shape).to(device)
+            self.probs_vec = HALF * torch.ones(c_frame_size, y_test.shape[1]).to(device)
         else:
-            self.probs_vec = HALF * torch.ones(c_frame_size - conf.test_pilot_size, y_test_column_shape).to(device)
+            self.probs_vec = HALF * torch.ones(c_frame_size - conf.test_pilot_size, y_test.shape[1]).to(device)

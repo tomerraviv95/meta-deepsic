@@ -3,7 +3,6 @@ from python_code.detectors.deep_sic_detector import DeepSICDetector
 from python_code.trainers.deep_sic_trainer import DeepSICTrainer
 from python_code.utils.config_singleton import Config
 import torch
-import copy
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 conf = Config()
@@ -82,7 +81,7 @@ class MetaDeepSICTrainer(DeepSICTrainer):
             opt.step()
 
     def online_train_loop(self, b_train, y_train, max_epochs, phase):
-        # self.detector = self.copy_detector(self.saved_detector)
+        self.detector = self.copy_detector(self.saved_detector)
         initial_probs = b_train.clone()
         b_train_all, y_train_all = self.prepare_data_for_training(b_train, y_train, initial_probs)
         # Training the DeepSIC network for each user for iteration=1

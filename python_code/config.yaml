@@ -1,7 +1,7 @@
 run_name: 'general_run' # run directory
 n_ant: 4 # number of Rx Antennas
 n_user: 4 # number of Transmitted Symbols, users
-snr: 14 # SNR value
+snr: 12 # SNR value
 iterations: 5 # number of iterations in the unfolded network
 train_frame_num: 50 # coherence-time block size
 test_frame_num: 50 # coherence-time block size
@@ -12,9 +12,9 @@ channel_mode: 'SED' # the channel model: set 'SED' for the Spatial Exponential D
 # set 'Gaussian' for a Gaussian Channel, i.e. N(0,1).
 # 'COST' for COST 8X8 setup.
 eval_mode: 'by_word' # Type of evaluation. Per snr - 'aggregated', Per block - 'by_word'.
-lr: 0.01 # learning rate
+lr: 0.001 # learning rate
 max_epochs: 300 # number of training epochs
-self_supervised_epochs: 50 # number of self-supervised epochs
+self_supervised_epochs: 10 # number of self-supervised epochs
 use_ecc: True # whether to use ecc (corrupted data blocks) for training, or use the genie aided blocks
 n_ecc_symbols: 2 # number of symbols in ecc
 ber_thresh: 0.02 # threshold for self-supervised training
