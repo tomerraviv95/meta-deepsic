@@ -50,7 +50,7 @@ class JointDeepSICTrainer(DeepSICTrainer):
             opt.step()
 
     def online_train_loop(self, b_train, y_train, model, max_epochs):
-        self.train_loop(b_train, y_train, model, max_epochs)
+        pass
 
 
 if __name__ == "__main__":

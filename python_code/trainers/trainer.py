@@ -38,6 +38,9 @@ class Trainer:
     def initialize_detector(self):
         self.detector = None
 
+    def prepare_for_eval(self, c_frame_size, y_test):
+        pass
+
     def train_model(self, net, x_train, y_train, max_epochs):
         pass
 
