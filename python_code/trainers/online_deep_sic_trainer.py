@@ -49,8 +49,8 @@ class OnlineDeepSICTrainer(DeepSICTrainer):
             loss.backward()
             opt.step()
 
-    def online_train_loop(self, b_train, y_train, max_epochs, phase):
-        self.train_loop(b_train, y_train, max_epochs, phase)
+    def online_train_loop(self, x_train, y_train, max_epochs, phase):
+        self.train_loop(x_train, y_train, max_epochs, phase)
 
 
 if __name__ == "__main__":

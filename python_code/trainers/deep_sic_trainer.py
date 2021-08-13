@@ -20,10 +20,7 @@ class DeepSICTrainer(Trainer):
     def initialize_single_detector(self):
         pass
 
-    def copy_detector(self, detector):
-        return [copy.deepcopy(net) for net in detector]
-
-    def prepare_data_for_training(self, b_train, ys_train, probs_vec):
+    def prepare_data_for_training(self, x_train, ys_train, probs_vec):
         """
         Generates the DeepSIC Networks for Each User for the Iterations>1
 
@@ -42,14 +39,14 @@ class DeepSICTrainer(Trainer):
             [i]['x_train'] --> Training Labels (Symbol probabilities) for the i-th user.
             [i]['y_train'] --> Output of the Channel and the Predicted Symbol Probs. of the j-th users, where for j != i
         """
-        b_train_all = []
+        x_train_all = []
         y_train_all = []
         for k in range(conf.n_user):
             idx = [i for i in range(conf.n_user) if i != k]
             y_train = torch.cat((ys_train, probs_vec[:, idx]), dim=1)
-            b_train_all.append(b_train[:, k])
+            x_train_all.append(x_train[:, k])
             y_train_all.append(y_train)
-        return b_train_all, y_train_all
+        return x_train_all, y_train_all
 
     def calculate_posteriors(self, trained_nets_list, i, probs_vec, y_train):
         next_probs_vec = torch.zeros(probs_vec.shape).to(device)
@@ -68,21 +65,21 @@ class DeepSICTrainer(Trainer):
                     continue
             self.train_model(trained_nets_list[user][i], x_train_all[user], y_train_all[user], max_epochs)
 
-    def train_loop(self, b_train, y_train, max_epochs, phase):
-        initial_probs = b_train.clone()
-        b_train_all, y_train_all = self.prepare_data_for_training(b_train, y_train, initial_probs)
+    def train_loop(self, x_train, y_train, max_epochs, phase):
+        initial_probs = x_train.clone()
+        x_train_all, y_train_all = self.prepare_data_for_training(x_train, y_train, initial_probs)
         # Training the DeepSIC network for each user for iteration=1
-        self.train_models(self.detector, 0, b_train_all, y_train_all, max_epochs, phase)
+        self.train_models(self.detector, 0, x_train_all, y_train_all, max_epochs, phase)
         # Initializing the probabilities
-        probs_vec = HALF * torch.ones(b_train.shape).to(device)
+        probs_vec = HALF * torch.ones(x_train.shape).to(device)
         # Training the DeepSICNet for each user-symbol/iteration
         for i in range(1, conf.iterations):
             # Generating soft symbols for training purposes
             probs_vec = self.calculate_posteriors(self.detector, i, probs_vec, y_train)
             # Obtaining the DeepSIC networks for each user-symbol and the i-th iteration
-            b_train_all, y_train_all = self.prepare_data_for_training(b_train, y_train, probs_vec)
+            x_train_all, y_train_all = self.prepare_data_for_training(x_train, y_train, probs_vec)
             # Training the DeepSIC networks for the iteration>1
-            self.train_models(self.detector, i, b_train_all, y_train_all, max_epochs, phase)
+            self.train_models(self.detector, i, x_train_all, y_train_all, max_epochs, phase)
 
     def initialize_detector(self):
         self.detector = [[self.initialize_single_detector() for _ in range(conf.iterations)]

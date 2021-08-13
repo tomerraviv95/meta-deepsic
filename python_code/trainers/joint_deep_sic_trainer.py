@@ -49,7 +49,7 @@ class JointDeepSICTrainer(DeepSICTrainer):
             loss.backward()
             opt.step()
 
-    def online_train_loop(self, b_train, y_train, model, max_epochs):
+    def online_train_loop(self, x_train, y_train, model, max_epochs):
         pass
 
 

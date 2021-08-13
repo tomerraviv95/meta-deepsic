@@ -1,3 +1,5 @@
+import copy
+
 from python_code.ecc.rs_main import ECC_BITS_PER_SYMBOL
 from python_code.ecc.wrappers import decoder, encoder
 from python_code.utils.metrics import calculate_error_rates
@@ -44,10 +46,10 @@ class Trainer:
     def train_model(self, net, x_train, y_train, max_epochs):
         pass
 
-    def online_train_loop(self, b_train, y_train, max_epochs, phase):
+    def online_train_loop(self, x_train, y_train, max_epochs, phase):
         pass
 
-    def train_loop(self, b_train, y_train, max_epochs, phase):
+    def train_loop(self, x_train, y_train, max_epochs, phase):
         pass
 
     def predict(self, y_test):
@@ -57,7 +59,7 @@ class Trainer:
         pass
 
     def copy_detector(self, detector):
-        pass
+        return [copy.deepcopy(net) for net in detector]
 
     def get_word(self, current_x, ber, detected_word, encoded_word):
         if not conf.use_ecc:
@@ -217,9 +219,9 @@ class Trainer:
         all_bers = []  # Contains the ber
         print(f'training')
         print(f'snr {conf.snr}')
-        b_train, y_train = self.train_dg(snr=conf.snr)  # Generating data for the given snr
+        x_train, y_train = self.train_dg(snr=conf.snr)  # Generating data for the given snr
         self.initialize_detector()
-        self.train_loop(b_train, y_train, conf.max_epochs, 'train')
+        self.train_loop(x_train, y_train, conf.max_epochs, 'train')
         ber = self.evaluate(conf.snr)
         all_bers.append(ber)
         print(f'\nber :{sum(ber) / len(ber)} @ snr: {conf.snr} [dB]')
