@@ -6,8 +6,6 @@ import numpy as np
 import scipy.io
 import os
 
-COST_CHANNELS = 5
-MAX_FRAMES = 50
 # MIN_COST_VAL = -0.0011940332244104606 # slow
 MIN_COST_VAL = -0.002187582111148217  # fast
 
@@ -15,6 +13,7 @@ MIN_COST_VAL = -0.002187582111148217  # fast
 MAX_COST_VAL = 0.002073063725906618  # fast
 
 conf = Config()
+
 
 class ChannelModel:
     @staticmethod

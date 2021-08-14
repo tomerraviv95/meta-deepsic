@@ -23,7 +23,7 @@ class JointDeepRXTrainer(Trainer):
         """
         Loads the DeepRX detector
         """
-        return DeepRXDetector()
+        self.detector = DeepRXDetector(self.total_frame_size)
 
     def train_model(self, net, x_train, y_train, max_epochs):
         """
@@ -38,12 +38,14 @@ class JointDeepRXTrainer(Trainer):
 
         """
         opt = torch.optim.Adam(net.parameters(), lr=conf.lr)
-        crt = torch.nn.CrossEntropyLoss()
+        crt = torch.nn.BCELoss().to(device)
+        m = torch.nn.Sigmoid()
+        net.set_state('train')
         net = net.to(device)
         for _ in range(max_epochs):
             opt.zero_grad()
             out = net(y_train)
-            loss = crt(out, x_train.squeeze(-1).long())
+            loss = crt(input=m(out), target=x_train)
             loss.backward()
             opt.step()
 
@@ -51,6 +53,7 @@ class JointDeepRXTrainer(Trainer):
         pass
 
     def predict(self, y_test):
+        self.detector.set_state('test')
         return self.detector(y_test)
 
     def train_loop(self, x_train, y_train, max_epochs, phase):

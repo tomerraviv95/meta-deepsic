@@ -59,7 +59,7 @@ class Trainer:
         pass
 
     def copy_detector(self, detector):
-        return [copy.deepcopy(net) for net in detector]
+        return copy.deepcopy(detector)
 
     def get_word(self, current_x, ber, detected_word, encoded_word):
         if not conf.use_ecc:

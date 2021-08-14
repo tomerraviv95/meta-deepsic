@@ -85,6 +85,9 @@ class DeepSICTrainer(Trainer):
         self.detector = [[self.initialize_single_detector() for _ in range(conf.iterations)]
                          for _ in range(conf.n_user)]  # 2D list for Storing the DeepSIC Networks
 
+    def copy_detector(self, detector):
+        return [copy.deepcopy(net) for net in detector]
+
     def predict(self, y_test):
         for i in range(conf.iterations):
             self.probs_vec = self.calculate_posteriors(self.detector, i + 1, self.probs_vec, y_test)
