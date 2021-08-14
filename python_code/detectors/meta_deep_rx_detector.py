@@ -1,4 +1,5 @@
 from python_code.utils.config_singleton import Config
+from torch.nn import functional as F
 from torch import nn
 import torch
 
@@ -14,11 +15,13 @@ IN7_FILTERS = 128
 IN8_FILTERS = 64
 IN9_FILTERS = 32
 IN10_FILTERS = 16
+RESNET_PARAMS = 9
 
 tanh_func = torch.nn.Tanh()
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
-class ResnetBlock(nn.Module):
+class MetaResnetBlock(nn.Module):
     def __init__(self, in_channels, out_channels, stride=1):
         """
         Args:
@@ -26,9 +29,12 @@ class ResnetBlock(nn.Module):
           out_channels (int): Number of output channels.
           stride (int):       Controls the stride.
         """
-        super(ResnetBlock, self).__init__()
+        super(MetaResnetBlock, self).__init__()
 
         self.skip = nn.Sequential()
+        self.stride = stride
+        self.in_channels = in_channels
+        self.out_channels = out_channels
 
         if stride != 1 or in_channels != out_channels:
             self.skip = nn.Sequential(
@@ -46,13 +52,19 @@ class ResnetBlock(nn.Module):
                       bias=False),
             nn.BatchNorm2d(out_channels))
 
-    def forward(self, x):
-
+    def forward(self, x: torch.Tensor, var: list):
         identity = x
-        out = self.block(x)
 
         if self.skip is not None:
-            identity = self.skip(x)
+            identity = F.batch_norm(F.conv2d(x, var[0], bias=None, padding=1, stride=3), var[2].detach(),
+                                    var[1].detach(), weight=var[1], bias=var[2])
+
+        # meta block
+        relu = nn.ReLU()
+        first = relu(F.batch_norm(F.conv2d(x, var[3], bias=None, padding=1, stride=1), var[5].detach(),
+                                  var[4].detach(), weight=var[4], bias=var[5]))
+        out = F.batch_norm(F.conv2d(first, var[6], bias=None, padding=1, stride=1), var[8].detach(),
+                           var[7].detach(), weight=var[7], bias=var[8])
 
         out += identity
         out = tanh_func(out)
@@ -60,30 +72,28 @@ class ResnetBlock(nn.Module):
         return out
 
 
-class DeepRXDetector(nn.Module):
+class MetaDeepRXDetector(nn.Module):
     """
     The DeepRXDetector Network Architecture
     """
 
     def __init__(self, total_frame_size):
-        super(DeepRXDetector, self).__init__()
+        super(MetaDeepRXDetector, self).__init__()
         self.total_frame_size = total_frame_size
-        self.all_blocks = nn.Sequential(
-            *[ResnetBlock(conf.n_ant, IN2_FILTERS),
-              ResnetBlock(IN2_FILTERS, IN3_FILTERS),
-              ResnetBlock(IN3_FILTERS, IN4_FILTERS),
-              ResnetBlock(IN4_FILTERS, IN5_FILTERS),
-              ResnetBlock(IN5_FILTERS, IN6_FILTERS),
-              ResnetBlock(IN6_FILTERS, IN7_FILTERS),
-              ResnetBlock(IN7_FILTERS, IN8_FILTERS),
-              ResnetBlock(IN8_FILTERS, IN9_FILTERS),
-              ResnetBlock(IN9_FILTERS, IN10_FILTERS),
-              ResnetBlock(IN10_FILTERS, conf.n_user)]
-        )
+        self.all_blocks = [MetaResnetBlock(conf.n_ant, IN2_FILTERS),
+                           MetaResnetBlock(IN2_FILTERS, IN3_FILTERS),
+                           MetaResnetBlock(IN3_FILTERS, IN4_FILTERS),
+                           MetaResnetBlock(IN4_FILTERS, IN5_FILTERS),
+                           MetaResnetBlock(IN5_FILTERS, IN6_FILTERS),
+                           MetaResnetBlock(IN6_FILTERS, IN7_FILTERS),
+                           MetaResnetBlock(IN7_FILTERS, IN8_FILTERS),
+                           MetaResnetBlock(IN8_FILTERS, IN9_FILTERS),
+                           MetaResnetBlock(IN9_FILTERS, IN10_FILTERS),
+                           MetaResnetBlock(IN10_FILTERS, conf.n_user)]
         self.state = None
 
     def reshaped_tensor_in(self, ten: torch.Tensor):
-        return ten.reshape(-1, self.total_frame_size, conf.n_user, 1).transpose(dim0=1, dim1=2)
+        return ten.reshape(-1, 1, conf.n_user, 1).transpose(dim0=1, dim1=2)
 
     def reshaped_tensor_out(self, ten: torch.Tensor):
         return ten.transpose(dim0=1, dim1=2).reshape(-1, conf.n_ant)
@@ -91,10 +101,13 @@ class DeepRXDetector(nn.Module):
     def set_state(self, state: str):
         self.state = state
 
-    def forward(self, y: torch.Tensor) -> torch.Tensor:
-        reshaped_y_in = self.reshaped_tensor_in(y)
-        out = self.all_blocks(tanh_func(reshaped_y_in))
-        reshaped_out = self.reshaped_tensor_out(out)
+    def forward(self, y: torch.Tensor, var: list) -> torch.Tensor:
+        cur_y = tanh_func(self.reshaped_tensor_in(y))
+        for i in range(len(self.all_blocks)):
+            cur_block = self.all_blocks[i]
+            current_var = var[i * RESNET_PARAMS:(i + 1) * RESNET_PARAMS]
+            cur_y = cur_block(cur_y, current_var)
+        reshaped_out = self.reshaped_tensor_out(cur_y)
         if self.state == 'train':
             return reshaped_out
         # in eval mode
