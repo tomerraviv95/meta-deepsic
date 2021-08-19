@@ -32,10 +32,8 @@ class MetaResnetBlock(nn.Module):
                                   running_var=var[4].detach(), weight=var[4], bias=var[5]))
         out = F.batch_norm(F.conv2d(first, var[6], bias=None, padding=1, stride=1), running_mean=var[8].detach(),
                            running_var=var[7].detach(), weight=var[7], bias=var[8])
-
         out += identity
         out = tanh_func(out)
-
         return out
 
 

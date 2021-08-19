@@ -14,19 +14,28 @@ mpl.rcParams['mathtext.fontset'] = 'stix'
 mpl.rcParams['font.family'] = 'STIXGeneral'
 
 COLORS_DICT = {'Joint DeepSIC': 'blue',
+               'Joint DeepRX': 'blue',
                'Online DeepSIC': 'black',
+               'Online DeepRX': 'black',
                'Meta-DeepSIC': 'green',
+               'Meta-DeepRX': 'green',
                'Online DeepSIC - Single User Training': 'black',
                'Meta-DeepSIC - Single User Training': 'green'}
 
 MARKERS_DICT = {'Joint DeepSIC': 'x',
-                'Online DeepSIC': 'o',
-                'Meta-DeepSIC': '+',
-                'Online DeepSIC - Single User Training': 'o',
+                'Joint DeepRX': 'o',
+                'Online DeepSIC': 'x',
+                'Online DeepRX': 'o',
+                'Meta-DeepSIC': 'x',
+                'Meta-DeepRX': 'o',
+                'Online DeepSIC - Single User Training': '+',
                 'Meta-DeepSIC - Single User Training': '+'}
 
 LINESTYLES_DICT = {'Joint DeepSIC': 'dotted',
+                   'Joint DeepRX': 'dotted',
                    'Online DeepSIC': 'dotted',
+                   'Online DeepRX': 'dotted',
                    'Meta-DeepSIC': 'dotted',
+                   'Meta-DeepRX': 'dotted',
                    'Online DeepSIC - Single User Training': '-',
                    'Meta-DeepSIC - Single User Training': '-'}

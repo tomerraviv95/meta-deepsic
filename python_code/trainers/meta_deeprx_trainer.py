@@ -1,7 +1,7 @@
-from python_code.detectors.deep_rx_detector import DeepRXDetector
 from python_code.detectors.meta_deep_rx_detector import MetaDeepRXDetector
-from python_code.trainers.trainer import Trainer
+from python_code.detectors.deep_rx_detector import DeepRXDetector
 from python_code.utils.config_singleton import Config
+from python_code.trainers.trainer import Trainer
 import torch
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -13,7 +13,7 @@ HALF = 0.5
 META_SAMPLES = 1024
 
 
-class OnlineDeepRXTrainer(Trainer):
+class MetaDeepRXTrainer(Trainer):
     """
     Trainer for the meta DeepRX model.
     """
@@ -44,8 +44,8 @@ class OnlineDeepRXTrainer(Trainer):
         m = torch.nn.Sigmoid()
         net = net.to(device)
         meta_detector = MetaDeepRXDetector(self.total_frame_size)
-        support_idx = torch.arange(x_train.shape[0] - self.total_frame_size)
-        query_idx = torch.arange(self.total_frame_size, x_train.shape[0])
+        support_idx = torch.arange(max(x_train.shape[0] - self.total_frame_size, 0))
+        query_idx = torch.arange(max(self.total_frame_size, x_train.shape[0], 0))
         net.set_state('train')
         meta_detector.set_state('train')
 
@@ -116,5 +116,5 @@ class OnlineDeepRXTrainer(Trainer):
 
 
 if __name__ == "__main__":
-    deep_rx_trainer = OnlineDeepRXTrainer()
+    deep_rx_trainer = MetaDeepRXTrainer()
     deep_rx_trainer.train()
