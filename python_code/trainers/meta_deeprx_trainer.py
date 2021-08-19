@@ -42,14 +42,14 @@ class OnlineDeepRXTrainer(Trainer):
         opt = torch.optim.Adam(net.parameters(), lr=conf.lr)
         crt = torch.nn.BCELoss().to(device)
         m = torch.nn.Sigmoid()
-        net.set_state('train')
         net = net.to(device)
         meta_detector = MetaDeepRXDetector(self.total_frame_size)
-        meta_detector.set_state('train')
         support_idx = torch.arange(x_train.shape[0] - self.total_frame_size)
         query_idx = torch.arange(self.total_frame_size, x_train.shape[0])
+        net.set_state('train')
+        meta_detector.set_state('train')
 
-        for _ in range(max_epochs):
+        for l in range(max_epochs):
             opt.zero_grad()
 
             # choose only META_SAMPLES samples from the entire support, query to use for current epoch
