@@ -75,7 +75,6 @@ class RXTrainer:
         b_pred = torch.zeros_like(b_test)
         c_frame_size = c_pred.shape[0] // conf.test_frame_num
         b_frame_size = b_pred.shape[0] // conf.test_frame_num
-        self.prepare_for_eval(c_frame_size, y_test)
 
         # saved detector is used to initialize the decoder in meta learning loops
         self.saved_detector = self.copy_detector(self.detector)

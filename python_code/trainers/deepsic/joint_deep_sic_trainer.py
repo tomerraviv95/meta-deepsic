@@ -49,8 +49,8 @@ class JointDeepSICDeepSICTrainer(DeepSICTrainer):
             loss.backward()
             opt.step()
 
-    def online_train_loop(self, b_train, y_train, trained_nets_list, max_epochs):
-        self.train_loop(b_train, y_train, trained_nets_list, max_epochs)
+    def online_train_loop(self, b_train, y_train, trained_nets_list, max_epochs, phase):
+        pass
 
 
 if __name__ == "__main__":
