@@ -6,15 +6,8 @@ import numpy as np
 import scipy.io
 import os
 
-COST_CHANNELS = 5
-MAX_FRAMES = 50
-# MIN_COST_VAL = -0.0011940332244104606 # slow
-MIN_COST_VAL = -0.002187582111148217  # fast
-
-# MAX_COST_VAL = 0.0016165160263559176 # slow
-MAX_COST_VAL = 0.002073063725906618  # fast
-
 conf = Config()
+
 
 class ChannelModel:
     @staticmethod
@@ -73,24 +66,14 @@ class COSTChannel(ChannelModel):
     @staticmethod
     def calculate_channel(n_ant, n_user, frame_num, iteration, phase) -> np.ndarray:
         total_h = np.empty([n_user, n_ant])
-        if phase == 'train':
-            phase_shift = 0
-        else:
-            phase_shift = frame_num
 
-        for i in range(1, n_user // 2 + 1):
-            path_to_mat = os.path.join(RESOURCES_DIR, phase,
-                                       f'h_link_{i}.mat')
-            h_user = scipy.io.loadmat(path_to_mat)['h1'][iteration + phase_shift]
-            h_users1 = np.concatenate([np.real(h_user), np.imag(h_user)], axis=1)
-            h_users2 = np.concatenate([-np.imag(h_user), np.real(h_user)], axis=1)
-            h_users = np.concatenate([h_users1, h_users2], axis=0)
-            row_ind = (i - 1) % 2
-            column_ind = (i - 1) // 2
-            total_h[row_ind * n_ant // 2:(row_ind + 1) * n_ant // 2,
-            column_ind * n_ant // 2:(column_ind + 1) * n_ant // 2] = h_users
+        for i in range(1, n_user):
+            path_to_mat = os.path.join(RESOURCES_DIR, 'new', f'h_{i}.mat')
+            h_user = scipy.io.loadmat(path_to_mat)['norm_channel'][iteration]
+            total_h[i - 1] = 0.25 * h_user
 
-        total_h = (total_h - MIN_COST_VAL) / (MAX_COST_VAL - MIN_COST_VAL)
+        total_h[np.arange(n_user), np.arange(n_user)] = 1
+
         return total_h
 
 
@@ -107,6 +90,7 @@ if __name__ == "__main__":
     for iteration in range(conf.test_frame_num):
         h = channel_model.get_channel(conf.channel_mode, conf.n_ant, conf.n_user,
                                       'test', conf.fading, conf.test_frame_num, iteration)
+        print(h)
         total_h_test = np.concatenate([total_h_test, np.expand_dims(h, axis=2)], axis=2)
 
     for i in range(conf.n_ant):
