@@ -1,7 +1,7 @@
 from python_code.detectors.meta_deep_rx_detector import MetaDeepRXDetector
 from python_code.detectors.deep_rx_detector import DeepRXDetector
+from python_code.trainers.deeprx.rx_trainer import RXTrainer
 from python_code.utils.config_singleton import Config
-from python_code.trainers.trainer import Trainer
 import torch
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -13,7 +13,7 @@ HALF = 0.5
 META_SAMPLES = 1024
 
 
-class MetaDeepRXTrainer(Trainer):
+class MetaDeepRXTrainer(RXTrainer):
     """
     Trainer for the meta DeepRX model.
     """

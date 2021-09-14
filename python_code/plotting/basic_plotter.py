@@ -1,9 +1,8 @@
-from python_code.plotting.plotter_utils import get_deepsic, get_meta_deepsic, get_online_deepsic, \
-    get_online_deepsic_single, get_meta_deepsic_single, get_deeprx, get_online_deeprx, get_meta_deeprx
+from python_code.plotting.plotter_utils import get_deepsic, get_meta_deepsic
 from python_code.utils.config_singleton import Config
 from python_code.utils.python_utils import load_pkl, save_pkl
 from python_code.plotting.plotter_config import *
-from python_code.trainers.trainer import Trainer
+from python_code.trainers.deepsic.deep_sic_trainer import DeepSICTrainer
 from dir_definitions import PLOTS_DIR, FIGURES_DIR
 import matplotlib.pyplot as plt
 import numpy as np
@@ -26,7 +25,7 @@ class Plotter:
         if not os.path.isdir(os.path.join(FIGURES_DIR, self.folder_name)):
             os.makedirs(os.path.join(FIGURES_DIR, self.folder_name))
 
-    def get_ser_plot(self, trainer: Trainer, run_over: bool, method_name: str, trial: int = None):
+    def get_ser_plot(self, trainer: DeepSICTrainer, run_over: bool, method_name: str, trial: int = None):
         print(method_name)
         # set the path to saved plot results for a single method (so we do not need to run anew each time)
         if not os.path.exists(PLOTS_DIR):

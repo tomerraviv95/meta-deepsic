@@ -1,42 +1,42 @@
 from dir_definitions import CONFIG_RUNS_DIR
 import os
-from python_code.trainers.joint_deep_sic_trainer import JointDeepSICTrainer
-from python_code.trainers.joint_deeprx_trainer import JointDeepRXTrainer
-from python_code.trainers.meta_deeprx_trainer import MetaDeepRXTrainer
-from python_code.trainers.online_deep_sic_trainer import OnlineDeepSICTrainer
-from python_code.trainers.meta_deep_sic_trainer import MetaDeepSICTrainer
-from python_code.trainers.online_deeprx_trainer import OnlineDeepRXTrainer
+from python_code.trainers.deepsic.joint_deep_sic_trainer import JointDeepSICDeepSICTrainer
+from python_code.trainers.deeprx.joint_deeprx_trainer import JointDeepRXTrainer
+from python_code.trainers.deeprx.meta_deeprx_trainer import MetaDeepRXTrainer
+from python_code.trainers.deepsic.online_deep_sic_trainer import OnlineDeepSICDeepSICTrainer
+from python_code.trainers.deepsic.meta_deep_sic_trainer import MetaDeepSICDeepSICTrainer
+from python_code.trainers.deeprx.online_deeprx_trainer import OnlineDeepRXTrainer
 from python_code.utils.config_singleton import Config
 
 
 def get_deepsic():
     config = Config()
     config.load_config(os.path.join(CONFIG_RUNS_DIR, 'all.yaml'))
-    return (JointDeepSICTrainer(), 'Joint DeepSIC')
+    return (JointDeepSICDeepSICTrainer(), 'Joint DeepSIC')
 
 
 def get_online_deepsic():
     config = Config()
     config.load_config(os.path.join(CONFIG_RUNS_DIR, 'all.yaml'))
-    return (OnlineDeepSICTrainer(), 'Online DeepSIC')
+    return (OnlineDeepSICDeepSICTrainer(), 'Online DeepSIC')
 
 
 def get_meta_deepsic():
     config = Config()
     config.load_config(os.path.join(CONFIG_RUNS_DIR, 'all.yaml'))
-    return (MetaDeepSICTrainer(), 'Meta-DeepSIC')
+    return (MetaDeepSICDeepSICTrainer(), 'Meta-DeepSIC')
 
 
 def get_online_deepsic_single():
     config = Config()
     config.load_config(os.path.join(CONFIG_RUNS_DIR, 'single.yaml'))
-    return (OnlineDeepSICTrainer(), 'Online DeepSIC - Single User Training')
+    return (OnlineDeepSICDeepSICTrainer(), 'Online DeepSIC - Single User Training')
 
 
 def get_meta_deepsic_single():
     config = Config()
     config.load_config(os.path.join(CONFIG_RUNS_DIR, 'single.yaml'))
-    return (MetaDeepSICTrainer(), 'Meta-DeepSIC - Single User Training')
+    return (MetaDeepSICDeepSICTrainer(), 'Meta-DeepSIC - Single User Training')
 
 
 def get_deeprx():

@@ -19,7 +19,7 @@ HALF = 0.5
 SUBFRAMES_IN_FRAME = 5
 
 
-class RXTrainer:
+class DeepSICTrainer:
     """Form the trainer class.
 
     Keyword arguments:
