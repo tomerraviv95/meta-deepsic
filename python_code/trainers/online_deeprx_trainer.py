@@ -45,7 +45,7 @@ class OnlineDeepRXTrainer(Trainer):
         for _ in range(max_epochs):
             opt.zero_grad()
             out = net(y_train)
-            loss = crt(input=m(out), target=x_train)
+            loss = crt(input=m(out), target=x_train.float())
             loss.backward()
             opt.step()
 

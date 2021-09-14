@@ -113,14 +113,14 @@ class Plotter:
 
 
 if __name__ == "__main__":
-    plotter = Plotter(run_over=False)
+    plotter = Plotter(run_over=True)
 
     plotter.ser_versus_block(current_run_params=get_deepsic())
-    plotter.ser_versus_block(current_run_params=get_deeprx())
-    plotter.ser_versus_block(current_run_params=get_online_deepsic())
-    plotter.ser_versus_block(current_run_params=get_online_deeprx())
+    # plotter.ser_versus_block(current_run_params=get_deeprx())
+    # plotter.ser_versus_block(current_run_params=get_online_deepsic())
+    # plotter.ser_versus_block(current_run_params=get_online_deeprx())
     plotter.ser_versus_block(current_run_params=get_meta_deepsic())
-    plotter.ser_versus_block(current_run_params=get_meta_deeprx())
+    # plotter.ser_versus_block(current_run_params=get_meta_deeprx())
     # plotter.ser_versus_block(current_run_params=get_online_deepsic_single())
     # plotter.ser_versus_block(current_run_params=get_meta_deepsic_single())
 
