@@ -1,5 +1,5 @@
 from python_code.detectors.deep_sic_detector import DeepSICDetector
-from python_code.trainers.trainer import Trainer
+from python_code.trainers.deep_sic_trainer import DeepSICTrainer
 from python_code.utils.config_singleton import Config
 import torch
 
@@ -7,7 +7,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 conf = Config()
 
 
-class JointDeepSICTrainer(Trainer):
+class JointDeepSICTrainer(DeepSICTrainer):
     """
     Trainer for the DeepSIC model.
     """
@@ -19,7 +19,7 @@ class JointDeepSICTrainer(Trainer):
     def __str__(self):
         return 'DeepSIC'
 
-    def initialize_detector(self):
+    def initialize_single_detector(self):
         """
         Loads the DeepSIC detector
         """
@@ -49,8 +49,8 @@ class JointDeepSICTrainer(Trainer):
             loss.backward()
             opt.step()
 
-    def online_train_loop(self, b_train, y_train, trained_nets_list, max_epochs):
-        self.train_loop(b_train, y_train, trained_nets_list, max_epochs)
+    def online_train_loop(self, x_train, y_train, model, max_epochs):
+        pass
 
 
 if __name__ == "__main__":
