@@ -8,10 +8,10 @@ import copy
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 conf = Config()
 
-MAML_FLAG = True
+MAML_FLAG = False
 META_LR = 0.01
 HALF = 0.5
-META_SAMPLES = 1024
+META_SAMPLES = 64
 
 
 class MetaDeepSICDeepSICTrainer(DeepSICTrainer):
@@ -46,8 +46,7 @@ class MetaDeepSICDeepSICTrainer(DeepSICTrainer):
         meta_detector = MetaDeepSICDetector()
         support_idx = torch.arange(b_train.shape[0] - self.total_frame_size)
         query_idx = torch.arange(self.total_frame_size, b_train.shape[0])
-
-        for _ in range(max_epochs):
+        for m in range(max_epochs):
             opt.zero_grad()
 
             # choose only META_SAMPLES samples from the entire support, query to use for current epoch

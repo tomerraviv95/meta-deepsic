@@ -93,12 +93,11 @@ class Plotter:
         name = current_run_params[1]
         conf.set_value('use_ecc', False)
 
-        test_pilot_sizes = [50, 100, 150, 200, 250, 300, 350, 400, 450, 500]
-        test_pilot_sizes = [100, 200, 300, 400, 500]
+        test_pilot_sizes = [50, 100, 150, 200, 250, 300]
+        test_pilot_sizes = [100]
         data_frame_size = 5000
         total_sers = []
-        trial_num = 5
-        trial_num = 5
+        trial_num = 2
         for test_pilot_size in test_pilot_sizes:
             conf.set_value('test_pilot_size', test_pilot_size)
             test_info_size = test_pilot_size + data_frame_size
@@ -116,7 +115,7 @@ class Plotter:
 
 
 if __name__ == "__main__":
-    plotter = Plotter(run_over=False)
+    plotter = Plotter(run_over=True)
 
     # plotter.ser_versus_block(current_run_params=get_deepsic())
     # plotter.ser_versus_block(current_run_params=get_deeprx())
@@ -127,9 +126,9 @@ if __name__ == "__main__":
     # plotter.ser_versus_block(current_run_params=get_online_deepsic_single())
     # plotter.ser_versus_block(current_run_params=get_meta_deepsic_single())
 
-    plotter.ser_versus_blocks_num(current_run_params=get_deepsic())
+    # plotter.ser_versus_blocks_num(current_run_params=get_deepsic())
     # plotter.ser_versus_blocks_num(current_run_params=get_deeprx())
-    plotter.ser_versus_blocks_num(current_run_params=get_online_deepsic())
+    # plotter.ser_versus_blocks_num(current_run_params=get_online_deepsic())
     # plotter.ser_versus_blocks_num(current_run_params=get_online_deeprx())
     plotter.ser_versus_blocks_num(current_run_params=get_meta_deepsic())
     # plotter.ser_versus_blocks_num(current_run_params=get_meta_deeprx())

@@ -1,12 +1,12 @@
-run_name: 'lll' # run directory
+run_name: 'general_run' # run directory
 n_ant: 4 # number of Rx Antennas
 n_user: 4 # number of Transmitted Symbols, users
 snr: 12 # SNR value
 iterations: 5 # number of iterations in the unfolded network
 train_frame_num: 50 # coherence-time block size
 test_frame_num: 50 # coherence-time block size
-test_info_size: 10000 # number of subsequent transmissions
-test_pilot_size: 1000 # number of subsequent pilot transmissions
+test_info_size: 5000 # number of subsequent transmissions
+test_pilot_size: 500 # number of subsequent pilot transmissions
 fading: True # whether to use fading
 channel_mode: 'SED' # the channel model: set 'SED' for the Spatial Exponential Decay Channel Model, i.e. exp(-|i-j|),
 # set 'Gaussian' for a Gaussian Channel, i.e. N(0,1).
