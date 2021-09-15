@@ -1,4 +1,4 @@
-from python_code.plotting.plotter_utils import get_deepsic, get_meta_deepsic
+from python_code.plotting.plotter_utils import get_deepsic, get_meta_deepsic, get_online_deepsic
 from python_code.utils.config_singleton import Config
 from python_code.utils.python_utils import load_pkl, save_pkl
 from python_code.plotting.plotter_config import *
@@ -91,10 +91,14 @@ class Plotter:
         trainer = current_run_params[0]
         # name of detector
         name = current_run_params[1]
-        test_pilot_sizes = [20, 60, 100, 140, 180, 260, 350, 500]
+        conf.set_value('use_ecc', False)
+
+        test_pilot_sizes = [50, 100, 150, 200, 250, 300, 350, 400, 450, 500]
+        test_pilot_sizes = [100, 200, 300, 400, 500]
         data_frame_size = 5000
         total_sers = []
-        trial_num = 1
+        trial_num = 5
+        trial_num = 5
         for test_pilot_size in test_pilot_sizes:
             conf.set_value('test_pilot_size', test_pilot_size)
             test_info_size = test_pilot_size + data_frame_size
@@ -112,15 +116,24 @@ class Plotter:
 
 
 if __name__ == "__main__":
-    plotter = Plotter(run_over=True)
+    plotter = Plotter(run_over=False)
 
-    plotter.ser_versus_block(current_run_params=get_deepsic())
+    # plotter.ser_versus_block(current_run_params=get_deepsic())
     # plotter.ser_versus_block(current_run_params=get_deeprx())
     # plotter.ser_versus_block(current_run_params=get_online_deepsic())
     # plotter.ser_versus_block(current_run_params=get_online_deeprx())
-    plotter.ser_versus_block(current_run_params=get_meta_deepsic())
+    # plotter.ser_versus_block(current_run_params=get_meta_deepsic())
     # plotter.ser_versus_block(current_run_params=get_meta_deeprx())
     # plotter.ser_versus_block(current_run_params=get_online_deepsic_single())
     # plotter.ser_versus_block(current_run_params=get_meta_deepsic_single())
+
+    plotter.ser_versus_blocks_num(current_run_params=get_deepsic())
+    # plotter.ser_versus_blocks_num(current_run_params=get_deeprx())
+    plotter.ser_versus_blocks_num(current_run_params=get_online_deepsic())
+    # plotter.ser_versus_blocks_num(current_run_params=get_online_deeprx())
+    plotter.ser_versus_blocks_num(current_run_params=get_meta_deepsic())
+    # plotter.ser_versus_blocks_num(current_run_params=get_meta_deeprx())
+    # plotter.ser_versus_blocks_num(current_run_params=get_online_deepsic_single())
+    # plotter.ser_versus_blocks_num(current_run_params=get_meta_deepsic_single())
 
     plt.show()

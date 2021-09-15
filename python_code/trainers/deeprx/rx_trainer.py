@@ -27,7 +27,8 @@ class RXTrainer:
     """
 
     def __init__(self):
-        self.total_frame_size = conf.test_info_size + ECC_BITS_PER_SYMBOL * conf.n_ecc_symbols
+        self.total_frame_size = (
+                conf.test_info_size + ECC_BITS_PER_SYMBOL * conf.n_ecc_symbols) if conf.use_ecc else conf.test_pilot_size
         self.train_dg = DataGenerator(self.total_frame_size, phase='train', frame_num=conf.train_frame_num)
         self.test_dg = DataGenerator(conf.test_info_size, phase='test', frame_num=conf.test_frame_num)
         self.softmax = torch.nn.Softmax(dim=1)  # Single symbol probability inference
