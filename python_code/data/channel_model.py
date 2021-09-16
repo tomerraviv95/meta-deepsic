@@ -70,7 +70,7 @@ class COSTChannel(ChannelModel):
         for i in range(1, n_user):
             path_to_mat = os.path.join(RESOURCES_DIR, phase, f'h_{i}.mat')
             h_user = scipy.io.loadmat(path_to_mat)['norm_channel'][iteration]
-            total_h[i - 1] = 0.6 * h_user
+            total_h[i - 1] = 0.5 * h_user
 
         total_h[np.arange(n_user), np.arange(n_user)] = 1
 

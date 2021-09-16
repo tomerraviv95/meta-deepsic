@@ -1,13 +1,13 @@
 run_name: 'general_run' # run directory
-n_ant: 4 # number of Rx Antennas
-n_user: 4 # number of Transmitted Symbols, users
-snr: 13 # SNR value
+n_ant: 8 # number of Rx Antennas
+n_user: 8 # number of Transmitted Symbols, users
+snr: 12 # SNR value
 iterations: 5 # number of iterations in the unfolded network
-train_frame_num: 10 # coherence-time block size
+train_frame_num: 50 # coherence-time block size
 test_frame_num: 50 # coherence-time block size
-test_info_size: 1784 # number of subsequent transmissions
+test_info_size: 80 # number of subsequent transmissions
 test_pilot_size: 0 # number of subsequent pilot transmissions
-fading: True # whether to use fading
+fading: False # whether to use fading
 channel_mode: 'SED' # the channel model: set 'SED' for the Spatial Exponential Decay Channel Model, i.e. exp(-|i-j|),
 # set 'Gaussian' for a Gaussian Channel, i.e. N(0,1).
 # 'COST' for COST 8X8 setup.
@@ -16,7 +16,7 @@ lr: 0.01 # learning rate
 max_epochs: 60 # number of training epochs
 self_supervised_epochs: 40 # number of self-supervised epochs
 use_ecc: True # whether to use ecc (corrupted data blocks) for training, or use the genie aided blocks
-n_ecc_symbols: 32 # number of symbols in ecc
+n_ecc_symbols: 2 # number of symbols in ecc
 ber_thresh: 0.02 # threshold for self-supervised training
 change_user_only: # index of single fading user
 retrain_user: # index of specific user-networks that need retraining

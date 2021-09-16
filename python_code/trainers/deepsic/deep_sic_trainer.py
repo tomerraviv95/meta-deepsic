@@ -12,9 +12,6 @@ import copy
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 conf = Config()
 
-torch.manual_seed(0)
-np.random.seed(0)
-
 HALF = 0.5
 SUBFRAMES_IN_FRAME = 5
 
@@ -86,6 +83,7 @@ class DeepSICTrainer:
         for user in range(conf.n_user):
             if phase == 'test' and conf.retrain_user is not None:
                 if not conf.retrain_user == user:
+                    print(f'Skipping user {user}')
                     continue
             self.train_model(trained_nets_list[user][i], x_train_all[user], y_train_all[user], max_epochs)
 

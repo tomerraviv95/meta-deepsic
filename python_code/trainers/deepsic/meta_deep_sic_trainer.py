@@ -8,8 +8,8 @@ import copy
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 conf = Config()
 
-MAML_FLAG = False
-META_LR = 0.01
+MAML_FLAG = True
+META_LR = 0.1
 HALF = 0.5
 META_SAMPLES = 64
 
@@ -101,6 +101,7 @@ class MetaDeepSICDeepSICTrainer(DeepSICTrainer):
         for user in range(conf.n_user):
             if phase == 'test' and conf.retrain_user is not None:
                 if not conf.retrain_user == user:
+                    print(f'Skipping user {user}')
                     continue
             self.online_train_model(trained_nets_list[user][i], x_train_all[user], y_train_all[user], max_epochs)
 
