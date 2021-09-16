@@ -109,7 +109,7 @@ class MetaDeepRXTrainer(RXTrainer):
 
     def predict(self, y_test):
         self.detector.set_state('test')
-        return self.detector(y_test)
+        return self.detector(y_test, self.train_frame_size if self.phase == 'train' else self.test_frame_size)
 
     def train_loop(self, x_train, y_train, max_epochs, phase):
         self.train_model(self.detector, x_train, y_train, max_epochs)
