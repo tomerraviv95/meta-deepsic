@@ -8,7 +8,7 @@ conf = Config()
 
 
 def encoder(b, phase):
-    if conf.use_ecc and phase == 'test':
+    if phase == 'test' and conf.use_ecc:
         encoding = lambda b: encode(b, conf.n_ecc_symbols)
     else:
         encoding = lambda b: b
@@ -16,12 +16,12 @@ def encoder(b, phase):
     return np.concatenate([encoding(b[:, i]).reshape(-1, 1) for i in range(b.shape[1])], axis=1)
 
 
-def decoder(c_pred):
-    if conf.use_ecc:
+def decoder(c_pred,phase):
+    if phase == 'test' and conf.use_ecc:
         decoding = lambda b: decode(b, conf.n_ecc_symbols)
     else:
         decoding = lambda b: b
-    b_pred = np.zeros([conf.test_frame_size, conf.n_user])
+    b_pred = np.zeros([conf.test_info_size, conf.n_user])
     for j in range(conf.n_user):
         b_pred[:, j] = decoding(c_pred[:, j].cpu().numpy())
     b_pred = torch.Tensor(b_pred).to(device)

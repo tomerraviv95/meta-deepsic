@@ -13,14 +13,29 @@ mpl.rcParams['legend.fontsize'] = 20
 mpl.rcParams['mathtext.fontset'] = 'stix'
 mpl.rcParams['font.family'] = 'STIXGeneral'
 
-COLORS_DICT = {'DeepSIC': 'blue',
+COLORS_DICT = {'Joint DeepSIC': 'blue',
+               'Joint DeepRX': 'blue',
                'Online DeepSIC': 'black',
-               'Meta-DeepSIC': 'green'}
+               'Online DeepRX': 'black',
+               'Meta-DeepSIC': 'green',
+               'Meta-DeepRX': 'green',
+               'Online DeepSIC - Single User Training': 'black',
+               'Meta-DeepSIC - Single User Training': 'green'}
 
-MARKERS_DICT = {'DeepSIC': 'x',
-                'Online DeepSIC': 'o',
-                'Meta-DeepSIC': '+'}
+MARKERS_DICT = {'Joint DeepSIC': 'x',
+                'Joint DeepRX': 'o',
+                'Online DeepSIC': 'x',
+                'Online DeepRX': 'o',
+                'Meta-DeepSIC': 'x',
+                'Meta-DeepRX': 'o',
+                'Online DeepSIC - Single User Training': '+',
+                'Meta-DeepSIC - Single User Training': '+'}
 
-LINESTYLES_DICT = {'DeepSIC': 'dotted',
+LINESTYLES_DICT = {'Joint DeepSIC': 'dotted',
+                   'Joint DeepRX': 'dotted',
                    'Online DeepSIC': 'dotted',
-                   'Meta-DeepSIC': 'dotted'}
+                   'Online DeepRX': 'dotted',
+                   'Meta-DeepSIC': 'dotted',
+                   'Meta-DeepRX': 'dotted',
+                   'Online DeepSIC - Single User Training': '-',
+                   'Meta-DeepSIC - Single User Training': '-'}

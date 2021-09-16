@@ -1,24 +1,22 @@
 run_name: 'test' # run directory
 n_ant: 4 # number of Rx Antennas
 n_user: 4 # number of Transmitted Symbols, users
-SNR_start: 15 # start SNR value
-SNR_step: 2 # increment of SNR values
-SNR_end: 15 # last SNR value
+snr: 14 # SNR value
 iterations: 5 # number of iterations in the unfolded network
-train_frame_size: 5000 # number of subsequent transmissions
-test_frame_size: 80 # number of subsequent transmissions
+test_info_size: 80 # number of subsequent transmissions
 train_frame_num: 10 # coherence-time block size
 test_frame_num: 50 # coherence-time block size
+test_pilot_size: 0 # number of subsequent pilot transmissions
 csi_noise: 0 # number of subsequent transmissions
 fading: True # whether to use fading
-ChannelModel: 'SED' # the channel model: set 'SEQ' for the Spatial Exponential Decay Channel Model, i.e. exp(-|i-j|),
+channel_mode: 'SED' # the channel model: set 'SED' for the Spatial Exponential Decay Channel Model, i.e. exp(-|i-j|),
 # set 'Gaussian' for a Gaussian Channel, i.e. N(0,1).
 eval_mode: 'by_word' # Type of evaluation. Per snr - 'aggregated', Per block - 'by_word'.
 lr: 0.01 # learning rate
 max_epochs: 60 # number of training epochs
 self_supervised_epochs: 40 # number of self-supervised epochs
-use_ecc: True # whether to encode with error correction codes
+use_ecc: True # whether to use ecc (corrupted data blocks) for training, or use the genie aided blocks
 n_ecc_symbols: 2 # number of symbols in ecc
-self_supervised: True # whether to train in an online fashion [True,False]
 ber_thresh: 0.02 # threshold for self-supervised training
-online_meta: False # whether to meta-train in an online fashion
+change_user_only: # index of single fading user
+retrain_user: # index of specific user-networks that need retraining

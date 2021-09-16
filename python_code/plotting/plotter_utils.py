@@ -1,40 +1,57 @@
-from python_code.utils.python_utils import load_pkl, save_pkl
-from dir_definitions import PLOTS_DIR
-from python_code.plotting.plotter_config import *
-from python_code.trainers.trainer import Trainer
-import matplotlib.pyplot as plt
-import numpy as np
+from dir_definitions import CONFIG_RUNS_DIR
 import os
+from python_code.trainers.deepsic.joint_deep_sic_trainer import JointDeepSICDeepSICTrainer
+from python_code.trainers.deeprx.joint_deeprx_trainer import JointDeepRXTrainer
+from python_code.trainers.deeprx.meta_deeprx_trainer import MetaDeepRXTrainer
+from python_code.trainers.deepsic.online_deep_sic_trainer import OnlineDeepSICDeepSICTrainer
+from python_code.trainers.deepsic.meta_deep_sic_trainer import MetaDeepSICDeepSICTrainer
+from python_code.trainers.deeprx.online_deeprx_trainer import OnlineDeepRXTrainer
+from python_code.utils.config_singleton import Config
 
 
-def get_ber_plot(dec: Trainer, run_over: bool, method_name: str):
-    print(method_name)
-    # set the path to saved plot results for a single method (so we do not need to run anew each time)
-    if not os.path.exists(PLOTS_DIR):
-        os.makedirs(PLOTS_DIR)
-    file_name = '_'.join([method_name])
-    plots_path = os.path.join(PLOTS_DIR, file_name + '.pkl')
-    print(plots_path)
-    # if plot already exists, and the run_over flag is false - load the saved plot
-    if os.path.isfile(plots_path) and not run_over:
-        print("Loading plots")
-        ser_total = load_pkl(plots_path)
-    else:
-        # otherwise - run again
-        print("calculating fresh")
-        ser_total = dec.train()
-        save_pkl(plots_path, ser_total)
-    return ser_total
+def get_deepsic():
+    config = Config()
+    config.load_config(os.path.join(CONFIG_RUNS_DIR, 'all.yaml'))
+    return (JointDeepSICDeepSICTrainer(), 'Joint DeepSIC')
 
 
-def plot_ser(blocks_ind, ser, method_name):
-    plt.plot(blocks_ind, np.cumsum(np.array(ser)) / len(ser),
-             label=method_name,
-             color=COLORS_DICT[method_name],
-             marker=MARKERS_DICT[method_name],
-             linestyle=LINESTYLES_DICT[method_name],
-             linewidth=2.2)
-    plt.ylabel(r'BER', fontsize=20)
-    plt.xlabel(r'block index', fontsize=20)
-    plt.grid(True, which='both')
-    plt.legend(loc='upper left', prop={'size': 15})
+def get_online_deepsic():
+    config = Config()
+    config.load_config(os.path.join(CONFIG_RUNS_DIR, 'all.yaml'))
+    return (OnlineDeepSICDeepSICTrainer(), 'Online DeepSIC')
+
+
+def get_meta_deepsic():
+    config = Config()
+    config.load_config(os.path.join(CONFIG_RUNS_DIR, 'all.yaml'))
+    return (MetaDeepSICDeepSICTrainer(), 'Meta-DeepSIC')
+
+
+def get_online_deepsic_single():
+    config = Config()
+    config.load_config(os.path.join(CONFIG_RUNS_DIR, 'single.yaml'))
+    return (OnlineDeepSICDeepSICTrainer(), 'Online DeepSIC - Single User Training')
+
+
+def get_meta_deepsic_single():
+    config = Config()
+    config.load_config(os.path.join(CONFIG_RUNS_DIR, 'single.yaml'))
+    return (MetaDeepSICDeepSICTrainer(), 'Meta-DeepSIC - Single User Training')
+
+
+def get_deeprx():
+    config = Config()
+    config.load_config(os.path.join(CONFIG_RUNS_DIR, 'all.yaml'))
+    return (JointDeepRXTrainer(), 'Joint DeepRX')
+
+
+def get_online_deeprx():
+    config = Config()
+    config.load_config(os.path.join(CONFIG_RUNS_DIR, 'all.yaml'))
+    return (OnlineDeepRXTrainer(), 'Online DeepRX')
+
+
+def get_meta_deeprx():
+    config = Config()
+    config.load_config(os.path.join(CONFIG_RUNS_DIR, 'all.yaml'))
+    return (MetaDeepRXTrainer(), 'Meta-DeepRX')

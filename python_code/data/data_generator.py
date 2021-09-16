@@ -33,14 +33,14 @@ class DataGenerator(Dataset):
 
         for i in range(self.frame_num):
             # get channel
-            H = ChannelModel.get_channel(conf.ChannelModel, conf.n_ant, conf.n_user, conf.csi_noise, self.phase,
-                                         conf.fading, i)
+            H = ChannelModel.get_channel(conf.channel_mode, conf.n_ant, conf.n_user, self.phase,
+                                         conf.fading, self.frame_num, i)
             # generate bits
             b = np.random.randint(0, 2, size=(self.frame_size, conf.n_user))
             c = encoder(b, self.phase)
             x = bpsk_modulate(c)
             sigma = calculate_sigma_from_snr(snr)
-            y = np.matmul(x, H) + np.sqrt(sigma) * np.random.randn(x.shape[0], conf.n_ant)
+            y = np.matmul(H, x.T).T + np.sqrt(sigma) * np.random.randn(x.shape[0], conf.n_ant)
             b_total = torch.cat([b_total, torch.FloatTensor(b)])
             x_total = torch.cat([x_total, torch.FloatTensor(x)])
             y_total = torch.cat([y_total, torch.FloatTensor(y)])
