@@ -1,5 +1,3 @@
-import copy
-
 from python_code.ecc.rs_main import ECC_BITS_PER_SYMBOL
 from python_code.ecc.wrappers import decoder, encoder
 from python_code.utils.metrics import calculate_error_rates
@@ -7,13 +5,20 @@ from python_code.data.data_generator import DataGenerator
 from python_code.utils.config_singleton import Config
 from typing import List
 import numpy as np
+import random
 import torch
+import copy
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 conf = Config()
 
 HALF = 0.5
 SUBFRAMES_IN_FRAME = 5
+
+random.seed(0)
+torch.manual_seed(0)
+torch.cuda.manual_seed(0)
+np.random.seed(0)
 
 
 class RXTrainer:
@@ -24,13 +29,15 @@ class RXTrainer:
     """
 
     def __init__(self):
-        self.total_frame_size = (
+        self.train_frame_size = conf.test_info_size if conf.use_ecc else conf.test_pilot_size
+        self.test_frame_size = (
                 conf.test_info_size + ECC_BITS_PER_SYMBOL * conf.n_ecc_symbols) if conf.use_ecc else conf.test_pilot_size
-        self.train_dg = DataGenerator(self.total_frame_size, phase='train', frame_num=conf.train_frame_num)
+        self.train_dg = DataGenerator(conf.test_info_size, phase='train', frame_num=conf.train_frame_num)
         self.test_dg = DataGenerator(conf.test_info_size, phase='test', frame_num=conf.test_frame_num)
         self.softmax = torch.nn.Softmax(dim=1)  # Single symbol probability inference
         self.online_meta = False
         self.self_supervised = False
+        self.phase = None
 
     def __str__(self):
         return 'trainer'
@@ -51,9 +58,6 @@ class RXTrainer:
         pass
 
     def predict(self, y_test):
-        pass
-
-    def eval_setup(self, c_frame_size, y_test_column_shape):
         pass
 
     def copy_detector(self, detector):
@@ -115,6 +119,8 @@ class RXTrainer:
 
         # use last word inserted in the buffer for training
         if self.self_supervised:
+            if self.online_meta:
+                self.detector = self.copy_detector(self.saved_detector)
             # use last word inserted in the buffer for training
             self.online_train_loop(x_pilot, y_pilot, conf.self_supervised_epochs, 'test')
 
@@ -160,6 +166,8 @@ class RXTrainer:
 
         # use last word inserted in the buffer for training
         if self.self_supervised and ber <= conf.ber_thresh:
+            if self.online_meta:
+                self.detector = self.copy_detector(self.saved_detector)
             # use last word inserted in the buffer for training
             self.online_train_loop(to_buffer_word, current_y, conf.self_supervised_epochs, 'test')
 
@@ -188,7 +196,6 @@ class RXTrainer:
         b_pred = torch.zeros_like(b_test)
         c_frame_size = c_pred.shape[0] // conf.test_frame_num
         b_frame_size = b_pred.shape[0] // conf.test_frame_num
-        self.eval_setup(c_frame_size, y_test.shape[1])
 
         c_pred = self.predict(y_test)
         print(f'Finished testing symbols')
@@ -216,9 +223,11 @@ class RXTrainer:
         all_bers = []  # Contains the ber
         print(f'training')
         print(f'snr {conf.snr}')
+        self.phase = 'train'
         x_train, y_train = self.train_dg(snr=conf.snr)  # Generating data for the given snr
         self.initialize_detector()
         self.train_loop(x_train, y_train, conf.max_epochs, 'train')
+        self.phase = 'test'
         ber = self.evaluate(conf.snr)
         all_bers.append(ber)
         print(f'\nber :{sum(ber) / len(ber)} @ snr: {conf.snr} [dB]')

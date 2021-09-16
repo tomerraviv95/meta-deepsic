@@ -130,7 +130,6 @@ class DeepSICTrainer:
             b_start_ind = frame * b_frame_size
             b_end_ind = (frame + 1) * b_frame_size
             current_x = b_test[b_start_ind:b_end_ind]
-
             if conf.use_ecc:
                 buffer_b, buffer_y = self.ecc_eval(buffer_b, buffer_y, probs_vec, ber_list, current_y, current_x,
                                                    trained_nets_list, frame)
@@ -154,13 +153,13 @@ class DeepSICTrainer:
             print('Meta')
             # initialize from trained weights
             self.train_loop(buffer_b, buffer_y, self.saved_nets_list, conf.self_supervised_epochs, self.phase)
-            trained_nets_list = [copy.deepcopy(net) for net in self.saved_nets_list]
 
         # use last word inserted in the buffer for training
         if self.self_supervised:
+            if self.online_meta:
+                trained_nets_list = [copy.deepcopy(net) for net in self.saved_nets_list]
             # use last word inserted in the buffer for training
-            self.online_train_loop(x_pilot, y_pilot, trained_nets_list,
-                                   conf.self_supervised_epochs, self.phase)
+            self.online_train_loop(x_pilot, y_pilot, trained_nets_list, conf.self_supervised_epochs, self.phase)
 
         # detect and decode
         for i in range(conf.iterations):
@@ -206,9 +205,9 @@ class DeepSICTrainer:
             self.train_loop(buffer_b, buffer_y, self.saved_nets_list, conf.self_supervised_epochs, self.phase)
 
         if self.self_supervised and ber <= conf.ber_thresh:
-            # use last word inserted in the buffer for training
             if self.online_meta:
                 trained_nets_list = [copy.deepcopy(net) for net in self.saved_nets_list]
+            # use last word inserted in the buffer for training
             self.online_train_loop(est_word, current_y, trained_nets_list, conf.self_supervised_epochs, self.phase)
 
         # use last word inserted in the buffer for training
@@ -292,7 +291,3 @@ class DeepSICTrainer:
         print(f'\nber :{sum(ber) / len(ber)} @ snr: {conf.snr} [dB]')
         print(f'Training and Testing Completed\nBERs: {all_bers}')
         return all_bers
-
-
-def check_weight(trained_nets_list):
-    print(torch.sum(torch.abs(trained_nets_list[0][0].fc0.weight)))
