@@ -34,10 +34,33 @@ class ChannelModel:
 
     @staticmethod
     def add_fading(H, fading, phase, n_ant, iteration):
+
+        if conf.fading_type == 1:
+            if phase == 'train':
+                degs_array = np.array([1, 1, 1, 1])
+                center = 1
+            else:
+                degs_array = np.array([51, 39, 33, 21])
+                center = 0.8
+        elif conf.fading_type == 2:
+            if phase == 'train':
+                degs_array = np.array([51, 39, 33, 21])
+                center = 0.8
+            else:
+                degs_array = np.array([28, 31, 23, 18])
+                center = 0.6
+        elif conf.fading_type == 3:
+            if phase == 'train':
+                degs_array = np.array([51, 39, 33, 21])
+                center = 0.9
+            else:
+                degs_array = np.array([51, 39, 33, 21])
+                center = 0.7
+        else:
+            raise ValueError("No such fading type!!!")
+
         if fading:
-        # if phase == 'test' and fading:
-            degs_array = np.array([10, 10, 10, 10])
-            fade_mat = (0.8 + 0.2 * np.cos(2 * np.pi * iteration / degs_array))
+            fade_mat = center + (1 - center) * np.cos(2 * np.pi * iteration / degs_array)
             if conf.change_user_only:
                 remaining_indices = list(set(list(range(n_ant))) - set([conf.change_user_only]))
                 fade_mat[remaining_indices] = 1

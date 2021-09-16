@@ -120,7 +120,6 @@ class DeepSICTrainer:
         self.saved_nets_list = [copy.deepcopy(net) for net in trained_nets_list]
         # query for all detected words
         buffer_b, buffer_y = torch.empty([0, b_test.shape[1]]).to(device), torch.empty([0, y_test.shape[1]]).to(device)
-        # buffer_b, buffer_y = self.train_dg(snr=snr)
 
         ber_list = []
         for frame in range(conf.test_frame_num - 1):
@@ -206,12 +205,13 @@ class DeepSICTrainer:
             # initialize from trained weights
             self.train_loop(buffer_b, buffer_y, self.saved_nets_list, conf.self_supervised_epochs, self.phase)
 
-        # use last word inserted in the buffer for training
         if self.self_supervised and ber <= conf.ber_thresh:
             # use last word inserted in the buffer for training
             if self.online_meta:
                 trained_nets_list = [copy.deepcopy(net) for net in self.saved_nets_list]
             self.online_train_loop(est_word, current_y, trained_nets_list, conf.self_supervised_epochs, self.phase)
+
+        # use last word inserted in the buffer for training
 
         return buffer_b, buffer_y
 
