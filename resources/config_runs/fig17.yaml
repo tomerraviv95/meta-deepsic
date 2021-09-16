@@ -8,7 +8,7 @@ train_frame_num: 50 # coherence-time block size
 test_frame_num: 40 # coherence-time block size
 test_pilot_size: 0 # number of subsequent pilot transmissions
 fading: False # whether to use fading
-fading_type: 1 # 1 - usual, 2 - from low fading to stronger fading
+fading_type: 0 # 1 - usual, 2 - from low fading to stronger fading
 channel_mode: 'COST' # the channel model: set 'SED' for the Spatial Exponential Decay Channel Model, i.e. exp(-|i-j|),
 # set 'Gaussian' for a Gaussian Channel, i.e. N(0,1).
 # 'COST' for COST 8X8 setup.

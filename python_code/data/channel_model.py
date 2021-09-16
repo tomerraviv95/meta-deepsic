@@ -16,7 +16,7 @@ class ChannelModel:
 
     @staticmethod
     def calculate_channel_wrapper(channel_mode, n_ant, n_user, phase, frame_num, iteration, fading) -> np.ndarray:
-        if channel_mode == 'SED':
+        if channel_mode == 'SED' or phase == 'train':
             H = SEDChannel.calculate_channel(n_ant, n_user, frame_num, iteration, phase)
         elif channel_mode == 'Gaussian':
             H = GaussianChannel.calculate_channel(n_ant, n_user, frame_num, iteration, phase)
@@ -90,14 +90,12 @@ class COSTChannel(ChannelModel):
     @staticmethod
     def calculate_channel(n_ant, n_user, frame_num, iteration, phase) -> np.ndarray:
         total_h = np.empty([n_user, n_ant])
-
+        main_folder = 1 + (iteration // 10)
         for i in range(1, n_user):
-            path_to_mat = os.path.join(RESOURCES_DIR, phase, f'h_{i}.mat')
-            h_user = scipy.io.loadmat(path_to_mat)['norm_channel'][iteration]
-            total_h[i - 1] = 0.8 * h_user
-
+            path_to_mat = os.path.join(RESOURCES_DIR, f'{phase}_{main_folder}', f'h_{i}.mat')
+            h_user = scipy.io.loadmat(path_to_mat)['norm_channel'][iteration % 10]
+            total_h[i - 1] = 0.25 * h_user
         total_h[np.arange(n_user), np.arange(n_user)] = 1
-
         return total_h
 
 
