@@ -1,4 +1,5 @@
-from python_code.plotting.plotter_utils import get_deepsic, get_meta_deepsic, get_online_deepsic
+from python_code.plotting.plotter_utils import get_deepsic, get_meta_deepsic, get_online_deepsic, get_deeprx, \
+    get_online_deeprx, get_meta_deeprx, get_online_deepsic_single_user
 from python_code.utils.config_singleton import Config
 from python_code.utils.python_utils import load_pkl, save_pkl
 from python_code.plotting.plotter_config import *
@@ -114,16 +115,22 @@ class Plotter:
                     bbox_inches='tight')
 
 
+def plot_figure_wrapper(figure_ind):
+    if figure_ind in [1, 2, 5, 6, 7, 8, 9, 10, 11, 12, 15, 16, 17, 18, 19, 20]:
+        plotter.ser_versus_block(current_run_params=get_deepsic(figure_ind))
+        plotter.ser_versus_block(current_run_params=get_online_deepsic(figure_ind))
+        plotter.ser_versus_block(current_run_params=get_meta_deepsic(figure_ind))
+    if figure_ind in [7, 8, 17, 18]:
+        plotter.ser_versus_block(current_run_params=get_deeprx(figure_ind))
+        plotter.ser_versus_block(current_run_params=get_online_deeprx(figure_ind))
+        plotter.ser_versus_block(current_run_params=get_meta_deeprx(figure_ind))
+    if figure_ind in [3, 4, 13, 14]:
+        plotter.ser_versus_block(current_run_params=get_online_deepsic(figure_ind - 2))
+        plotter.ser_versus_block(current_run_params=get_online_deepsic_single_user(figure_ind))
+
+
 if __name__ == "__main__":
     plotter = Plotter(run_over=True)
-
-    plotter.ser_versus_block(current_run_params=get_deepsic())
-    # plotter.ser_versus_block(current_run_params=get_deeprx())
-    plotter.ser_versus_block(current_run_params=get_online_deepsic())
-    # plotter.ser_versus_block(current_run_params=get_online_deeprx())
-    plotter.ser_versus_block(current_run_params=get_meta_deepsic())
-    # plotter.ser_versus_block(current_run_params=get_meta_deeprx())
-    # plotter.ser_versus_block(current_run_params=get_online_deepsic_single())
-    # plotter.ser_versus_block(current_run_params=get_meta_deepsic_single())
-
+    figure_ind = 1
+    plot_figure_wrapper(figure_ind)
     plt.show()
