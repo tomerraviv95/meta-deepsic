@@ -34,8 +34,9 @@ class ChannelModel:
 
     @staticmethod
     def add_fading(H, fading, phase, n_ant, iteration):
-        if phase == 'test' and fading:
-            degs_array = np.array([51, 39, 33, 21])
+        if fading:
+        # if phase == 'test' and fading:
+            degs_array = np.array([10, 10, 10, 10])
             fade_mat = (0.8 + 0.2 * np.cos(2 * np.pi * iteration / degs_array))
             if conf.change_user_only:
                 remaining_indices = list(set(list(range(n_ant))) - set([conf.change_user_only]))
@@ -70,7 +71,7 @@ class COSTChannel(ChannelModel):
         for i in range(1, n_user):
             path_to_mat = os.path.join(RESOURCES_DIR, phase, f'h_{i}.mat')
             h_user = scipy.io.loadmat(path_to_mat)['norm_channel'][iteration]
-            total_h[i - 1] = 0.5 * h_user
+            total_h[i - 1] = 0.8 * h_user
 
         total_h[np.arange(n_user), np.arange(n_user)] = 1
 

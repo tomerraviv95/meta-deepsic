@@ -1,7 +1,7 @@
-from python_code.detectors.meta_deep_sic_detector import MetaDeepSICDetector
 from python_code.detectors.deep_sic_detector import DeepSICDetector
-from python_code.utils.config_singleton import Config
+from python_code.detectors.meta_deep_sic_detector import MetaDeepSICDetector
 from python_code.trainers.deepsic.deep_sic_trainer import DeepSICTrainer
+from python_code.utils.config_singleton import Config
 import torch
 import copy
 
@@ -9,7 +9,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 conf = Config()
 
 MAML_FLAG = True
-META_LR = 0.1
+META_LR = 0.01
 HALF = 0.5
 
 
@@ -43,14 +43,15 @@ class MetaDeepSICTrainer(DeepSICTrainer):
         crt = torch.nn.CrossEntropyLoss()
         net = net.to(device)
         meta_detector = MetaDeepSICDetector()
-        for _ in range(max_epochs):
+        frame_size = self.train_frame_size if self.phase == 'train' else self.test_frame_size
+        support_idx = torch.arange(b_train.shape[0] - frame_size)
+        query_idx = torch.arange(frame_size, b_train.shape[0])
+        for m in range(max_epochs):
             opt.zero_grad()
-            cur_support_idx = torch.arange(b_train.shape[0] - 1)
-            cur_query_idx = torch.arange(1, b_train.shape[0])
 
             # divide the words to following pairs - (support,query)
-            support_b, support_y = b_train[cur_support_idx], y_train[cur_support_idx]
-            query_b, query_y = b_train[cur_query_idx], y_train[cur_query_idx]
+            support_b, support_y = b_train[support_idx], y_train[support_idx]
+            query_b, query_y = b_train[query_idx], y_train[query_idx]
 
             # local update (with support set)
             para_list_detector = list(map(lambda p: p[0], zip(net.parameters())))
@@ -76,7 +77,6 @@ class MetaDeepSICTrainer(DeepSICTrainer):
             opt.step()
 
     def online_train_loop(self, b_train, y_train, trained_nets_list, max_epochs, phase):
-        trained_nets_list = [copy.deepcopy(net) for net in self.saved_nets_list]
         initial_probs = b_train.clone()
         b_train_all, y_train_all = self.prepare_data_for_training(b_train, y_train, initial_probs)
         # Training the DeepSIC network for each user for iteration=1

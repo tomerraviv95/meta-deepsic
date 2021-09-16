@@ -32,7 +32,7 @@ class Plotter:
             os.makedirs(PLOTS_DIR)
         file_name = '_'.join([method_name,
                               conf.channel_mode,
-                              str(trainer.total_frame_size),
+                              str(trainer.test_frame_size),
                               str(conf.test_info_size),
                               str(conf.snr), 'dB'])
         if trial is not None:
@@ -83,7 +83,7 @@ class Plotter:
         name = current_run_params[1]
         ser = self.get_ser_plot(trainer, run_over=self.run_over, method_name=name)
         self.plot_ser_versus_block(range(conf.test_frame_num - 1), ser[0], name)
-        plt.savefig(os.path.join(FIGURES_DIR, self.folder_name, f'SER_versus_block_{trainer.total_frame_size}.png'),
+        plt.savefig(os.path.join(FIGURES_DIR, self.folder_name, f'SER_versus_block_{trainer.test_frame_size}.png'),
                     bbox_inches='tight')
 
     def ser_versus_blocks_num(self, current_run_params):

@@ -30,13 +30,15 @@ class DeepSICTrainer:
     """
 
     def __init__(self):
-        self.total_frame_size = (
+        self.train_frame_size = conf.test_info_size if conf.use_ecc else conf.test_pilot_size
+        self.test_frame_size = (
                 conf.test_info_size + ECC_BITS_PER_SYMBOL * conf.n_ecc_symbols) if conf.use_ecc else conf.test_pilot_size
-        self.train_dg = DataGenerator(self.total_frame_size, phase='train', frame_num=conf.train_frame_num)
+        self.train_dg = DataGenerator(conf.test_info_size, phase='train', frame_num=conf.train_frame_num)
         self.test_dg = DataGenerator(conf.test_info_size, phase='test', frame_num=conf.test_frame_num)
         self.softmax = torch.nn.Softmax(dim=1)  # Single symbol probability inference
         self.online_meta = False
         self.self_supervised = False
+        self.phase = None
 
     def __str__(self):
         return 'trainer'
@@ -116,9 +118,9 @@ class DeepSICTrainer:
 
         # saved detector is used to initialize the decoder in meta learning loops
         self.saved_nets_list = [copy.deepcopy(net) for net in trained_nets_list]
-
         # query for all detected words
         buffer_b, buffer_y = torch.empty([0, b_test.shape[1]]).to(device), torch.empty([0, y_test.shape[1]]).to(device)
+        # buffer_b, buffer_y = self.train_dg(snr=snr)
 
         ber_list = []
         for frame in range(conf.test_frame_num - 1):
@@ -152,14 +154,14 @@ class DeepSICTrainer:
         if self.online_meta and (frame + 1) % SUBFRAMES_IN_FRAME == 0:
             print('Meta')
             # initialize from trained weights
-            self.train_loop(buffer_b, buffer_y, self.saved_nets_list, conf.self_supervised_epochs, 'test')
+            self.train_loop(buffer_b, buffer_y, self.saved_nets_list, conf.self_supervised_epochs, self.phase)
             trained_nets_list = [copy.deepcopy(net) for net in self.saved_nets_list]
 
         # use last word inserted in the buffer for training
         if self.self_supervised:
             # use last word inserted in the buffer for training
             self.online_train_loop(x_pilot, y_pilot, trained_nets_list,
-                                   conf.self_supervised_epochs, 'test')
+                                   conf.self_supervised_epochs, self.phase)
 
         # detect and decode
         for i in range(conf.iterations):
@@ -181,11 +183,11 @@ class DeepSICTrainer:
         detected_word = symbol_to_prob(prob_to_symbol(probs_vec.float()))
 
         # decode
-        decoded_word = decoder(detected_word, 'test')
+        decoded_word = decoder(detected_word, self.phase)
 
         # encode word again
         decoded_word_array = decoded_word.int().cpu().numpy()
-        encoded_word = torch.Tensor(encoder(decoded_word_array, 'test')).to(device)
+        encoded_word = torch.Tensor(encoder(decoded_word_array, self.phase)).to(device)
 
         # calculate error rate
         ber = calculate_error_rates(decoded_word, current_x)[0]
@@ -194,21 +196,22 @@ class DeepSICTrainer:
 
         # save the encoded word in the buffer
         if ber <= conf.ber_thresh:
-            to_buffer_word = self.get_word(current_x, ber, detected_word, encoded_word)
-            buffer_b = torch.cat([buffer_b, to_buffer_word], dim=0)
+            est_word = self.get_word(current_x, ber, detected_word, encoded_word)
+            buffer_b = torch.cat([buffer_b, est_word], dim=0)
             buffer_y = torch.cat([buffer_y, current_y], dim=0)
 
         # meta-learning main function
         if self.online_meta and (frame + 1) % SUBFRAMES_IN_FRAME == 0:
             print('Meta')
             # initialize from trained weights
-            self.train_loop(buffer_b, buffer_y, self.saved_nets_list, conf.self_supervised_epochs, 'test')
-            trained_nets_list = [copy.deepcopy(net) for net in self.saved_nets_list]
+            self.train_loop(buffer_b, buffer_y, self.saved_nets_list, conf.self_supervised_epochs, self.phase)
 
         # use last word inserted in the buffer for training
         if self.self_supervised and ber <= conf.ber_thresh:
             # use last word inserted in the buffer for training
-            self.online_train_loop(to_buffer_word, current_y, trained_nets_list, conf.self_supervised_epochs, 'test')
+            if self.online_meta:
+                trained_nets_list = [copy.deepcopy(net) for net in self.saved_nets_list]
+            self.online_train_loop(est_word, current_y, trained_nets_list, conf.self_supervised_epochs, self.phase)
 
         return buffer_b, buffer_y
 
@@ -243,7 +246,7 @@ class DeepSICTrainer:
             c_end_ind = (frame + 1) * c_frame_size
             b_start_ind = frame * b_frame_size
             b_end_ind = (frame + 1) * b_frame_size
-            b_pred[b_start_ind:b_end_ind] = decoder(c_pred[c_start_ind:c_end_ind], 'test')
+            b_pred[b_start_ind:b_end_ind] = decoder(c_pred[c_start_ind:c_end_ind], self.phase)
         ber = calculate_error_rates(b_pred, b_test)[0]
         return [ber]
 
@@ -278,12 +281,18 @@ class DeepSICTrainer:
         all_bers = []  # Contains the ber
         print(f'training')
         print(f'snr {conf.snr}')
+        self.phase = 'train'
         b_train, y_train = self.train_dg(snr=conf.snr)  # Generating data for the given snr
         trained_nets_list = [[self.initialize_detector() for _ in range(conf.iterations)]
                              for _ in range(conf.n_user)]  # 2D list for Storing the DeepSIC Networks
-        self.train_loop(b_train, y_train, trained_nets_list, conf.max_epochs, 'train')
+        self.train_loop(b_train, y_train, trained_nets_list, conf.max_epochs, self.phase)
+        self.phase = 'test'
         ber = self.evaluate(conf.snr, trained_nets_list)
         all_bers.append(ber)
         print(f'\nber :{sum(ber) / len(ber)} @ snr: {conf.snr} [dB]')
         print(f'Training and Testing Completed\nBERs: {all_bers}')
         return all_bers
+
+
+def check_weight(trained_nets_list):
+    print(torch.sum(torch.abs(trained_nets_list[0][0].fc0.weight)))
