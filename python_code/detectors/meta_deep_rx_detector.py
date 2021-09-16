@@ -42,9 +42,8 @@ class MetaDeepRXDetector(nn.Module):
     The DeepRXDetector Network Architecture
     """
 
-    def __init__(self, total_frame_size):
+    def __init__(self):
         super(MetaDeepRXDetector, self).__init__()
-        self.total_frame_size = total_frame_size
         self.all_blocks = [MetaResnetBlock() for _ in range(RESNET_BLOCKS)]
         self.state = None
 

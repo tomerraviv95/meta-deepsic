@@ -10,7 +10,6 @@ conf = Config()
 MAML_FLAG = True
 META_LR = 0.01
 HALF = 0.5
-META_SAMPLES = 1024
 
 
 class MetaDeepRXTrainer(RXTrainer):
@@ -30,7 +29,7 @@ class MetaDeepRXTrainer(RXTrainer):
         """
         Loads the DeepRX detector
         """
-        self.detector = DeepRXDetector(self.total_frame_size)
+        self.detector = DeepRXDetector()
 
     def train_model(self, net, x_train, y_train, max_epochs):
         """
@@ -43,13 +42,14 @@ class MetaDeepRXTrainer(RXTrainer):
         crt = torch.nn.BCELoss().to(device)
         m = torch.nn.Sigmoid()
         net = net.to(device)
-        meta_detector = MetaDeepRXDetector(self.total_frame_size)
-        support_idx = torch.arange(max(x_train.shape[0] - self.total_frame_size, 0))
-        query_idx = torch.arange(max(self.total_frame_size, x_train.shape[0], 0))
+        meta_detector = MetaDeepRXDetector()
+        frame_size = self.train_frame_size if self.phase == 'train' else self.test_frame_size
+        support_idx = torch.arange(x_train.shape[0] - frame_size)
+        query_idx = torch.arange(frame_size, x_train.shape[0])
+        META_SAMPLES = 25
         net.set_state('train')
         meta_detector.set_state('train')
-
-        for l in range(max_epochs):
+        for _ in range(max_epochs):
             opt.zero_grad()
 
             # choose only META_SAMPLES samples from the entire support, query to use for current epoch

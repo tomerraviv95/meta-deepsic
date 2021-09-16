@@ -91,7 +91,6 @@ class DeepSICTrainer:
         for user in range(conf.n_user):
             if phase == 'test' and conf.retrain_user is not None:
                 if not conf.retrain_user == user:
-                    print(f'Skipping user {user}')
                     continue
             self.train_model(trained_nets_list[user][i], x_train_all[user], y_train_all[user], max_epochs)
 

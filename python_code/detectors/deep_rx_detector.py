@@ -65,9 +65,8 @@ class DeepRXDetector(nn.Module):
     The DeepRXDetector Network Architecture
     """
 
-    def __init__(self, total_frame_size):
+    def __init__(self):
         super(DeepRXDetector, self).__init__()
-        self.total_frame_size = total_frame_size
         self.all_blocks = nn.Sequential(
             *[ResnetBlock(conf.n_ant, IN2_FILTERS),
               ResnetBlock(IN2_FILTERS, IN3_FILTERS),
@@ -82,8 +81,8 @@ class DeepRXDetector(nn.Module):
         )
         self.state = None
 
-    def reshaped_tensor_in(self, ten: torch.Tensor):
-        return ten.reshape(-1, self.total_frame_size, conf.n_user, 1).transpose(dim0=1, dim1=2)
+    def reshaped_tensor_in(self, ten: torch.Tensor, frame_size: int):
+        return ten.reshape(-1, frame_size, conf.n_user, 1).transpose(dim0=1, dim1=2)
 
     def reshaped_tensor_out(self, ten: torch.Tensor):
         return ten.transpose(dim0=1, dim1=2).reshape(-1, conf.n_ant)
@@ -91,8 +90,8 @@ class DeepRXDetector(nn.Module):
     def set_state(self, state: str):
         self.state = state
 
-    def forward(self, y: torch.Tensor) -> torch.Tensor:
-        reshaped_y_in = self.reshaped_tensor_in(y)
+    def forward(self, y: torch.Tensor, frame_size: int) -> torch.Tensor:
+        reshaped_y_in = self.reshaped_tensor_in(y, frame_size)
         out = self.all_blocks(tanh_func(reshaped_y_in))
         reshaped_out = self.reshaped_tensor_out(out)
         if self.state == 'train':

@@ -23,7 +23,7 @@ class JointDeepRXTrainer(RXTrainer):
         """
         Loads the DeepRX detector
         """
-        self.detector = DeepRXDetector(self.total_frame_size)
+        self.detector = DeepRXDetector()
 
     def train_model(self, net, x_train, y_train, max_epochs):
         """
@@ -44,7 +44,7 @@ class JointDeepRXTrainer(RXTrainer):
         net = net.to(device)
         for _ in range(max_epochs):
             opt.zero_grad()
-            out = net(y_train)
+            out = net(y_train, self.train_frame_size if self.phase == 'train' else self.test_frame_size)
             loss = crt(input=m(out), target=x_train)
             loss.backward()
             opt.step()
@@ -54,7 +54,7 @@ class JointDeepRXTrainer(RXTrainer):
 
     def predict(self, y_test):
         self.detector.set_state('test')
-        return self.detector(y_test)
+        return self.detector(y_test, self.train_frame_size if self.phase == 'train' else self.test_frame_size)
 
     def train_loop(self, x_train, y_train, max_epochs, phase):
         self.train_model(self.detector, x_train, y_train, max_epochs)
