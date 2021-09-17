@@ -33,6 +33,12 @@ def get_meta_deepsic(figure_ind):
     return (MetaDeepSICTrainer(), 'Meta-DeepSIC')
 
 
+def get_meta_deepsic_single_user(figure_ind):
+    config = Config()
+    config.load_config(os.path.join(CONFIG_RUNS_DIR, f'fig{figure_ind}.yaml'))
+    return (MetaDeepSICTrainer(), 'Meta-DeepSIC - Single User')
+
+
 def get_deeprx(figure_ind):
     config = Config()
     config.load_config(os.path.join(CONFIG_RUNS_DIR, f'fig{figure_ind}.yaml'))

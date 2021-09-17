@@ -20,7 +20,7 @@ COLORS_DICT = {'Joint DeepSIC': 'blue',
                'Meta-DeepSIC': 'green',
                'Meta-DeepRX': 'green',
                'Online DeepSIC - Single User': 'black',
-               'Meta-DeepSIC - Single User Training': 'green'}
+               'Meta-DeepSIC - Single User': 'green'}
 
 MARKERS_DICT = {'Joint DeepSIC': 'x',
                 'Joint DeepRX': 'o',
@@ -29,7 +29,7 @@ MARKERS_DICT = {'Joint DeepSIC': 'x',
                 'Meta-DeepSIC': 'x',
                 'Meta-DeepRX': 'o',
                 'Online DeepSIC - Single User': '+',
-                'Meta-DeepSIC - Single User Training': '+'}
+                'Meta-DeepSIC - Single User': '+'}
 
 LINESTYLES_DICT = {'Joint DeepSIC': 'dotted',
                    'Joint DeepRX': 'dotted',
@@ -38,4 +38,4 @@ LINESTYLES_DICT = {'Joint DeepSIC': 'dotted',
                    'Meta-DeepSIC': 'dotted',
                    'Meta-DeepRX': 'dotted',
                    'Online DeepSIC - Single User': '-',
-                   'Meta-DeepSIC - Single User Training': '-'}
+                   'Meta-DeepSIC - Single User': '-'}

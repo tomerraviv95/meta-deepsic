@@ -44,6 +44,8 @@ class MetaDeepRXTrainer(RXTrainer):
         net = net.to(device)
         meta_detector = MetaDeepRXDetector()
         frame_size = self.train_frame_size if self.phase == 'train' else self.test_frame_size
+        if x_train.shape[0] - frame_size <= 0:
+            return
         support_idx = torch.arange(x_train.shape[0] - frame_size)
         query_idx = torch.arange(frame_size, x_train.shape[0])
         META_SAMPLES = 25
