@@ -96,7 +96,7 @@ class Plotter:
         test_pilot_sizes = [50, 100, 150, 200, 250, 300, 350, 400, 450, 500]
         data_frame_size = 5000
         total_sers = []
-        trial_num = 5
+        trial_num = 1
         for test_pilot_size in test_pilot_sizes:
             conf.set_value('test_pilot_size', test_pilot_size)
             test_info_size = test_pilot_size + data_frame_size
@@ -140,7 +140,7 @@ def plot_figure_wrapper(figure_ind: int):
 
 
 if __name__ == "__main__":
-    plotter = Plotter(run_over=True)
-    figure_ind = 6
+    plotter = Plotter(run_over=False)
+    figure_ind = 10
     plot_figure_wrapper(figure_ind)
     plt.show()
