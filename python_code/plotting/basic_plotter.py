@@ -93,10 +93,10 @@ class Plotter:
         # name of detector
         name = current_run_params[1]
         conf.set_value('use_ecc', False)
-        test_pilot_sizes = [50, 100, 150, 200, 250, 300]
+        test_pilot_sizes = [50, 100, 150, 200, 250, 300, 350, 400, 450, 500]
         data_frame_size = 5000
         total_sers = []
-        trial_num = 1
+        trial_num = 5
         for test_pilot_size in test_pilot_sizes:
             conf.set_value('test_pilot_size', test_pilot_size)
             test_info_size = test_pilot_size + data_frame_size
@@ -129,14 +129,18 @@ def plot_figure_wrapper(figure_ind: int):
         plotter.ser_versus_block(current_run_params=get_deeprx(figure_ind))
         plotter.ser_versus_block(current_run_params=get_online_deeprx(figure_ind))
         plotter.ser_versus_block(current_run_params=get_meta_deeprx(figure_ind))
-    if figure_ind in [9, 10, 19, 20]:
+    if figure_ind in [9, 19]:
         plotter.ser_versus_blocks_num(current_run_params=get_deepsic(figure_ind))
         plotter.ser_versus_blocks_num(current_run_params=get_online_deepsic(figure_ind))
         plotter.ser_versus_blocks_num(current_run_params=get_meta_deepsic(figure_ind))
+    if figure_ind in [10, 20]:
+        plotter.ser_versus_blocks_num(current_run_params=get_deepsic(figure_ind))
+        plotter.ser_versus_blocks_num(current_run_params=get_online_deepsic_single_user(figure_ind))
+        plotter.ser_versus_blocks_num(current_run_params=get_meta_deepsic_single_user(figure_ind))
 
 
 if __name__ == "__main__":
     plotter = Plotter(run_over=False)
-    figure_ind = 11
+    figure_ind = 9
     plot_figure_wrapper(figure_ind)
     plt.show()

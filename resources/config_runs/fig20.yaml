@@ -9,7 +9,7 @@ test_frame_num: 40 # coherence-time block size
 test_pilot_size: 100 # number of subsequent pilot transmissions
 fading: False # whether to use fading
 fading_type: 1 # 1 - usual, 2 - from low fading to stronger fading
-channel_mode: 'SED' # the channel model: set 'SED' for the Spatial Exponential Decay Channel Model, i.e. exp(-|i-j|),
+channel_mode: 'COST' # the channel model: set 'SED' for the Spatial Exponential Decay Channel Model, i.e. exp(-|i-j|),
 # set 'Gaussian' for a Gaussian Channel, i.e. N(0,1).
 # 'COST' for COST 8X8 setup.
 eval_mode: 'by_word' # Type of evaluation. Per snr - 'aggregated', Per block - 'by_word'.

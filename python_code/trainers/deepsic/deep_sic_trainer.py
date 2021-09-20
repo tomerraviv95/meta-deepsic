@@ -143,9 +143,7 @@ class DeepSICTrainer:
         x_pilot, x_data = current_x[:conf.test_pilot_size], current_x[conf.test_pilot_size:]
         y_pilot, y_data = current_y[:conf.test_pilot_size], current_y[conf.test_pilot_size:]
 
-        # save the encoded word in the buffer
-        buffer_b = torch.cat([buffer_b, x_pilot], dim=0)
-        buffer_y = torch.cat([buffer_y, y_pilot], dim=0)
+        last_x_pilot, last_y_pilot = buffer_b[-conf.test_pilot_size:], buffer_y[-conf.test_pilot_size:]
 
         # meta-learning main function
         if self.online_meta and (frame + 1) % SUBFRAMES_IN_FRAME == 0:
@@ -157,13 +155,20 @@ class DeepSICTrainer:
         if self.self_supervised:
             if self.online_meta:
                 trained_nets_list = [copy.deepcopy(net) for net in self.saved_nets_list]
-            # use last word inserted in the buffer for training
-            self.online_train_loop(x_pilot, y_pilot, trained_nets_list, conf.self_supervised_epochs, self.phase)
+                self.online_train_loop(last_x_pilot, last_y_pilot, trained_nets_list, conf.self_supervised_epochs,
+                                       self.phase)
+            else:
+                # use last word inserted in the buffer for training
+                self.online_train_loop(x_pilot, y_pilot, trained_nets_list, conf.self_supervised_epochs, self.phase)
 
         # detect and decode
         for i in range(conf.iterations):
             probs_vec = self.calculate_posteriors(trained_nets_list, i + 1, probs_vec, y_data)
         detected_word = symbol_to_prob(prob_to_symbol(probs_vec.float()))
+
+        # save the encoded word in the buffer
+        buffer_b = torch.cat([buffer_b, x_pilot], dim=0)
+        buffer_y = torch.cat([buffer_y, y_pilot], dim=0)
 
         # calculate error rate
         ber = calculate_error_rates(detected_word, x_data)[0]

@@ -90,7 +90,6 @@ class COSTChannel(ChannelModel):
     @staticmethod
     def calculate_channel(n_ant, n_user, frame_num, iteration, phase) -> np.ndarray:
         total_h = np.empty([n_user, n_ant])
-        print(iteration)
         main_folder = 1 + (iteration // 10)
         for i in range(1, n_user + 1):
             path_to_mat = os.path.join(RESOURCES_DIR, f'{phase}_{main_folder}', f'h_{i}.mat')
