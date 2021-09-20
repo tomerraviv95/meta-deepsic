@@ -1,7 +1,7 @@
 run_name: 'test' # run directory
 n_ant: 4 # number of Rx Antennas
 n_user: 4 # number of Transmitted Symbols, users
-snr: 10 # SNR value
+snr: 12 # SNR value
 iterations: 5 # number of iterations in the unfolded network
 test_info_size: 80 # number of subsequent transmissions
 train_frame_num: 50 # coherence-time block size
