@@ -19,5 +19,5 @@ self_supervised_epochs: 50 # number of self-supervised epochs
 use_ecc: True # whether to use ecc (corrupted data blocks) for training, or use the genie aided blocks
 n_ecc_symbols: 2 # number of symbols in ecc
 ber_thresh: 0.02 # threshold for self-supervised training
-change_user_only: # index of single fading user
+change_user_only: 2 # index of single fading user
 retrain_user: # index of specific user-networks that need retraining

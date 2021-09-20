@@ -95,6 +95,12 @@ class COSTChannel(ChannelModel):
             path_to_mat = os.path.join(RESOURCES_DIR, f'{phase}_{main_folder}', f'h_{i}.mat')
             h_user = scipy.io.loadmat(path_to_mat)['norm_channel'][iteration % 10]
             total_h[i - 1] = 0.25 * h_user
+
+            if conf.change_user_only:
+                H_sed = SEDChannel.calculate_channel(n_ant, n_user, frame_num, iteration, phase)
+                remaining_indices = list(set(list(range(n_ant))) - set([conf.change_user_only]))
+                total_h[i - 1][remaining_indices] = H_sed[i-1][remaining_indices]
+
         total_h[np.arange(n_user), np.arange(n_user)] = 1
         return total_h
 
