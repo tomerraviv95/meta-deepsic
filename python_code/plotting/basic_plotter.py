@@ -64,6 +64,19 @@ class Plotter:
         plt.yscale('log')
         plt.legend(loc='upper left', prop={'size': 15})
 
+    def plot_ser_versus_snr(self, blocks_ind, ser, method_name):
+        plt.plot(blocks_ind, ser,
+                 label=method_name,
+                 color=COLORS_DICT[method_name],
+                 marker=MARKERS_DICT[method_name],
+                 linestyle=LINESTYLES_DICT[method_name],
+                 linewidth=2.2)
+        plt.ylabel(r'SER', fontsize=20)
+        plt.xlabel(r'SNR[dB]', fontsize=20)
+        plt.grid(True, which='both')
+        plt.yscale('log')
+        plt.legend(loc='upper left', prop={'size': 15})
+
     def plot_ser_versus_blocks_num(self, blocks_ind, ser, method_name):
         plt.plot(blocks_ind, ser,
                  label=method_name,
@@ -112,6 +125,22 @@ class Plotter:
         plt.savefig(os.path.join(FIGURES_DIR, self.folder_name, f'SER_versus_pilot_size_{data_frame_size}_data.png'),
                     bbox_inches='tight')
 
+    def ser_versus_snr(self, current_run_params):
+        # get trainer
+        trainer = current_run_params[0]
+        # name of detector
+        name = current_run_params[1]
+        snr_values = [10, 12, 14, 16]
+        total_sers = []
+        for snr in snr_values:
+            conf.set_value('snr', snr)
+            ser_plot = self.get_ser_plot(trainer, run_over=self.run_over, method_name=name)
+            avg_ser = sum(ser_plot[0]) / len(ser_plot[0])
+            total_sers.append(avg_ser)
+
+        self.plot_ser_versus_snr(snr_values, total_sers, name)
+        plt.savefig(os.path.join(FIGURES_DIR, self.folder_name, f'SER_versus_snr.png'), bbox_inches='tight')
+
 
 def plot_figure_wrapper(figure_ind: int):
     if figure_ind in [1, 2, 7, 8, 11, 12, 17, 18]:
@@ -137,10 +166,14 @@ def plot_figure_wrapper(figure_ind: int):
         plotter.ser_versus_blocks_num(current_run_params=get_deepsic(figure_ind))
         plotter.ser_versus_blocks_num(current_run_params=get_online_deepsic_single_user(figure_ind))
         plotter.ser_versus_blocks_num(current_run_params=get_meta_deepsic_single_user(figure_ind))
+    if figure_ind in [21, 22]:
+        plotter.ser_versus_snr(current_run_params=get_deepsic(figure_ind))
+        plotter.ser_versus_snr(current_run_params=get_online_deepsic(figure_ind))
+        plotter.ser_versus_snr(current_run_params=get_meta_deepsic(figure_ind))
 
 
 if __name__ == "__main__":
     plotter = Plotter(run_over=False)
-    figure_ind = 10
+    figure_ind = 22
     plot_figure_wrapper(figure_ind)
     plt.show()

@@ -44,6 +44,8 @@ class MetaDeepSICTrainer(DeepSICTrainer):
         net = net.to(device)
         meta_detector = MetaDeepSICDetector()
         frame_size = self.train_frame_size if self.phase == 'train' else self.test_frame_size
+        if b_train.shape[0] - frame_size <= 0:
+            return
         support_idx = torch.arange(b_train.shape[0] - frame_size)
         query_idx = torch.arange(frame_size, b_train.shape[0])
         META_SAMPLES = 25
