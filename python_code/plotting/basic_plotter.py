@@ -1,11 +1,10 @@
-from python_code.plotting.plotter_utils import get_deepsic, get_meta_deepsic, get_online_deepsic, get_blackbox, \
-    get_online_blackbox, get_meta_blackbox, get_online_deepsic_single_user, get_meta_deepsic_single_user
+from python_code.trainers.trainer import Trainer
 from python_code.utils.config_singleton import Config
 from python_code.utils.python_utils import load_pkl, save_pkl
 from python_code.plotting.plotter_config import *
-from python_code.trainers.deep_sic_trainer import DeepSICTrainer
 from dir_definitions import PLOTS_DIR, FIGURES_DIR
 import matplotlib.pyplot as plt
+from typing import Tuple, List
 import numpy as np
 import datetime
 import os
@@ -14,8 +13,12 @@ conf = Config()
 
 
 class Plotter:
+    """
+    Main Plotting function - for the figures of the paper, enter figure index below. It runs by applying the config
+    from resources/config_runs with the same figure index.
+    """
 
-    def __init__(self, run_over):
+    def __init__(self, run_over: bool):
         self.run_over = run_over
         self.init_save_folder()
 
@@ -26,7 +29,7 @@ class Plotter:
         if not os.path.isdir(os.path.join(FIGURES_DIR, self.folder_name)):
             os.makedirs(os.path.join(FIGURES_DIR, self.folder_name))
 
-    def get_ser_plot(self, trainer: DeepSICTrainer, run_over: bool, method_name: str, trial: int = None):
+    def get_ser_plot(self, trainer: Trainer, run_over: bool, method_name: str, trial: int = None):
         print(method_name)
         # set the path to saved plot results for a single method (so we do not need to run anew each time)
         if not os.path.exists(PLOTS_DIR):
@@ -51,7 +54,7 @@ class Plotter:
             save_pkl(plots_path, ser)
         return ser
 
-    def plot_ser_versus_block(self, blocks_ind, ser, method_name):
+    def plot_ser_versus_block(self, blocks_ind: List[int], ser: List[float], method_name: str):
         plt.plot(blocks_ind, np.cumsum(np.array(ser)) / len(ser),
                  label=method_name,
                  color=COLORS_DICT[method_name],
@@ -64,7 +67,7 @@ class Plotter:
         plt.yscale('log')
         plt.legend(loc='upper left', prop={'size': 15})
 
-    def plot_ser_versus_snr(self, blocks_ind, ser, method_name):
+    def plot_ser_versus_snr(self, blocks_ind: List[int], ser: List[float], method_name: str):
         plt.plot(blocks_ind, ser,
                  label=method_name,
                  color=COLORS_DICT[method_name],
@@ -77,7 +80,7 @@ class Plotter:
         plt.yscale('log')
         plt.legend(loc='upper left', prop={'size': 15})
 
-    def plot_ser_versus_blocks_num(self, blocks_ind, ser, method_name):
+    def plot_ser_versus_blocks_num(self, blocks_ind: List[int], ser: List[float], method_name: str):
         plt.plot(blocks_ind, ser,
                  label=method_name,
                  color=COLORS_DICT[method_name],
@@ -90,7 +93,7 @@ class Plotter:
         plt.yscale('log')
         plt.legend(loc='upper left', prop={'size': 15})
 
-    def ser_versus_block(self, current_run_params):
+    def ser_versus_block(self, current_run_params: Tuple[Trainer, str]):
         # get trainer
         trainer = current_run_params[0]
         # name of detector
@@ -100,7 +103,7 @@ class Plotter:
         plt.savefig(os.path.join(FIGURES_DIR, self.folder_name, f'SER_versus_block_{trainer.test_frame_size}.png'),
                     bbox_inches='tight')
 
-    def ser_versus_blocks_num(self, current_run_params):
+    def ser_versus_blocks_num(self, current_run_params: Tuple[Trainer, str]):
         # get trainer
         trainer = current_run_params[0]
         # name of detector
@@ -109,7 +112,7 @@ class Plotter:
         test_pilot_sizes = [50, 100, 150, 200, 250, 300, 350, 400, 450, 500]
         data_frame_size = 5000
         total_sers = []
-        trial_num = 1
+        trial_num = 5
         for test_pilot_size in test_pilot_sizes:
             conf.set_value('test_pilot_size', test_pilot_size)
             test_info_size = test_pilot_size + data_frame_size
@@ -125,7 +128,7 @@ class Plotter:
         plt.savefig(os.path.join(FIGURES_DIR, self.folder_name, f'SER_versus_pilot_size_{data_frame_size}_data.png'),
                     bbox_inches='tight')
 
-    def ser_versus_snr(self, current_run_params):
+    def ser_versus_snr(self, current_run_params: Tuple[Trainer, str]):
         # get trainer
         trainer = current_run_params[0]
         # name of detector
@@ -145,40 +148,3 @@ class Plotter:
 
         self.plot_ser_versus_snr(snr_values, total_sers, name)
         plt.savefig(os.path.join(FIGURES_DIR, self.folder_name, f'SER_versus_snr.png'), bbox_inches='tight')
-
-
-def plot_figure_wrapper(figure_ind: int):
-    if figure_ind in [1, 2, 7, 8, 11, 12, 17, 18]:
-        plotter.ser_versus_block(current_run_params=get_deepsic(figure_ind))
-        plotter.ser_versus_block(current_run_params=get_online_deepsic(figure_ind))
-        plotter.ser_versus_block(current_run_params=get_meta_deepsic(figure_ind))
-    if figure_ind in [3, 4, 13, 14]:
-        plotter.ser_versus_block(current_run_params=get_online_deepsic(f'{figure_ind}a'))
-        plotter.ser_versus_block(current_run_params=get_online_deepsic_single_user(f'{figure_ind}b'))
-    if figure_ind in [5, 6, 15, 16]:
-        plotter.ser_versus_block(current_run_params=get_deepsic(figure_ind))
-        plotter.ser_versus_block(current_run_params=get_online_deepsic_single_user(figure_ind))
-        plotter.ser_versus_block(current_run_params=get_meta_deepsic_single_user(figure_ind))
-    if figure_ind in [7, 8, 17, 18]:
-        plotter.ser_versus_block(current_run_params=get_blackbox(figure_ind))
-        plotter.ser_versus_block(current_run_params=get_online_blackbox(figure_ind))
-        plotter.ser_versus_block(current_run_params=get_meta_blackbox(figure_ind))
-    if figure_ind in [9, 19]:
-        plotter.ser_versus_blocks_num(current_run_params=get_deepsic(figure_ind))
-        plotter.ser_versus_blocks_num(current_run_params=get_online_deepsic(figure_ind))
-        plotter.ser_versus_blocks_num(current_run_params=get_meta_deepsic(figure_ind))
-    if figure_ind in [10, 20]:
-        plotter.ser_versus_blocks_num(current_run_params=get_deepsic(figure_ind))
-        plotter.ser_versus_blocks_num(current_run_params=get_online_deepsic_single_user(figure_ind))
-        plotter.ser_versus_blocks_num(current_run_params=get_meta_deepsic_single_user(figure_ind))
-    if figure_ind in [21, 22]:
-        plotter.ser_versus_snr(current_run_params=get_deepsic(figure_ind))
-        plotter.ser_versus_snr(current_run_params=get_online_deepsic(figure_ind))
-        plotter.ser_versus_snr(current_run_params=get_meta_deepsic(figure_ind))
-
-
-if __name__ == "__main__":
-    plotter = Plotter(run_over=False)
-    figure_ind = 21
-    plot_figure_wrapper(figure_ind)
-    plt.show()
