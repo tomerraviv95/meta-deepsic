@@ -2,6 +2,7 @@ from python_code.detectors.deep_sic_detector import DeepSICDetector
 from python_code.detectors.meta_deep_sic_detector import MetaDeepSICDetector
 from python_code.trainers.deepsic.deep_sic_trainer import DeepSICTrainer
 from python_code.utils.config_singleton import Config
+from python_code.utils.constants import Phase
 import torch
 import copy
 
@@ -43,7 +44,7 @@ class MetaDeepSICTrainer(DeepSICTrainer):
         crt = torch.nn.CrossEntropyLoss()
         net = net.to(device)
         meta_detector = MetaDeepSICDetector()
-        frame_size = self.train_frame_size if self.phase == 'train' else self.test_frame_size
+        frame_size = self.train_frame_size if self.phase == Phase.TRAIN else self.test_frame_size
         if b_train.shape[0] - frame_size <= 0:
             return
         support_idx = torch.arange(b_train.shape[0] - frame_size)
@@ -112,7 +113,7 @@ class MetaDeepSICTrainer(DeepSICTrainer):
 
     def online_train_models(self, trained_nets_list, i, x_train_all, y_train_all, max_epochs, phase):
         for user in range(conf.n_user):
-            if phase == 'test' and conf.retrain_user is not None:
+            if phase == Phase.TEST and conf.retrain_user is not None:
                 if not conf.retrain_user == user:
                     continue
             self.online_train_model(trained_nets_list[user][i], x_train_all[user], y_train_all[user], max_epochs)

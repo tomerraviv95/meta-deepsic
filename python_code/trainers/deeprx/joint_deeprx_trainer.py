@@ -3,6 +3,8 @@ from python_code.trainers.deeprx.rx_trainer import RXTrainer
 from python_code.utils.config_singleton import Config
 import torch
 
+from python_code.utils.constants import Phase
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 conf = Config()
 
@@ -40,11 +42,11 @@ class JointDeepRXTrainer(RXTrainer):
         opt = torch.optim.Adam(net.parameters(), lr=conf.lr)
         crt = torch.nn.BCELoss().to(device)
         m = torch.nn.Sigmoid()
-        net.set_state('train')
+        net.set_state(Phase.TRAIN)
         net = net.to(device)
         for _ in range(max_epochs):
             opt.zero_grad()
-            out = net(y_train, self.train_frame_size if self.phase == 'train' else self.test_frame_size)
+            out = net(y_train, self.train_frame_size if self.phase == Phase.TRAIN else self.test_frame_size)
             loss = crt(input=m(out), target=x_train)
             loss.backward()
             opt.step()
@@ -53,8 +55,8 @@ class JointDeepRXTrainer(RXTrainer):
         pass
 
     def predict(self, y_test):
-        self.detector.set_state('test')
-        return self.detector(y_test, self.train_frame_size if self.phase == 'train' else self.test_frame_size)
+        self.detector.set_state(Phase.TEST)
+        return self.detector(y_test, self.train_frame_size if self.phase == Phase.TRAIN else self.test_frame_size)
 
     def train_loop(self, x_train, y_train, max_epochs, phase):
         self.train_model(self.detector, x_train, y_train, max_epochs)

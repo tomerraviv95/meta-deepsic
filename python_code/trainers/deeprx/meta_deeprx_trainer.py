@@ -2,7 +2,9 @@ from python_code.detectors.meta_deep_rx_detector import MetaDeepRXDetector
 from python_code.detectors.deep_rx_detector import DeepRXDetector
 from python_code.trainers.deeprx.rx_trainer import RXTrainer
 from python_code.utils.config_singleton import Config
+from python_code.utils.constants import Phase
 import torch
+
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 conf = Config()
@@ -43,14 +45,14 @@ class MetaDeepRXTrainer(RXTrainer):
         m = torch.nn.Sigmoid()
         net = net.to(device)
         meta_detector = MetaDeepRXDetector()
-        frame_size = self.train_frame_size if self.phase == 'train' else self.test_frame_size
+        frame_size = self.train_frame_size if self.phase == Phase.TRAIN else self.test_frame_size
         if x_train.shape[0] - frame_size <= 0:
             return
         support_idx = torch.arange(x_train.shape[0] - frame_size)
         query_idx = torch.arange(frame_size, x_train.shape[0])
         META_SAMPLES = 25
-        net.set_state('train')
-        meta_detector.set_state('train')
+        net.set_state(Phase.TRAIN)
+        meta_detector.set_state(Phase.TRAIN)
         for _ in range(max_epochs):
             opt.zero_grad()
 
@@ -100,7 +102,7 @@ class MetaDeepRXTrainer(RXTrainer):
         opt = torch.optim.Adam(net.parameters(), lr=conf.lr)
         crt = torch.nn.BCELoss().to(device)
         m = torch.nn.Sigmoid()
-        net.set_state('train')
+        net.set_state(Phase.TRAIN)
         net = net.to(device)
         for _ in range(max_epochs):
             opt.zero_grad()
@@ -110,8 +112,8 @@ class MetaDeepRXTrainer(RXTrainer):
             opt.step()
 
     def predict(self, y_test):
-        self.detector.set_state('test')
-        return self.detector(y_test, self.train_frame_size if self.phase == 'train' else self.test_frame_size)
+        self.detector.set_state(Phase.TEST)
+        return self.detector(y_test, self.train_frame_size if self.phase == Phase.TRAIN else self.test_frame_size)
 
     def train_loop(self, x_train, y_train, max_epochs, phase):
         self.train_model(self.detector, x_train, y_train, max_epochs)

@@ -1,4 +1,5 @@
 from python_code.utils.config_singleton import Config
+from python_code.utils.constants import Phase
 from torch import nn
 import torch
 
@@ -87,17 +88,17 @@ class DeepRXDetector(nn.Module):
     def reshaped_tensor_out(self, ten: torch.Tensor):
         return ten.transpose(dim0=1, dim1=2).reshape(-1, conf.n_ant)
 
-    def set_state(self, state: str):
+    def set_state(self, state: Phase):
         self.state = state
 
     def forward(self, y: torch.Tensor, frame_size: int) -> torch.Tensor:
         reshaped_y_in = self.reshaped_tensor_in(y, frame_size)
         out = self.all_blocks(tanh_func(reshaped_y_in))
         reshaped_out = self.reshaped_tensor_out(out)
-        if self.state == 'train':
+        if self.state == Phase.TRAIN:
             return reshaped_out
         # in eval mode
-        elif self.state == 'test':
+        elif self.state == Phase.TEST:
             m = torch.nn.Sigmoid()
             hard_decision_output = m(reshaped_out) >= 0.5
             return hard_decision_output

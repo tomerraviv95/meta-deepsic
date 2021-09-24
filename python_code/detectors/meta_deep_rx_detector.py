@@ -1,4 +1,5 @@
 from python_code.utils.config_singleton import Config
+from python_code.utils.constants import Phase
 from torch.nn import functional as F
 from torch import nn
 import torch
@@ -53,7 +54,7 @@ class MetaDeepRXDetector(nn.Module):
     def reshaped_tensor_out(self, ten: torch.Tensor):
         return ten.transpose(dim0=1, dim1=2).reshape(-1, conf.n_ant)
 
-    def set_state(self, state: str):
+    def set_state(self, state: Phase):
         self.state = state
 
     def forward(self, y: torch.Tensor, var: list) -> torch.Tensor:
@@ -63,10 +64,10 @@ class MetaDeepRXDetector(nn.Module):
             current_var = var[i * RESNET_PARAMS:(i + 1) * RESNET_PARAMS]
             cur_y = cur_block(cur_y, current_var)
         reshaped_out = self.reshaped_tensor_out(cur_y)
-        if self.state == 'train':
+        if self.state == Phase.TRAIN:
             return reshaped_out
         # in eval mode
-        elif self.state == 'test':
+        elif self.state == Phase.TEST:
             m = torch.nn.Sigmoid()
             hard_decision_output = m(reshaped_out) >= 0.5
             return hard_decision_output

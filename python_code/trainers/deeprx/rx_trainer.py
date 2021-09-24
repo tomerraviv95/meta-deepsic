@@ -1,5 +1,6 @@
 from python_code.ecc.rs_main import ECC_BITS_PER_SYMBOL
 from python_code.ecc.wrappers import decoder, encoder
+from python_code.utils.constants import Phase
 from python_code.utils.metrics import calculate_error_rates
 from python_code.data.data_generator import DataGenerator
 from python_code.utils.config_singleton import Config
@@ -32,8 +33,8 @@ class RXTrainer:
         self.train_frame_size = conf.test_info_size if conf.use_ecc else conf.test_pilot_size
         self.test_frame_size = (
                 conf.test_info_size + ECC_BITS_PER_SYMBOL * conf.n_ecc_symbols) if conf.use_ecc else conf.test_pilot_size
-        self.train_dg = DataGenerator(conf.test_info_size, phase='train', frame_num=conf.train_frame_num)
-        self.test_dg = DataGenerator(conf.test_info_size, phase='test', frame_num=conf.test_frame_num)
+        self.train_dg = DataGenerator(conf.test_info_size, phase=Phase.TRAIN, frame_num=conf.train_frame_num)
+        self.test_dg = DataGenerator(conf.test_info_size, phase=Phase.TEST, frame_num=conf.test_frame_num)
         self.softmax = torch.nn.Softmax(dim=1)  # Single symbol probability inference
         self.online_meta = False
         self.self_supervised = False
@@ -114,7 +115,7 @@ class RXTrainer:
             print('Meta')
             # initialize from trained weights
             self.detector = self.copy_detector(self.saved_detector)
-            self.train_loop(buffer_b, buffer_y, conf.self_supervised_epochs, 'test')
+            self.train_loop(buffer_b, buffer_y, conf.self_supervised_epochs, Phase.TEST)
             self.saved_detector = self.copy_detector(self.detector)
 
         # use last word inserted in the buffer for training
@@ -122,7 +123,7 @@ class RXTrainer:
             if self.online_meta:
                 self.detector = self.copy_detector(self.saved_detector)
             # use last word inserted in the buffer for training
-            self.online_train_loop(x_pilot, y_pilot, conf.self_supervised_epochs, 'test')
+            self.online_train_loop(x_pilot, y_pilot, conf.self_supervised_epochs, Phase.TEST)
 
         # detect
         detected_word = self.predict(y_data)
@@ -139,11 +140,11 @@ class RXTrainer:
         detected_word = self.predict(current_y)
 
         # decode
-        decoded_word = decoder(detected_word, 'test')
+        decoded_word = decoder(detected_word, Phase.TEST)
 
         # encode word again
         decoded_word_array = decoded_word.int().cpu().numpy()
-        encoded_word = torch.Tensor(encoder(decoded_word_array, 'test')).to(device)
+        encoded_word = torch.Tensor(encoder(decoded_word_array, Phase.TEST)).to(device)
 
         # calculate error rate
         ber = calculate_error_rates(decoded_word, current_x)[0]
@@ -161,7 +162,7 @@ class RXTrainer:
             print('Meta')
             # initialize from trained weights
             self.detector = self.copy_detector(self.saved_detector)
-            self.train_loop(buffer_b, buffer_y, conf.self_supervised_epochs, 'test')
+            self.train_loop(buffer_b, buffer_y, conf.self_supervised_epochs, Phase.TEST)
             self.saved_detector = self.copy_detector(self.detector)
 
         # use last word inserted in the buffer for training
@@ -169,7 +170,7 @@ class RXTrainer:
             if self.online_meta:
                 self.detector = self.copy_detector(self.saved_detector)
             # use last word inserted in the buffer for training
-            self.online_train_loop(to_buffer_word, current_y, conf.self_supervised_epochs, 'test')
+            self.online_train_loop(to_buffer_word, current_y, conf.self_supervised_epochs, Phase.TEST)
 
         return buffer_b, buffer_y
 
@@ -204,7 +205,7 @@ class RXTrainer:
             c_end_ind = (frame + 1) * c_frame_size
             b_start_ind = frame * b_frame_size
             b_end_ind = (frame + 1) * b_frame_size
-            b_pred[b_start_ind:b_end_ind] = decoder(c_pred[c_start_ind:c_end_ind], 'test')
+            b_pred[b_start_ind:b_end_ind] = decoder(c_pred[c_start_ind:c_end_ind], Phase.TEST)
         ber = calculate_error_rates(b_pred, b_test)[0]
         return [ber]
 
@@ -223,11 +224,11 @@ class RXTrainer:
         all_bers = []  # Contains the ber
         print(f'training')
         print(f'snr {conf.snr}')
-        self.phase = 'train'
+        self.phase = Phase.TRAIN
         x_train, y_train = self.train_dg(snr=conf.snr)  # Generating data for the given snr
         self.initialize_detector()
-        self.train_loop(x_train, y_train, conf.max_epochs, 'train')
-        self.phase = 'test'
+        self.train_loop(x_train, y_train, conf.max_epochs, Phase.TRAIN)
+        self.phase = Phase.TEST
         ber = self.evaluate(conf.snr)
         all_bers.append(ber)
         print(f'\nber :{sum(ber) / len(ber)} @ snr: {conf.snr} [dB]')

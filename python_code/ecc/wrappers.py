@@ -1,5 +1,6 @@
 from python_code.utils.config_singleton import Config
 from python_code.ecc.rs_main import decode, encode
+from python_code.utils.constants import Phase
 import numpy as np
 import torch
 
@@ -8,7 +9,7 @@ conf = Config()
 
 
 def encoder(b, phase):
-    if phase == 'test' and conf.use_ecc:
+    if phase == Phase.TEST and conf.use_ecc:
         encoding = lambda b: encode(b, conf.n_ecc_symbols)
     else:
         encoding = lambda b: b
@@ -16,8 +17,8 @@ def encoder(b, phase):
     return np.concatenate([encoding(b[:, i]).reshape(-1, 1) for i in range(b.shape[1])], axis=1)
 
 
-def decoder(c_pred,phase):
-    if phase == 'test' and conf.use_ecc:
+def decoder(c_pred, phase):
+    if phase == Phase.TEST and conf.use_ecc:
         decoding = lambda b: decode(b, conf.n_ecc_symbols)
     else:
         decoding = lambda b: b

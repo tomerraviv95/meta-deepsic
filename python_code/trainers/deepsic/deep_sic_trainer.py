@@ -4,6 +4,7 @@ from python_code.utils.metrics import calculate_error_rates
 from python_code.utils.utils import symbol_to_prob, prob_to_symbol
 from python_code.data.data_generator import DataGenerator
 from python_code.utils.config_singleton import Config
+from python_code.utils.constants import Phase
 from typing import List
 import numpy as np
 import random
@@ -33,8 +34,8 @@ class DeepSICTrainer:
         self.train_frame_size = conf.test_info_size if conf.use_ecc else conf.test_pilot_size
         self.test_frame_size = (
                 conf.test_info_size + ECC_BITS_PER_SYMBOL * conf.n_ecc_symbols) if conf.use_ecc else conf.test_pilot_size
-        self.train_dg = DataGenerator(conf.test_info_size, phase='train', frame_num=conf.train_frame_num)
-        self.test_dg = DataGenerator(conf.test_info_size, phase='test', frame_num=conf.test_frame_num)
+        self.train_dg = DataGenerator(conf.test_info_size, phase=Phase.TRAIN, frame_num=conf.train_frame_num)
+        self.test_dg = DataGenerator(conf.test_info_size, phase=Phase.TEST, frame_num=conf.test_frame_num)
         self.softmax = torch.nn.Softmax(dim=1)  # Single symbol probability inference
         self.online_meta = False
         self.self_supervised = False
@@ -89,7 +90,7 @@ class DeepSICTrainer:
 
     def train_models(self, trained_nets_list, i, x_train_all, y_train_all, max_epochs, phase):
         for user in range(conf.n_user):
-            if phase == 'test' and conf.retrain_user is not None:
+            if phase == Phase.TEST and conf.retrain_user is not None:
                 if not conf.retrain_user == user:
                     continue
             self.train_model(trained_nets_list[user][i], x_train_all[user], y_train_all[user], max_epochs)
@@ -284,12 +285,12 @@ class DeepSICTrainer:
         all_bers = []  # Contains the ber
         print(f'training')
         print(f'snr {conf.snr}')
-        self.phase = 'train'
+        self.phase = Phase.TRAIN
         b_train, y_train = self.train_dg(snr=conf.snr)  # Generating data for the given snr
         trained_nets_list = [[self.initialize_detector() for _ in range(conf.iterations)]
                              for _ in range(conf.n_user)]  # 2D list for Storing the DeepSIC Networks
         self.train_loop(b_train, y_train, trained_nets_list, conf.max_epochs, self.phase)
-        self.phase = 'test'
+        self.phase = Phase.TEST
         ber = self.evaluate(conf.snr, trained_nets_list)
         all_bers.append(ber)
         print(f'\nber :{sum(ber) / len(ber)} @ snr: {conf.snr} [dB]')
