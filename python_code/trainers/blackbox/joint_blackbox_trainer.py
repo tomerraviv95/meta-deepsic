@@ -27,26 +27,26 @@ class JointBlackBoxTrainer(BlackBoxTrainer):
         """
         return BlackBoxDetector()
 
-    def train_model(self, model: nn.Module, b_train: torch.Tensor, y_train: torch.Tensor, max_epochs: int):
+    def train_model(self, single_model: nn.Module, b_train: torch.Tensor, y_train: torch.Tensor, max_epochs: int):
         """
         Trains the BlackBox Network
 
         Parameters
         ----------
-        model: an instance of the DeepSICNet class to be trained.
+        single_model: an instance of the DeepSICNet class to be trained.
         k_m_fYtrain:  dictionary
                       The training data dictionary to be used for optimizing the underlying DeepSICNet network.
         -------
 
         """
-        opt = torch.optim.Adam(model.parameters(), lr=conf.lr)
+        opt = torch.optim.Adam(single_model.parameters(), lr=conf.lr)
         crt = torch.nn.BCELoss().to(device)
         m = torch.nn.Sigmoid()
-        model.set_state(Phase.TRAIN)
-        model = model.to(device)
+        single_model.set_state(Phase.TRAIN)
+        single_model = single_model.to(device)
         for _ in range(max_epochs):
             opt.zero_grad()
-            out = model(y_train, self.train_frame_size if self.phase == Phase.TRAIN else self.test_frame_size)
+            out = single_model(y_train, self.train_frame_size if self.phase == Phase.TRAIN else self.test_frame_size)
             loss = crt(input=m(out), target=b_train)
             loss.backward()
             opt.step()

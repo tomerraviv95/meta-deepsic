@@ -33,24 +33,24 @@ class MetaBlackBoxTrainer(BlackBoxTrainer):
         """
         return BlackBoxDetector()
 
-    def train_model(self, model: nn.Module, b_train: torch.Tensor, y_train: torch.Tensor, max_epochs: int):
+    def train_model(self, single_model: nn.Module, b_train: torch.Tensor, y_train: torch.Tensor, max_epochs: int):
         """
         Main meta-training loop. Runs in minibatches, each minibatch is split to pairs of following words.
         The pairs are comprised of (support,query) words.
         Evaluates performance over validation SNRs.
         Saves weights every so and so iterations.
         """
-        opt = torch.optim.Adam(model.parameters(), lr=conf.lr)
+        opt = torch.optim.Adam(single_model.parameters(), lr=conf.lr)
         crt = torch.nn.BCELoss().to(device)
         m = torch.nn.Sigmoid()
-        model = model.to(device)
+        single_model = single_model.to(device)
         meta_detector = MetaBlackBoxDetector()
         frame_size = self.train_frame_size if self.phase == Phase.TRAIN else self.test_frame_size
         if b_train.shape[0] - frame_size <= 0:
             return
         support_idx = torch.arange(b_train.shape[0] - frame_size)
         query_idx = torch.arange(frame_size, b_train.shape[0])
-        model.set_state(Phase.TRAIN)
+        single_model.set_state(Phase.TRAIN)
         meta_detector.set_state(Phase.TRAIN)
         for _ in range(max_epochs):
             opt.zero_grad()
@@ -64,7 +64,7 @@ class MetaBlackBoxTrainer(BlackBoxTrainer):
             query_b, query_y = b_train[cur_query_idx], y_train[cur_query_idx]
 
             # local update (with support set)
-            para_list_detector = list(map(lambda p: p[0], zip(model.parameters())))
+            para_list_detector = list(map(lambda p: p[0], zip(single_model.parameters())))
             soft_estimation_supp = meta_detector(support_y, para_list_detector)
             loss_supp = crt(m(soft_estimation_supp), support_b)
 
@@ -79,7 +79,7 @@ class MetaBlackBoxTrainer(BlackBoxTrainer):
             meta_grad = torch.autograd.grad(loss_query, para_list_detector, create_graph=False)
 
             ind_param = 0
-            for param in model.parameters():
+            for param in single_model.parameters():
                 param.grad = None  # zero_grad
                 param.grad = meta_grad[ind_param]
                 ind_param += 1

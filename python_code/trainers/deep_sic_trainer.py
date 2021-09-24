@@ -109,9 +109,9 @@ class DeepSICTrainer(Trainer):
         y_train_all = []
         for k in range(conf.n_user):
             idx = [i for i in range(conf.n_user) if i != k]
-            y_train = torch.cat((y_train, probs_vec[:, idx]), dim=1)
+            current_y_train = torch.cat((y_train, probs_vec[:, idx]), dim=1)
             b_train_all.append(b_train[:, k])
-            y_train_all.append(y_train)
+            y_train_all.append(current_y_train)
         return b_train_all, y_train_all
 
     def calculate_posteriors(self, model: nn.Module, i: int, probs_vec: torch.Tensor,

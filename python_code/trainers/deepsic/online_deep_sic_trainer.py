@@ -29,13 +29,13 @@ class OnlineDeepSICTrainer(DeepSICTrainer):
         """
         return DeepSICDetector()
 
-    def train_model(self, model: nn.Module, b_train: torch.Tensor, y_train: torch.Tensor, max_epochs: int):
+    def train_model(self, single_model: nn.Module, b_train: torch.Tensor, y_train: torch.Tensor, max_epochs: int):
         """
         Trains a DeepSIC Network
 
         Parameters
         ----------
-        model: an instance of the DeepSICNet class to be trained.
+        single_model: an instance of the DeepSICNet class to be trained.
         k_m_fYtrain:  dictionary
                       The training data dictionary to be used for optimizing the underlying DeepSICNet network.
         Returns
@@ -43,12 +43,12 @@ class OnlineDeepSICTrainer(DeepSICTrainer):
         k_DeepSICNet
             The optimized DeepSECNet network.
         """
-        opt = torch.optim.Adam(model.parameters(), lr=conf.lr)
+        opt = torch.optim.Adam(single_model.parameters(), lr=conf.lr)
         crt = torch.nn.CrossEntropyLoss()
-        model = model.to(device)
+        single_model = single_model.to(device)
         for _ in range(max_epochs):
             opt.zero_grad()
-            out = model(y_train)
+            out = single_model(y_train)
             loss = crt(out, b_train.squeeze(-1).long())
             loss.backward()
             opt.step()
