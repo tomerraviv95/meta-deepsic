@@ -8,7 +8,13 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 conf = Config()
 
 
-def encoder(b, phase):
+def encoder(b: np.ndarray, phase: Phase) -> np.ndarray:
+    """
+    Encode only in test phase, and if the boolean flag is on
+    :param b: to encode bits
+    :param phase: Phase enum
+    :return: encoded bits numpy array
+    """
     if phase == Phase.TEST and conf.use_ecc:
         encoding = lambda b: encode(b, conf.n_ecc_symbols)
     else:
@@ -17,7 +23,13 @@ def encoder(b, phase):
     return np.concatenate([encoding(b[:, i]).reshape(-1, 1) for i in range(b.shape[1])], axis=1)
 
 
-def decoder(c_pred, phase):
+def decoder(c_pred: np.ndarray, phase: Phase) -> torch.Tensor:
+    """
+    Decode only in the test phase, and if the boolean flag is on
+    :param c_pred: predicted bits
+    :param phase: Phase enum
+    :return: decoded bits tensor
+    """
     if phase == Phase.TEST and conf.use_ecc:
         decoding = lambda b: decode(b, conf.n_ecc_symbols)
     else:
