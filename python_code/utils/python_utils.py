@@ -8,6 +8,6 @@ def save_pkl(pkls_path: str, array: np.ndarray):
     output.close()
 
 
-def load_pkl(pkls_path: str):
+def load_pkl(pkls_path: str) -> np.ndarray:
     output = open(pkls_path, 'rb')
     return pkl.load(output)

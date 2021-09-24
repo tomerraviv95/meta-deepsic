@@ -20,9 +20,11 @@ class ChannelModel:
         self.phase = phase
 
     def get_channel(self, frame_ind: int) -> np.ndarray:
+        # create SED channel matrix
         if conf.channel_mode == Channel.SED.name or self.phase == Phase.TRAIN:
             H = SEDChannel.calculate_channel(conf.n_ant, conf.n_user, self.phase, frame_ind, conf.fading,
                                              conf.change_user_only)
+        # create COST channel matrix
         elif conf.channel_mode == Channel.COST.name:
             H = COSTChannel.calculate_channel(conf.n_ant, conf.n_user, frame_ind, self.phase, conf.change_user_only)
         else:

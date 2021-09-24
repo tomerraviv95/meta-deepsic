@@ -1,6 +1,5 @@
 from python_code.ecc.wrappers import encoder
 from python_code.utils.constants import Phase
-from python_code.utils.utils import calculate_sigma_from_snr, bpsk_modulate
 from python_code.data.channel_model import ChannelModel
 from python_code.utils.config_singleton import Config
 from torch.utils.data import Dataset
@@ -9,6 +8,19 @@ import torch
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 conf = Config()
+
+
+def bpsk_modulate(b: np.ndarray) -> np.ndarray:
+    return (-1) ** b
+
+
+def calculate_sigma_from_snr(snr: int) -> float:
+    """
+    converts the Desired SNR into the noise power (noise variance)
+    :param snr: signal-to-noise ratio
+    :return: noise's sigma
+    """
+    return 10 ** (-0.1 * snr)
 
 
 class DataGenerator(Dataset):

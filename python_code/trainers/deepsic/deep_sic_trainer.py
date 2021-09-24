@@ -1,7 +1,6 @@
 from python_code.ecc.rs_main import ECC_BITS_PER_SYMBOL
 from python_code.ecc.wrappers import decoder, encoder
 from python_code.utils.metrics import calculate_error_rates
-from python_code.utils.utils import symbol_to_prob, prob_to_symbol
 from python_code.data.data_generator import DataGenerator
 from python_code.utils.config_singleton import Config
 from python_code.utils.constants import Phase
@@ -21,6 +20,26 @@ random.seed(0)
 torch.manual_seed(0)
 torch.cuda.manual_seed(0)
 np.random.seed(0)
+
+
+def symbol_to_prob(s):
+    """
+    symbol_to_prob(x:PyTorch/Numpy Tensor/Array)
+    Converts BPSK Symbols to Probabilities: '-1' -> 0, '+1' -> '1.'
+    :param s: symbols vector
+    :return: probabilities vector
+    """
+    return 0.5 * (s + 1)
+
+
+def prob_to_symbol(p):
+    """
+    prob_to_symbol(x:PyTorch/Numpy Tensor/Array)
+    Converts Probabilities to BPSK Symbols by hard threshold: [0,0.5] -> '-1', [0.5,0] -> '+1'
+    :param p: probabilities vector
+    :return: symbols vector
+    """
+    return torch.sign(p - 0.5)
 
 
 class DeepSICTrainer:
