@@ -5,7 +5,6 @@ from python_code.utils.config_singleton import Config
 from python_code.utils.constants import Phase
 import torch
 
-
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 conf = Config()
 
@@ -15,7 +14,7 @@ META_LR = 0.01
 
 class MetaBlackBoxTrainer(BlackBoxTrainer):
     """
-    Trainer for the meta DeepRX model.
+    Trainer for the meta BlackBox model.
     """
 
     def __init__(self):
@@ -24,13 +23,13 @@ class MetaBlackBoxTrainer(BlackBoxTrainer):
         self.self_supervised = True
 
     def __str__(self):
-        return 'Meta-DeepRX'
+        return 'Meta-BlackBox'
 
     def initialize_detector(self):
         """
-        Loads the DeepRX detector
+        Loads the BlackBox detector
         """
-        self.detector = BlackBoxDetector()
+        return BlackBoxDetector()
 
     def train_model(self, net, x_train, y_train, max_epochs):
         """
@@ -86,9 +85,9 @@ class MetaBlackBoxTrainer(BlackBoxTrainer):
 
             opt.step()
 
-    def online_train_loop(self, net, x_train, y_train, max_epochs):
+    def online_train_loop(self, net, x_train, y_train, max_epochs, phase):
         """
-        Trains the DeepRX Network
+        Trains the BlackBox Network
 
         Parameters
         ----------
@@ -110,12 +109,12 @@ class MetaBlackBoxTrainer(BlackBoxTrainer):
             loss.backward()
             opt.step()
 
-    def predict(self, y_test):
-        self.detector.set_state(Phase.TEST)
-        return self.detector(y_test, self.train_frame_size if self.phase == Phase.TRAIN else self.test_frame_size)
+    def predict(self, model, y_test):
+        model.set_state(Phase.TEST)
+        return model(y_test, self.train_frame_size if self.phase == Phase.TRAIN else self.test_frame_size)
 
-    def train_loop(self, x_train, y_train, max_epochs, phase):
-        self.train_model(self.detector, x_train, y_train, max_epochs)
+    def train_loop(self, x_train, y_train, model, max_epochs, phase):
+        self.train_model(model, x_train, y_train, max_epochs)
 
 
 if __name__ == "__main__":

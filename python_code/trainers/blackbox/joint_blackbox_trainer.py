@@ -11,7 +11,7 @@ conf = Config()
 
 class JointBlackBoxTrainer(BlackBoxTrainer):
     """
-    Trainer for the DeepRX model.
+    Trainer for the BlackBox model.
     """
 
     def __init__(self):
@@ -19,17 +19,17 @@ class JointBlackBoxTrainer(BlackBoxTrainer):
         self.self_supervised = False
 
     def __str__(self):
-        return 'DeepRX'
+        return 'BlackBox'
 
     def initialize_detector(self):
         """
-        Loads the DeepRX detector
+        Loads the BlackBox detector
         """
-        self.detector = BlackBoxDetector()
+        return BlackBoxDetector()
 
     def train_model(self, net, x_train, y_train, max_epochs):
         """
-        Trains the DeepRX Network
+        Trains the BlackBox Network
 
         Parameters
         ----------
@@ -51,15 +51,15 @@ class JointBlackBoxTrainer(BlackBoxTrainer):
             loss.backward()
             opt.step()
 
-    def online_train_loop(self, x_train, y_train, model, max_epochs):
+    def online_train_loop(self, x_train, y_train, model, max_epochs, phase):
         pass
 
-    def predict(self, y_test):
-        self.detector.set_state(Phase.TEST)
-        return self.detector(y_test, self.train_frame_size if self.phase == Phase.TRAIN else self.test_frame_size)
+    def predict(self, model, y_test):
+        model.set_state(Phase.TEST)
+        return model(y_test, self.train_frame_size if self.phase == Phase.TRAIN else self.test_frame_size)
 
-    def train_loop(self, x_train, y_train, max_epochs, phase):
-        self.train_model(self.detector, x_train, y_train, max_epochs)
+    def train_loop(self, x_train, y_train, model, max_epochs, phase):
+        self.train_model(model, x_train, y_train, max_epochs)
 
 
 if __name__ == "__main__":

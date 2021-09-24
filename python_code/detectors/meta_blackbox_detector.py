@@ -38,7 +38,7 @@ class MetaResnetBlock(nn.Module):
 
 class MetaBlackBoxDetector(nn.Module):
     """
-    The DeepRXDetector Network Architecture
+    The BlackBoxDetector Network Architecture
     """
 
     def __init__(self):

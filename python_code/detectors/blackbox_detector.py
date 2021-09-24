@@ -58,7 +58,7 @@ class ResnetBlock(nn.Module):
 
 class BlackBoxDetector(nn.Module):
     """
-    The DeepRXDetector Network Architecture
+    The BlackBoxDetector Network Architecture
     """
 
     def __init__(self):

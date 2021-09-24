@@ -167,7 +167,6 @@ class DeepSICTrainer:
         # meta-learning main function
         if self.online_meta and (frame + 1) % SUBFRAMES_IN_FRAME == 0:
             print('Meta')
-            # initialize from trained weights
             self.train_loop(buffer_b, buffer_y, self.saved_nets_list, conf.self_supervised_epochs, self.phase)
 
         # use last word inserted in the buffer for training
@@ -305,11 +304,11 @@ class DeepSICTrainer:
         print(f'snr {conf.snr}')
         self.phase = Phase.TRAIN
         b_train, y_train = self.train_dg(snr=conf.snr)  # Generating data for the given snr
-        trained_nets_list = [[self.initialize_detector() for _ in range(conf.iterations)]
-                             for _ in range(conf.n_user)]  # 2D list for Storing the DeepSIC Networks
-        self.train_loop(b_train, y_train, trained_nets_list, conf.max_epochs, self.phase)
+        model = [[self.initialize_detector() for _ in range(conf.iterations)]
+                 for _ in range(conf.n_user)]  # 2D list for Storing the DeepSIC Networks
+        self.train_loop(b_train, y_train, model, conf.max_epochs, self.phase)
         self.phase = Phase.TEST
-        ber = self.evaluate(conf.snr, trained_nets_list)
+        ber = self.evaluate(conf.snr, model)
         all_bers.append(ber)
         print(f'\nber :{sum(ber) / len(ber)} @ snr: {conf.snr} [dB]')
         print(f'Training and Testing Completed\nBERs: {all_bers}')

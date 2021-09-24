@@ -1,5 +1,5 @@
-from python_code.plotting.plotter_utils import get_deepsic, get_meta_deepsic, get_online_deepsic, get_deeprx, \
-    get_online_deeprx, get_meta_deeprx, get_online_deepsic_single_user, get_meta_deepsic_single_user
+from python_code.plotting.plotter_utils import get_deepsic, get_meta_deepsic, get_online_deepsic, get_blackbox, \
+    get_online_blackbox, get_meta_blackbox, get_online_deepsic_single_user, get_meta_deepsic_single_user
 from python_code.utils.config_singleton import Config
 from python_code.utils.python_utils import load_pkl, save_pkl
 from python_code.plotting.plotter_config import *
@@ -160,9 +160,9 @@ def plot_figure_wrapper(figure_ind: int):
         plotter.ser_versus_block(current_run_params=get_online_deepsic_single_user(figure_ind))
         plotter.ser_versus_block(current_run_params=get_meta_deepsic_single_user(figure_ind))
     if figure_ind in [7, 8, 17, 18]:
-        plotter.ser_versus_block(current_run_params=get_deeprx(figure_ind))
-        plotter.ser_versus_block(current_run_params=get_online_deeprx(figure_ind))
-        plotter.ser_versus_block(current_run_params=get_meta_deeprx(figure_ind))
+        plotter.ser_versus_block(current_run_params=get_blackbox(figure_ind))
+        plotter.ser_versus_block(current_run_params=get_online_blackbox(figure_ind))
+        plotter.ser_versus_block(current_run_params=get_meta_blackbox(figure_ind))
     if figure_ind in [9, 19]:
         plotter.ser_versus_blocks_num(current_run_params=get_deepsic(figure_ind))
         plotter.ser_versus_blocks_num(current_run_params=get_online_deepsic(figure_ind))

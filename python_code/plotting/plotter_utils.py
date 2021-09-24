@@ -39,19 +39,19 @@ def get_meta_deepsic_single_user(figure_ind):
     return (MetaDeepSICTrainer(), 'Meta-DeepSIC - Single User')
 
 
-def get_deeprx(figure_ind):
+def get_blackbox(figure_ind):
     config = Config()
     config.load_config(os.path.join(CONFIG_RUNS_DIR, f'fig{figure_ind}.yaml'))
-    return (JointBlackBoxTrainer(), 'Joint DeepRX')
+    return (JointBlackBoxTrainer(), 'Joint BlackBox')
 
 
-def get_online_deeprx(figure_ind):
+def get_online_blackbox(figure_ind):
     config = Config()
     config.load_config(os.path.join(CONFIG_RUNS_DIR, f'fig{figure_ind}.yaml'))
-    return (OnlineBlackBoxTrainer(), 'Online DeepRX')
+    return (OnlineBlackBoxTrainer(), 'Online BlackBox')
 
 
-def get_meta_deeprx(figure_ind):
+def get_meta_blackbox(figure_ind):
     config = Config()
     config.load_config(os.path.join(CONFIG_RUNS_DIR, f'fig{figure_ind}.yaml'))
-    return (MetaBlackBoxTrainer(), 'Meta-DeepRX')
+    return (MetaBlackBoxTrainer(), 'Meta-BlackBox')
