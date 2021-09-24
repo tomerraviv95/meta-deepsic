@@ -13,7 +13,6 @@ import copy
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 conf = Config()
 
-HALF = 0.5
 SUBFRAMES_IN_FRAME = 5
 
 random.seed(0)
@@ -22,7 +21,7 @@ torch.cuda.manual_seed(0)
 np.random.seed(0)
 
 
-class RXTrainer:
+class BlackBoxTrainer:
     """Form the trainer class.
 
     Keyword arguments:

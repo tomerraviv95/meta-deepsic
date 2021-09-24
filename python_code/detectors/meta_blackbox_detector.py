@@ -1,5 +1,6 @@
+from python_code.utils.python_utils import reshape_input, reshape_output
 from python_code.utils.config_singleton import Config
-from python_code.utils.constants import Phase
+from python_code.utils.constants import Phase, HALF
 from torch.nn import functional as F
 from torch import nn
 import torch
@@ -45,28 +46,22 @@ class MetaBlackBoxDetector(nn.Module):
         self.all_blocks = [MetaResnetBlock() for _ in range(RESNET_BLOCKS)]
         self.state = None
 
-    def reshaped_tensor_in(self, ten: torch.Tensor):
-        return ten.reshape(-1, 1, conf.n_user, 1).transpose(dim0=1, dim1=2)
-
-    def reshaped_tensor_out(self, ten: torch.Tensor):
-        return ten.transpose(dim0=1, dim1=2).reshape(-1, conf.n_ant)
-
     def set_state(self, state: Phase):
         self.state = state
 
     def forward(self, y: torch.Tensor, var: list) -> torch.Tensor:
-        cur_y = tanh_func(self.reshaped_tensor_in(y))
+        out = tanh_func(reshape_input(y, conf.n_user, 1))
         for i in range(len(self.all_blocks)):
             cur_block = self.all_blocks[i]
             current_var = var[i * RESNET_PARAMS:(i + 1) * RESNET_PARAMS]
-            cur_y = cur_block(cur_y, current_var)
-        reshaped_out = self.reshaped_tensor_out(cur_y)
+            out = cur_block(out, current_var)
+        out = reshape_output(out, conf.n_ant)
         if self.state == Phase.TRAIN:
-            return reshaped_out
+            return out
         # in eval mode
         elif self.state == Phase.TEST:
             m = torch.nn.Sigmoid()
-            hard_decision_output = m(reshaped_out) >= 0.5
+            hard_decision_output = m(out) >= HALF
             return hard_decision_output
         else:
             raise Exception("No such state value!!!")

@@ -1,5 +1,6 @@
+from python_code.utils.python_utils import reshape_input, reshape_output
 from python_code.utils.config_singleton import Config
-from python_code.utils.constants import Phase
+from python_code.utils.constants import Phase, HALF
 from torch import nn
 import torch
 
@@ -76,25 +77,19 @@ class BlackBoxDetector(nn.Module):
         )
         self.state = None
 
-    def reshaped_tensor_in(self, ten: torch.Tensor, frame_size: int):
-        return ten.reshape(-1, frame_size, conf.n_user, 1).transpose(dim0=1, dim1=2)
-
-    def reshaped_tensor_out(self, ten: torch.Tensor):
-        return ten.transpose(dim0=1, dim1=2).reshape(-1, conf.n_ant)
-
     def set_state(self, state: Phase):
         self.state = state
 
     def forward(self, y: torch.Tensor, frame_size: int) -> torch.Tensor:
-        reshaped_y_in = self.reshaped_tensor_in(y, frame_size)
+        reshaped_y_in = reshape_input(y, conf.n_user, frame_size)
         out = self.all_blocks(tanh_func(reshaped_y_in))
-        reshaped_out = self.reshaped_tensor_out(out)
+        out = reshape_output(out, conf.n_ant)
         if self.state == Phase.TRAIN:
-            return reshaped_out
+            return out
         # in eval mode
         elif self.state == Phase.TEST:
             m = torch.nn.Sigmoid()
-            hard_decision_output = m(reshaped_out) >= 0.5
+            hard_decision_output = m(out) >= HALF
             return hard_decision_output
         else:
             raise Exception("No such state value!!!")

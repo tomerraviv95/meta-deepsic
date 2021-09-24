@@ -2,16 +2,14 @@ from python_code.detectors.deep_sic_detector import DeepSICDetector
 from python_code.detectors.meta_deep_sic_detector import MetaDeepSICDetector
 from python_code.trainers.deepsic.deep_sic_trainer import DeepSICTrainer
 from python_code.utils.config_singleton import Config
-from python_code.utils.constants import Phase
+from python_code.utils.constants import Phase, HALF
 import torch
-import copy
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 conf = Config()
 
 MAML_FLAG = True
 META_LR = 0.01
-HALF = 0.5
 
 
 class MetaDeepSICTrainer(DeepSICTrainer):

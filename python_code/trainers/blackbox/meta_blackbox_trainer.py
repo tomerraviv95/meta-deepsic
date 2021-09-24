@@ -1,6 +1,6 @@
 from python_code.detectors.meta_blackbox_detector import MetaBlackBoxDetector
 from python_code.detectors.blackbox_detector import BlackBoxDetector
-from python_code.trainers.deeprx.rx_trainer import RXTrainer
+from python_code.trainers.blackbox.blackbox_trainer import BlackBoxTrainer
 from python_code.utils.config_singleton import Config
 from python_code.utils.constants import Phase
 import torch
@@ -11,10 +11,9 @@ conf = Config()
 
 MAML_FLAG = True
 META_LR = 0.01
-HALF = 0.5
 
 
-class MetaDeepRXTrainer(RXTrainer):
+class MetaBlackBoxTrainer(BlackBoxTrainer):
     """
     Trainer for the meta DeepRX model.
     """
@@ -120,5 +119,5 @@ class MetaDeepRXTrainer(RXTrainer):
 
 
 if __name__ == "__main__":
-    deep_rx_trainer = MetaDeepRXTrainer()
+    deep_rx_trainer = MetaBlackBoxTrainer()
     deep_rx_trainer.train()

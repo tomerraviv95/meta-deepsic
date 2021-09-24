@@ -3,7 +3,7 @@ from python_code.ecc.wrappers import decoder, encoder
 from python_code.utils.metrics import calculate_error_rates
 from python_code.data.data_generator import DataGenerator
 from python_code.utils.config_singleton import Config
-from python_code.utils.constants import Phase
+from python_code.utils.constants import Phase, HALF
 from typing import List
 import numpy as np
 import random
@@ -13,7 +13,6 @@ import copy
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 conf = Config()
 
-HALF = 0.5
 SUBFRAMES_IN_FRAME = 5
 
 random.seed(0)
@@ -29,7 +28,7 @@ def symbol_to_prob(s):
     :param s: symbols vector
     :return: probabilities vector
     """
-    return 0.5 * (s + 1)
+    return HALF * (s + 1)
 
 
 def prob_to_symbol(p):
@@ -39,7 +38,7 @@ def prob_to_symbol(p):
     :param p: probabilities vector
     :return: symbols vector
     """
-    return torch.sign(p - 0.5)
+    return torch.sign(p - HALF)
 
 
 class DeepSICTrainer:
