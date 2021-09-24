@@ -1,8 +1,9 @@
 from python_code.detectors.meta_blackbox_detector import MetaBlackBoxDetector
 from python_code.detectors.blackbox_detector import BlackBoxDetector
-from python_code.trainers.blackbox.blackbox_trainer import BlackBoxTrainer
+from python_code.trainers.blackbox_trainer import BlackBoxTrainer
 from python_code.utils.config_singleton import Config
 from python_code.utils.constants import Phase
+from torch import nn
 import torch
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -10,6 +11,7 @@ conf = Config()
 
 MAML_FLAG = True
 META_LR = 0.01
+META_SAMPLES = 25
 
 
 class MetaBlackBoxTrainer(BlackBoxTrainer):
@@ -25,31 +27,30 @@ class MetaBlackBoxTrainer(BlackBoxTrainer):
     def __str__(self):
         return 'Meta-BlackBox'
 
-    def initialize_detector(self):
+    def initialize_single_detector(self) -> nn.Module:
         """
         Loads the BlackBox detector
         """
         return BlackBoxDetector()
 
-    def train_model(self, net, x_train, y_train, max_epochs):
+    def train_model(self, model: nn.Module, b_train: torch.Tensor, y_train: torch.Tensor, max_epochs: int):
         """
         Main meta-training loop. Runs in minibatches, each minibatch is split to pairs of following words.
         The pairs are comprised of (support,query) words.
         Evaluates performance over validation SNRs.
         Saves weights every so and so iterations.
         """
-        opt = torch.optim.Adam(net.parameters(), lr=conf.lr)
+        opt = torch.optim.Adam(model.parameters(), lr=conf.lr)
         crt = torch.nn.BCELoss().to(device)
         m = torch.nn.Sigmoid()
-        net = net.to(device)
+        model = model.to(device)
         meta_detector = MetaBlackBoxDetector()
         frame_size = self.train_frame_size if self.phase == Phase.TRAIN else self.test_frame_size
-        if x_train.shape[0] - frame_size <= 0:
+        if b_train.shape[0] - frame_size <= 0:
             return
-        support_idx = torch.arange(x_train.shape[0] - frame_size)
-        query_idx = torch.arange(frame_size, x_train.shape[0])
-        META_SAMPLES = 25
-        net.set_state(Phase.TRAIN)
+        support_idx = torch.arange(b_train.shape[0] - frame_size)
+        query_idx = torch.arange(frame_size, b_train.shape[0])
+        model.set_state(Phase.TRAIN)
         meta_detector.set_state(Phase.TRAIN)
         for _ in range(max_epochs):
             opt.zero_grad()
@@ -59,11 +60,11 @@ class MetaBlackBoxTrainer(BlackBoxTrainer):
             cur_support_idx, cur_query_idx = support_idx[cur_idx], query_idx[cur_idx]
 
             # divide the words to following pairs - (support,query)
-            support_b, support_y = x_train[cur_support_idx], y_train[cur_support_idx]
-            query_b, query_y = x_train[cur_query_idx], y_train[cur_query_idx]
+            support_b, support_y = b_train[cur_support_idx], y_train[cur_support_idx]
+            query_b, query_y = b_train[cur_query_idx], y_train[cur_query_idx]
 
             # local update (with support set)
-            para_list_detector = list(map(lambda p: p[0], zip(net.parameters())))
+            para_list_detector = list(map(lambda p: p[0], zip(model.parameters())))
             soft_estimation_supp = meta_detector(support_y, para_list_detector)
             loss_supp = crt(m(soft_estimation_supp), support_b)
 
@@ -78,14 +79,15 @@ class MetaBlackBoxTrainer(BlackBoxTrainer):
             meta_grad = torch.autograd.grad(loss_query, para_list_detector, create_graph=False)
 
             ind_param = 0
-            for param in net.parameters():
+            for param in model.parameters():
                 param.grad = None  # zero_grad
                 param.grad = meta_grad[ind_param]
                 ind_param += 1
 
             opt.step()
 
-    def online_train_loop(self, net, x_train, y_train, max_epochs, phase):
+    def online_train_loop(self, model: nn.Module, b_train: torch.Tensor, y_train: torch.Tensor, max_epochs: int,
+                          phase: Phase):
         """
         Trains the BlackBox Network
 
@@ -97,26 +99,19 @@ class MetaBlackBoxTrainer(BlackBoxTrainer):
         -------
 
         """
-        opt = torch.optim.Adam(net.parameters(), lr=conf.lr)
+        opt = torch.optim.Adam(model.parameters(), lr=conf.lr)
         crt = torch.nn.BCELoss().to(device)
         m = torch.nn.Sigmoid()
-        net.set_state(Phase.TRAIN)
-        net = net.to(device)
+        model.set_state(Phase.TRAIN)
+        model = model.to(device)
         for _ in range(max_epochs):
             opt.zero_grad()
-            out = net(y_train)
-            loss = crt(input=m(out), target=x_train)
+            out = model(y_train)
+            loss = crt(input=m(out), target=b_train)
             loss.backward()
             opt.step()
 
-    def predict(self, model, y_test):
-        model.set_state(Phase.TEST)
-        return model(y_test, self.train_frame_size if self.phase == Phase.TRAIN else self.test_frame_size)
-
-    def train_loop(self, x_train, y_train, model, max_epochs, phase):
-        self.train_model(model, x_train, y_train, max_epochs)
-
 
 if __name__ == "__main__":
-    deep_rx_trainer = MetaBlackBoxTrainer()
-    deep_rx_trainer.train()
+    trainer = MetaBlackBoxTrainer()
+    trainer.main()

@@ -3,7 +3,7 @@ from python_code.plotting.plotter_utils import get_deepsic, get_meta_deepsic, ge
 from python_code.utils.config_singleton import Config
 from python_code.utils.python_utils import load_pkl, save_pkl
 from python_code.plotting.plotter_config import *
-from python_code.trainers.deepsic.deep_sic_trainer import DeepSICTrainer
+from python_code.trainers.deep_sic_trainer import DeepSICTrainer
 from dir_definitions import PLOTS_DIR, FIGURES_DIR
 import matplotlib.pyplot as plt
 import numpy as np
@@ -47,7 +47,7 @@ class Plotter:
         else:
             # otherwise - run again
             print("calculating fresh")
-            ser = trainer.train()
+            ser = trainer.main()
             save_pkl(plots_path, ser)
         return ser
 
