@@ -99,7 +99,7 @@ class COSTChannel(ChannelModel):
             if conf.change_user_only:
                 H_sed = SEDChannel.calculate_channel(n_ant, n_user, frame_num, iteration, phase)
                 remaining_indices = list(set(list(range(n_ant))) - set([conf.change_user_only]))
-                total_h[i - 1][remaining_indices] = H_sed[i-1][remaining_indices]
+                total_h[i - 1][remaining_indices] = H_sed[i - 1][remaining_indices]
 
         total_h[np.arange(n_user), np.arange(n_user)] = 1
         return total_h

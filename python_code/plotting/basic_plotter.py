@@ -130,13 +130,18 @@ class Plotter:
         trainer = current_run_params[0]
         # name of detector
         name = current_run_params[1]
-        snr_values = [10, 12, 14, 16]
+        snr_values = [11, 12, 13, 14, 15, 16]
+        # snr_values = [14]
         total_sers = []
+        trial_num = 1
         for snr in snr_values:
             conf.set_value('snr', snr)
-            ser_plot = self.get_ser_plot(trainer, run_over=self.run_over, method_name=name)
-            avg_ser = sum(ser_plot[0]) / len(ser_plot[0])
-            total_sers.append(avg_ser)
+            avg_ser = 0
+            for trial in range(trial_num):
+                trainer.__init__()
+                ser_plot = self.get_ser_plot(trainer, run_over=self.run_over, method_name=name, trial=trial)
+                avg_ser += sum(ser_plot[0]) / len(ser_plot[0])
+            total_sers.append(avg_ser / trial_num)
 
         self.plot_ser_versus_snr(snr_values, total_sers, name)
         plt.savefig(os.path.join(FIGURES_DIR, self.folder_name, f'SER_versus_snr.png'), bbox_inches='tight')
@@ -174,6 +179,6 @@ def plot_figure_wrapper(figure_ind: int):
 
 if __name__ == "__main__":
     plotter = Plotter(run_over=False)
-    figure_ind = 22
+    figure_ind = 21
     plot_figure_wrapper(figure_ind)
     plt.show()
