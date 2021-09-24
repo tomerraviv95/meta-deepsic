@@ -10,6 +10,7 @@ RESNET_PARAMS = 9
 RESNET_BLOCKS = 10
 
 tanh_func = torch.nn.Tanh()
+relu_func = torch.nn.ReLU()
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
@@ -23,28 +24,24 @@ class MetaResnetBlock(nn.Module):
         """
         super(MetaResnetBlock, self).__init__()
 
-    def forward(self, x: torch.Tensor, var: list):
-        identity = F.batch_norm(F.conv2d(x, var[0]), running_mean=var[2].detach(),
+    def forward(self, x: torch.Tensor, var: list) -> torch.Tensor:
+        skip_out = F.batch_norm(F.conv2d(x, var[0]), running_mean=var[2].detach(),
                                 running_var=var[1].detach(), weight=var[1], bias=var[2])
-
-        # meta block
-        relu = nn.ReLU()
-        first = relu(F.batch_norm(F.conv2d(x, var[3], bias=None, padding=1, stride=1), running_mean=var[5].detach(),
-                                  running_var=var[4].detach(), weight=var[4], bias=var[5]))
-        out = F.batch_norm(F.conv2d(first, var[6], bias=None, padding=1, stride=1), running_mean=var[8].detach(),
-                           running_var=var[7].detach(), weight=var[7], bias=var[8])
-        out += identity
-        out = tanh_func(out)
-        return out
+        out1 = relu_func(F.batch_norm(F.conv2d(x, var[3], bias=None, padding=1, stride=1), running_mean=var[5].detach(),
+                                      running_var=var[4].detach(), weight=var[4], bias=var[5]))
+        out2 = F.batch_norm(F.conv2d(out1, var[6], bias=None, padding=1, stride=1), running_mean=var[8].detach(),
+                            running_var=var[7].detach(), weight=var[7], bias=var[8])
+        out = out2 + skip_out
+        return tanh_func(out)
 
 
-class MetaDeepRXDetector(nn.Module):
+class MetaBlackBoxDetector(nn.Module):
     """
     The DeepRXDetector Network Architecture
     """
 
     def __init__(self):
-        super(MetaDeepRXDetector, self).__init__()
+        super(MetaBlackBoxDetector, self).__init__()
         self.all_blocks = [MetaResnetBlock() for _ in range(RESNET_BLOCKS)]
         self.state = None
 

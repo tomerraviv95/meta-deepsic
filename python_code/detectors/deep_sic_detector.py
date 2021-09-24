@@ -1,7 +1,6 @@
-import torch
-
 from python_code.utils.config_singleton import Config
 from torch import nn
+import torch
 
 conf = Config()
 

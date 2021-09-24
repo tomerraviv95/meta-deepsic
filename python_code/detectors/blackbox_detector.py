@@ -20,7 +20,7 @@ tanh_func = torch.nn.Tanh()
 
 
 class ResnetBlock(nn.Module):
-    def __init__(self, in_channels, out_channels, stride=1):
+    def __init__(self, in_channels: int, out_channels: int, stride=1):
         """
         Args:
           in_channels (int):  Number of input channels.
@@ -29,14 +29,9 @@ class ResnetBlock(nn.Module):
         """
         super(ResnetBlock, self).__init__()
 
-        self.skip = nn.Sequential()
-
-        if stride != 1 or in_channels != out_channels:
-            self.skip = nn.Sequential(
-                nn.Conv2d(in_channels=in_channels, out_channels=out_channels, kernel_size=1, stride=stride, bias=False),
-                nn.BatchNorm2d(out_channels))
-        else:
-            self.skip = None
+        self.skip = nn.Sequential(
+            nn.Conv2d(in_channels=in_channels, out_channels=out_channels, kernel_size=1, stride=stride, bias=False),
+            nn.BatchNorm2d(out_channels))
 
         self.block = nn.Sequential(
             nn.Conv2d(in_channels=in_channels, out_channels=HIDDEN_SIZE, kernel_size=3, padding=1, stride=1,
@@ -47,27 +42,26 @@ class ResnetBlock(nn.Module):
                       bias=False),
             nn.BatchNorm2d(out_channels))
 
-    def forward(self, x):
-
-        identity = x
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        skip_out = x
         out = self.block(x)
 
         if self.skip is not None:
-            identity = self.skip(x)
+            skip_out = self.skip(x)
 
-        out += identity
+        out += skip_out
         out = tanh_func(out)
 
         return out
 
 
-class DeepRXDetector(nn.Module):
+class BlackBoxDetector(nn.Module):
     """
     The DeepRXDetector Network Architecture
     """
 
     def __init__(self):
-        super(DeepRXDetector, self).__init__()
+        super(BlackBoxDetector, self).__init__()
         self.all_blocks = nn.Sequential(
             *[ResnetBlock(conf.n_ant, IN2_FILTERS),
               ResnetBlock(IN2_FILTERS, IN3_FILTERS),

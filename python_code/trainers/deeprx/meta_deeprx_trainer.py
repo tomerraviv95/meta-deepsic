@@ -1,5 +1,5 @@
-from python_code.detectors.meta_deep_rx_detector import MetaDeepRXDetector
-from python_code.detectors.deep_rx_detector import DeepRXDetector
+from python_code.detectors.meta_blackbox_detector import MetaBlackBoxDetector
+from python_code.detectors.blackbox_detector import BlackBoxDetector
 from python_code.trainers.deeprx.rx_trainer import RXTrainer
 from python_code.utils.config_singleton import Config
 from python_code.utils.constants import Phase
@@ -31,7 +31,7 @@ class MetaDeepRXTrainer(RXTrainer):
         """
         Loads the DeepRX detector
         """
-        self.detector = DeepRXDetector()
+        self.detector = BlackBoxDetector()
 
     def train_model(self, net, x_train, y_train, max_epochs):
         """
@@ -44,7 +44,7 @@ class MetaDeepRXTrainer(RXTrainer):
         crt = torch.nn.BCELoss().to(device)
         m = torch.nn.Sigmoid()
         net = net.to(device)
-        meta_detector = MetaDeepRXDetector()
+        meta_detector = MetaBlackBoxDetector()
         frame_size = self.train_frame_size if self.phase == Phase.TRAIN else self.test_frame_size
         if x_train.shape[0] - frame_size <= 0:
             return

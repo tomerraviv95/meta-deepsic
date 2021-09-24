@@ -1,4 +1,4 @@
-from python_code.detectors.deep_rx_detector import DeepRXDetector
+from python_code.detectors.blackbox_detector import BlackBoxDetector
 from python_code.trainers.deeprx.rx_trainer import RXTrainer
 from python_code.utils.config_singleton import Config
 from python_code.utils.constants import Phase
@@ -24,7 +24,7 @@ class OnlineDeepRXTrainer(RXTrainer):
         """
         Loads the DeepRX detector
         """
-        self.detector = DeepRXDetector()
+        self.detector = BlackBoxDetector()
 
     def train_model(self, net, x_train, y_train, max_epochs):
         """
