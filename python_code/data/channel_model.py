@@ -4,9 +4,15 @@ from python_code.utils.config_singleton import Config
 from python_code.plotting.plotter_config import *
 from python_code.utils.constants import Phase
 import matplotlib.pyplot as plt
+from enum import Enum, auto
 import numpy as np
 
 conf = Config()
+
+
+class Channel(Enum):
+    SED = auto()
+    COST = auto()
 
 
 class ChannelModel:
@@ -14,10 +20,10 @@ class ChannelModel:
         self.phase = phase
 
     def get_channel(self, frame_ind: int) -> np.ndarray:
-        if conf.channel_mode == 'SED' or self.phase == Phase.TRAIN:
+        if conf.channel_mode == Channel.SED.name or self.phase == Phase.TRAIN:
             H = SEDChannel.calculate_channel(conf.n_ant, conf.n_user, self.phase, frame_ind, conf.fading,
                                              conf.change_user_only)
-        elif conf.channel_mode == 'COST':
+        elif conf.channel_mode == Channel.COST.name:
             H = COSTChannel.calculate_channel(conf.n_ant, conf.n_user, frame_ind, self.phase, conf.change_user_only)
         else:
             raise NotImplementedError
