@@ -31,9 +31,7 @@ class MetaDeepSICDetector(nn.Module):
     def __init__(self):
         super(MetaDeepSICDetector, self).__init__()
         self.fc0 = nn.Linear(conf.n_user + conf.n_ant - 1, HIDDEN_SIZE)
-        self.sigmoid = nn.Sigmoid()
         self.fc1 = nn.Linear(HIDDEN_SIZE, int(HIDDEN_SIZE / 2))
-        self.relu = nn.ReLU()
         self.fc2 = nn.Linear(int(HIDDEN_SIZE / 2), CLASSES_NUM)
 
     def forward(self, y: torch.Tensor, var: list) -> torch.Tensor:
