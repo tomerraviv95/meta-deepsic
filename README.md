@@ -13,13 +13,12 @@ Please cite our [paper](...), if the code is used for publishing research.
 - [Introduction](#introduction)
 - [Folders Structure](#folders-structure)
   * [python_code](#python_code)
-    + [channel](#channel)
+    + [data](#data)
     + [detectors](#detectors)
     + [ecc](#ecc)
-    + [plotters](#plotters)
+    + [plotting](#plotting)
     + [trainers](#trainers)
     + [utils](#utils)
-    + [config](#config)
   * [resources](#resources)
   * [dir_definitions](#dir_definitions)
 - [Execution](#execution)
@@ -49,7 +48,7 @@ The backbone detectors: DeepSIC, Meta-DeepSIC, BlackBox, Meta-BlackBox. The meta
 
 Error-correction codes functions. Code from [site](https://en.wikiversity.org/wiki/Reed%E2%80%93Solomon_codes_for_coders).
 
-### plotters
+### plotting
 
 Features main plotting tools for the paper:
 
