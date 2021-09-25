@@ -51,19 +51,47 @@ Error-correction codes functions. Code from [site](https://en.wikiversity.org/wi
 
 ### plotters
 
-Plotting of the FER versus SNR, and the FER versus the blocks. 
+Features main plotting tools for the paper:
+
+* basic_plotter - features the main plotting class, with plots of coded BER by block index and SNR, or SER by pilots length.
+* plotter_config - colors, markers and linestyles for all methods.
+* plotter_utils - wrapper for the trainers initialization and method name.
+* plot_figures_for_paper - loads the relevant config from config_runs directory, and runs the appropriate methods.
 
 ### trainers 
 
-Wrappers for the training and evaluation of the detectors.
+Wrappers for the training and evaluation of the detectors. Trainer holds the training, sequential evaluation of data blocks with coding and without pilots / with pilots and without coding. It also holds the main function that trains the detector and evaluates it, returning a list of coded ber/ser per block. The train and test dataloaders are also initialized by the trainer.
 
-The basic trainer class holds most used methods: train, meta-train and evaluation (per SNR/block, see the paper for the two types of eval). It is also used for parsing the config.yaml file and preparing the deep learning setup (loss, optimizer, ...).
+The specific class trainer (deepsic/blackbox) holds relevant functions that are used by that specific trainer only. In each directory we also have a wrapper trainer for each detector, that implements different training methodologies. Joint implements training in offline only, not online. Online methods implement both the training and online training as the same util. Meta methods implement both the offline and online meta-training, as well as the online supervised training. 
 
-Each trainer inherets from the basic trainer class, extending it as needed. You can run each trainer with the train/evaluate commands in their __main__.
+Each trainer is executable by running it. The trainer runs the main function of trainer - training and evaluation one after the other.
 
 ### utils
 
-Extra utils for saving and loading pkls; calculating the accuracy over FER and BER; and transitioning over the trellis.
+Extra utils for pickle manipulations and tensor reshaping; calculating the accuracy over FER and BER; several constants; and most important - the config singleton class.
+
+The config works by the [singleton design patter](https://en.wikipedia.org/wiki/Singleton_pattern). Check the link if unfamiliar. 
+
+The config is accessible from every module in the package, featuring the next parameters:
+
+1. n_user - number of transmitting users. Integer.
+2. n_ant - number of receiving antennas. Integer.
+3. snr - channel signal-to-noise ratio, in dB. Integer.
+4. iterations - number of iterations in the unfolded DeepSIC architecture. Integer.
+5. info_size - number of information bits in each training pilot block and test data block. Integer.
+6. train_frame_num - number of blocks used for training. Integer.
+7. test_frame_num - number of blocks used for test. Integer.
+8. test_pilot_size - number of bits in each test pilot block. Integer.
+9. fading - whether to use fading. Relevant only to the SED channel. Boolean flag.
+10. channel_mode - choose the Spatial Exponential Decay Channel Model, i.e. exp(-|i-j|), or the beamformed COST channel. String value: 'SED' or 'COST'. COST works with 8x8 n_user and n_ant only.
+11. lr - learning rate for training. Float.
+12. max_epochs - number of offline training epochs. Integer.
+13. self_supervised_epochs - number of online training epochs. Integer.
+14. use_ecc - whether to use Error Correction Codes (ECC) or not. If not - automatically will run in evaluations the online pilots-blocks scenario (as in pilots efficiency part). Boolean flag.
+15. n_ecc_symbols - number of symbols in ecc. Number of additional transmitted bits is 8 times this value, due to the specific Reed-Solomon we employ. [Read more here](https://en.wikiversity.org/wiki/Reed%E2%80%93Solomon_codes_for_coders). Integer.
+16. ber_thresh - threshold for self-supervised training, as in the [ViterbiNet](https://arxiv.org/abs/1905.10750) or [DeepSIC](https://arxiv.org/abs/2002.03214) papers.
+17. change_user_only - allows change of channel for a single user. Integer value (the index of the desired user: {0,..,n_user}).
+18. retrain_user - only in the DeepSIC architecture, allow for training the specific user networks only. Integer value (the index of the desired user: {0,..,n_user}).
 
 ### config
 
