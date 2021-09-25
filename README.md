@@ -6,7 +6,7 @@
 
 Python repository for the paper "...".
 
-Please cite our [paper](https://arxiv.org/abs/2103.13483), if the code is used for publishing research.
+Please cite our [paper](...), if the code is used for publishing research.
 
 # Table of Contents
 
@@ -37,14 +37,13 @@ This repository implements classical and machine-learning based detectors for a 
 
 The python simulations of the simplified communication chain: encoder, channel and detectors.
 
-### channel 
+### data 
 
-Includes all relevant channel functions and classes. The class in "channel_dataset.py" implements the main class for aggregating pairs of (transmitted,received) samples. 
-In "channel.py", the ISI AWGN channel is implemented. "channel_estimation.py" is for the calculation of the h values. Lastly, the channel BPSK modulator lies in "channel_modulator.py".
+Includes the channel dataloader (in the data_generator module) and the channel model, including the SED and beamformed COST channels. In particular, the dataloader generates pairs of (transmitted,received) samples. 
 
 ### detectors
 
-The backbone detectors: VA, VNET, LSTM, META_VNET and META_LSTM. The meta and non-meta detectors have slightly different API so they are seperated in the trainer class below. Also, we use VA as the ML detector, thus we assume full knowledge of the CSI. To have a single API across the detectors, the snr and gamma appear in all the approriate forward calls, but are omitted in the code itself. A factory design pattern could have been a better fit here, and is left as future work.
+The backbone detectors: DeepSIC, Meta-DeepSIC, BlackBox, Meta-BlackBox. The meta and non-meta detectors have slightly different API so they are seperated in the trainer class below. The meta variation has to receive the parameters of the original architecture for the training. Each DeepSIC network employs 3 linear layers, with sigmoid and relu activations inbetween. The black-box architectures employs Resnet blocks from [this post](https://stackoverflow.com/questions/60817390/implementing-a-simple-resnet-block-with-pytorch).
 
 ### ecc
 
