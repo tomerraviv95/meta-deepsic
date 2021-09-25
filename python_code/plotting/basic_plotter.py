@@ -37,7 +37,7 @@ class Plotter:
         file_name = '_'.join([method_name,
                               conf.channel_mode,
                               str(trainer.test_frame_size),
-                              str(conf.test_info_size),
+                              str(conf.info_size),
                               str(conf.snr), 'dB'])
         if trial is not None:
             file_name = file_name + '_' + str(trial)
@@ -115,8 +115,8 @@ class Plotter:
         trial_num = 5
         for test_pilot_size in test_pilot_sizes:
             conf.set_value('test_pilot_size', test_pilot_size)
-            test_info_size = test_pilot_size + data_frame_size
-            conf.set_value('test_info_size', test_info_size)
+            info_size = test_pilot_size + data_frame_size
+            conf.set_value('info_size', info_size)
             ser = 0
             for trial in range(trial_num):
                 trainer.__init__()

@@ -22,11 +22,11 @@ np.random.seed(0)
 class Trainer:
 
     def __init__(self):
-        self.train_frame_size = conf.test_info_size if conf.use_ecc else conf.test_pilot_size
+        self.train_frame_size = conf.info_size if conf.use_ecc else conf.test_pilot_size
         self.test_frame_size = (
-                conf.test_info_size + ECC_BITS_PER_SYMBOL * conf.n_ecc_symbols) if conf.use_ecc else conf.test_pilot_size
-        self.train_dg = DataGenerator(conf.test_info_size, phase=Phase.TRAIN, frame_num=conf.train_frame_num)
-        self.test_dg = DataGenerator(conf.test_info_size, phase=Phase.TEST, frame_num=conf.test_frame_num)
+                conf.info_size + ECC_BITS_PER_SYMBOL * conf.n_ecc_symbols) if conf.use_ecc else conf.test_pilot_size
+        self.train_dg = DataGenerator(conf.info_size, phase=Phase.TRAIN, frame_num=conf.train_frame_num)
+        self.test_dg = DataGenerator(conf.info_size, phase=Phase.TEST, frame_num=conf.test_frame_num)
         self.softmax = torch.nn.Softmax(dim=1)  # Single symbol probability inference
         self.online_meta = False
         self.self_supervised = False

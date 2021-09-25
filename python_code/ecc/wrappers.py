@@ -34,7 +34,7 @@ def decoder(c_pred: np.ndarray, phase: Phase) -> torch.Tensor:
         decoding = lambda b: decode(b, conf.n_ecc_symbols)
     else:
         decoding = lambda b: b
-    b_pred = np.zeros([conf.test_info_size, conf.n_user])
+    b_pred = np.zeros([conf.info_size, conf.n_user])
     for j in range(conf.n_user):
         b_pred[:, j] = decoding(c_pred[:, j].cpu().numpy())
     b_pred = torch.Tensor(b_pred).to(device)
