@@ -93,13 +93,9 @@ The config is accessible from every module in the package, featuring the next pa
 17. change_user_only - allows change of channel for a single user. Integer value (the index of the desired user: {0,..,n_user}).
 18. retrain_user - only in the DeepSIC architecture, allow for training the specific user networks only. Integer value (the index of the desired user: {0,..,n_user}).
 
-### config
-
-Controls all parameters and hyperparameters.
-
 ## resources
 
-Keeps the channel coefficients vectors (4 taps, each with 300 blocks).
+Keeps the COST channel coefficients vectors in 4 test folders. Also holds config runs for the paper.
 
 ## dir_definitions 
 
@@ -123,7 +119,7 @@ This code was simulated with GeForce RTX 2060 with driver version 432.00 and CUD
 
 3. Open Anaconda prompt and navigate to the cloned repository.
 
-4. Run the command "conda env create -f metanet.yml". This should install the required python environment.
+4. Run the command "conda env create -f metadeepsic.yml". This should install the required python environment.
 
 5. Open the cloned directory using PyCharm.
 
@@ -137,7 +133,7 @@ This code was simulated with GeForce RTX 2060 with driver version 432.00 and CUD
 
 10. Select Existing environment and navigate to where the python.exe executable of the deep_ensemble environment is installed under the interpreter setting
 
-  - For windows its usually found at C:\users\<username>\anaconda3\envs\metanet\python.exe)
+  - For windows its usually found at C:\users\<username>\anaconda3\envs\metadeepsic\python.exe)
 
   - For linux its usually found at /home/<username>/anaconda3
   
