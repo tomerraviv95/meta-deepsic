@@ -65,7 +65,7 @@ class Trainer:
             return detected_word
         return encoded_word
 
-    def online_evaluate(self, model: nn.Module, snr: int) -> List[float]:
+    def evaluate(self, model: nn.Module, snr: int) -> List[float]:
         # generate data and declare sizes
         b_test, y_test = self.test_dg(snr=snr)
         c_pred = torch.zeros_like(y_test)
@@ -176,53 +176,6 @@ class Trainer:
             self.online_train_loop(model, est_word, current_y, conf.self_supervised_epochs, self.phase)
 
         return buffer_b, buffer_y
-
-    def agg_evaluate(self, model: nn.Module, snr: int) -> List[float]:
-        """
-        Evaluates the performance of the model.
-
-        Parameters
-        ----------
-        conf: an instance of the Conf class.
-        model: 2D List
-                A 2D list containing the optimized DeepSICNet Networks for each user per iteration,
-                trained_nets_list[user_id][iteration]
-        Returns
-        -------
-        BERs
-            The Bit Error Rates/Ratios for the specified SNR of the testing dataset
-        b_pred
-            The recovered symbols
-        """
-        # generate data and declare sizes
-        b_test, y_test = self.test_dg(snr=snr)  # Generating data for the given SNR
-        probs_vec = HALF * torch.ones(y_test.shape).to(device)
-        c_pred = torch.zeros_like(y_test)
-        b_pred = torch.zeros_like(b_test)
-        c_frame_size = c_pred.shape[0] // conf.test_frame_num
-        b_frame_size = b_pred.shape[0] // conf.test_frame_num
-
-        c_pred = self.predict(model, y_test, probs_vec)
-        print(f'Finished testing symbols')
-        for frame in range(conf.test_frame_num - 1):
-            c_start_ind = frame * c_frame_size
-            c_end_ind = (frame + 1) * c_frame_size
-            b_start_ind = frame * b_frame_size
-            b_end_ind = (frame + 1) * b_frame_size
-            b_pred[b_start_ind:b_end_ind] = decoder(c_pred[c_start_ind:c_end_ind], self.phase)
-        ber = calculate_error_rates(b_pred, b_test)[0]
-        return [ber]
-
-    def evaluate(self, model: nn.Module, snr: int) -> List[float]:
-        print('evaluating')
-        # Testing the network on the current snr
-        if conf.eval_mode == 'by_word':
-            ber = self.online_evaluate(model, snr)
-        elif conf.eval_mode == 'aggregated':
-            ber = self.agg_evaluate(model, snr)
-        else:
-            raise ValueError('No such evaluation mode!!!')
-        return ber
 
     def main(self) -> List[float]:
         """
