@@ -1,4 +1,3 @@
-run_name: 'test' # run directory
 n_ant: 8 # number of Rx Antennas
 n_user: 8 # number of Transmitted Symbols, users
 snr: 12 # SNR value
@@ -8,11 +7,8 @@ train_frame_num: 50 # coherence-time block size
 test_frame_num: 40 # coherence-time block size
 test_pilot_size: 0 # number of subsequent pilot transmissions
 fading: False # whether to use fading
-fading_type: 0 # 1 - usual, 2 - from low fading to stronger fading
 channel_mode: 'COST' # the channel model: set 'SED' for the Spatial Exponential Decay Channel Model, i.e. exp(-|i-j|),
-# set 'Gaussian' for a Gaussian Channel, i.e. N(0,1).
 # 'COST' for COST 8X8 setup.
-eval_mode: 'by_word' # Type of evaluation. Per snr - 'aggregated', Per block - 'by_word'.
 lr: 0.01 # learning rate
 max_epochs: 100 # number of training epochs
 self_supervised_epochs: 50 # number of self-supervised epochs
