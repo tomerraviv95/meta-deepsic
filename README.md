@@ -4,7 +4,7 @@
 
 # Meta-DeepSIC repository
 
-Python repository for the paper "...".
+Python repository for the paper "..." (to be completed).
 
 Please cite our [paper](...), if the code is used for publishing research.
 
