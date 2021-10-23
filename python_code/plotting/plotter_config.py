@@ -15,27 +15,27 @@ mpl.rcParams['font.family'] = 'STIXGeneral'
 
 COLORS_DICT = {'Joint DeepSIC': 'blue',
                'Joint BlackBox': 'blue',
-               'Online DeepSIC': 'black',
-               'Online BlackBox': 'black',
-               'Meta-DeepSIC': 'green',
-               'Meta-BlackBox': 'green',
-               'Online DeepSIC - Single User': 'black',
-               'Meta-DeepSIC - Single User': 'green'}
+               'Online DeepSIC': 'green',
+               'Online BlackBox': 'green',
+               'Meta-DeepSIC': 'red',
+               'Meta-BlackBox': 'red',
+               'Online DeepSIC - Single User': 'green',
+               'Meta-DeepSIC - Single User': 'red'}
 
 MARKERS_DICT = {'Joint DeepSIC': 'x',
-                'Joint BlackBox': 'o',
-                'Online DeepSIC': 'x',
-                'Online BlackBox': 'o',
-                'Meta-DeepSIC': 'x',
-                'Meta-BlackBox': 'o',
+                'Joint BlackBox': 'x',
+                'Online DeepSIC': '.',
+                'Online BlackBox': '.',
+                'Meta-DeepSIC': 'd',
+                'Meta-BlackBox': 'd',
                 'Online DeepSIC - Single User': '+',
                 'Meta-DeepSIC - Single User': '+'}
 
-LINESTYLES_DICT = {'Joint DeepSIC': 'dotted',
+LINESTYLES_DICT = {'Joint DeepSIC': '-',
                    'Joint BlackBox': 'dotted',
-                   'Online DeepSIC': 'dotted',
+                   'Online DeepSIC': '-',
                    'Online BlackBox': 'dotted',
-                   'Meta-DeepSIC': 'dotted',
+                   'Meta-DeepSIC': '-',
                    'Meta-BlackBox': 'dotted',
                    'Online DeepSIC - Single User': '-',
                    'Meta-DeepSIC - Single User': '-'}

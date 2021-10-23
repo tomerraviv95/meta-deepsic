@@ -9,6 +9,8 @@ import numpy as np
 import datetime
 import os
 
+MARKER_EVERY = 5
+
 conf = Config()
 
 
@@ -60,10 +62,10 @@ class Plotter:
                  color=COLORS_DICT[method_name],
                  marker=MARKERS_DICT[method_name],
                  linestyle=LINESTYLES_DICT[method_name],
-                 linewidth=2.2)
+                 linewidth=2.2,
+                 markevery=MARKER_EVERY)
         plt.ylabel(r'Coded BER', fontsize=20)
         plt.xlabel(r'block index', fontsize=20)
-        plt.grid(True, which='both')
         plt.yscale('log')
         plt.legend(loc='upper left', prop={'size': 15})
 
@@ -78,7 +80,7 @@ class Plotter:
         plt.xlabel(r'SNR[dB]', fontsize=20)
         plt.grid(True, which='both')
         plt.yscale('log')
-        plt.legend(loc='upper left', prop={'size': 15})
+        plt.legend(loc='lower left', prop={'size': 15})
 
     def plot_ser_versus_blocks_num(self, blocks_ind: List[int], ser: List[float], method_name: str):
         plt.plot(blocks_ind, ser,
@@ -133,10 +135,9 @@ class Plotter:
         trainer = current_run_params[0]
         # name of detector
         name = current_run_params[1]
-        snr_values = [11, 12, 13, 14, 15, 16]
-        # snr_values = [14]
+        snr_values = list(range(11,15))
         total_sers = []
-        trial_num = 1
+        trial_num = 3
         for snr in snr_values:
             conf.set_value('snr', snr)
             avg_ser = 0
