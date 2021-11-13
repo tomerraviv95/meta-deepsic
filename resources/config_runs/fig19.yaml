@@ -7,6 +7,7 @@ train_frame_num: 50 # coherence-time block size
 test_frame_num: 40 # coherence-time block size
 test_pilot_size: 100 # number of subsequent pilot transmissions
 fading: False # whether to use fading
+linear_channel: True # whether channel is linear or not. In case it is not - a tanh function is applied.
 channel_mode: 'COST' # the channel model: set 'SED' for the Spatial Exponential Decay Channel Model, i.e. exp(-|i-j|),
 # 'COST' for COST 8X8 setup.
 lr: 0.01 # learning rate

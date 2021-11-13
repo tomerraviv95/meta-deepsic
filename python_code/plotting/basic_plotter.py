@@ -41,6 +41,8 @@ class Plotter:
                               str(trainer.test_frame_size),
                               str(conf.info_size),
                               str(conf.snr), 'dB'])
+        if not conf.linear_channel:
+            file_name = file_name + '_non_linear'
         if trial is not None:
             file_name = file_name + '_' + str(trial)
         plots_path = os.path.join(PLOTS_DIR, file_name + '.pkl')
@@ -76,7 +78,7 @@ class Plotter:
                  marker=MARKERS_DICT[method_name],
                  linestyle=LINESTYLES_DICT[method_name],
                  linewidth=2.2)
-        plt.ylabel(r'SER', fontsize=20)
+        plt.ylabel(r'Coded BER', fontsize=20)
         plt.xlabel(r'SNR[dB]', fontsize=20)
         plt.grid(True, which='both')
         plt.yscale('log')
@@ -135,7 +137,7 @@ class Plotter:
         trainer = current_run_params[0]
         # name of detector
         name = current_run_params[1]
-        snr_values = list(range(11,15))
+        snr_values = list(range(11, 15))
         total_sers = []
         trial_num = 3
         for snr in snr_values:

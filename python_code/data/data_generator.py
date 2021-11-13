@@ -56,6 +56,8 @@ class DataGenerator(Dataset):
             # pass through channel
             sigma = calculate_sigma_from_snr(snr)
             y = np.matmul(x, H) + np.sqrt(sigma) * np.random.randn(x.shape[0], conf.n_ant)
+            if not conf.linear_channel:
+                y = np.tanh(0.5 * y)
             # add to buffer
             b_total = torch.cat([b_total, torch.FloatTensor(b)])
             y_total = torch.cat([y_total, torch.FloatTensor(y)])

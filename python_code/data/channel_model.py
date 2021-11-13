@@ -50,13 +50,35 @@ def plot_channel_by_phase(phase: Phase):
             plt.plot(total_h[i, j], label=f'{j}')
         plt.ylabel(r'magnitude', fontsize=20)
         plt.xlabel(r'block index', fontsize=20)
-        # plt.title('Train Channel')
         plt.ylim([-0.1, 1.1])
         plt.grid(True, which='both')
         plt.legend(loc='upper left', prop={'size': 15})
         plt.show()
 
 
+def plot_channel_by_phase2(phase: Phase):
+    """
+    Plot for one given antenna at a time
+    :param phase: Enum
+    """
+    channel_model = ChannelModel(phase)
+
+    total_h = np.empty([conf.n_ant, conf.n_user, 0])
+    for frame_ind in range(conf.train_frame_num):
+        h = channel_model.get_channel(frame_ind)
+        total_h = np.concatenate([total_h, np.expand_dims(h, axis=2)], axis=2)
+
+    total_h_mag = np.sum(np.sum(total_h ** 2, axis=0), axis=0)
+
+    plt.figure()
+    plt.plot(total_h_mag)
+    plt.ylabel(r'H^2 magnitude', fontsize=20)
+    plt.xlabel(r'block index', fontsize=20)
+    plt.grid(True, which='both')
+    plt.legend(loc='upper left', prop={'size': 15})
+    plt.show()
+
+
 if __name__ == "__main__":
     phase = Phase.TEST  # either TRAIN or TEST
-    plot_channel_by_phase(phase)
+    plot_channel_by_phase2(phase)
