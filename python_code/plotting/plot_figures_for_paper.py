@@ -41,7 +41,7 @@ def plot_figure_wrapper(figure_ind: int):
 
 
 if __name__ == "__main__":
-    plotter = Plotter(run_over=True)
+    plotter = Plotter(run_over=False)
     figure_ind = 22
     plot_figure_wrapper(figure_ind)
     plt.show()

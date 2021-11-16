@@ -13,10 +13,10 @@ import torch
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 conf = Config()
 
-random.seed(0)
-torch.manual_seed(0)
-torch.cuda.manual_seed(0)
-np.random.seed(0)
+random.seed(1)
+torch.manual_seed(2)
+torch.cuda.manual_seed(3)
+np.random.seed(4)
 
 
 class Trainer:
