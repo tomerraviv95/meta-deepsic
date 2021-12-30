@@ -39,19 +39,19 @@ def get_meta_deepsic_single_user(figure_ind):
     return (MetaDeepSICTrainer(), 'Meta-DeepSIC - Single User')
 
 
-def get_blackbox(figure_ind):
+def get_resnet(figure_ind):
     config = Config()
     config.load_config(os.path.join(CONFIG_RUNS_DIR, f'fig{figure_ind}.yaml'))
-    return (JointBlackBoxTrainer(), 'Joint BlackBox')
+    return (JointBlackBoxTrainer(), 'Joint ResNet10')
 
 
-def get_online_blackbox(figure_ind):
+def get_online_resnet(figure_ind):
     config = Config()
     config.load_config(os.path.join(CONFIG_RUNS_DIR, f'fig{figure_ind}.yaml'))
-    return (OnlineBlackBoxTrainer(), 'Online BlackBox')
+    return (OnlineBlackBoxTrainer(), 'Online ResNet10')
 
 
-def get_meta_blackbox(figure_ind):
+def get_meta_resnet(figure_ind):
     config = Config()
     config.load_config(os.path.join(CONFIG_RUNS_DIR, f'fig{figure_ind}.yaml'))
-    return (MetaBlackBoxTrainer(), 'Meta-BlackBox')
+    return (MetaBlackBoxTrainer(), 'Meta-ResNet10')

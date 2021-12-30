@@ -14,28 +14,28 @@ mpl.rcParams['mathtext.fontset'] = 'stix'
 mpl.rcParams['font.family'] = 'STIXGeneral'
 
 COLORS_DICT = {'Joint DeepSIC': 'blue',
-               'Joint BlackBox': 'blue',
+               'Joint ResNet10': 'blue',
                'Online DeepSIC': 'green',
-               'Online BlackBox': 'green',
+               'Online ResNet10': 'green',
                'Meta-DeepSIC': 'red',
-               'Meta-BlackBox': 'red',
+               'Meta-ResNet10': 'red',
                'Online DeepSIC - Single User': 'darkgreen',
                'Meta-DeepSIC - Single User': 'darkred'}
 
 MARKERS_DICT = {'Joint DeepSIC': 'x',
-                'Joint BlackBox': 'x',
+                'Joint ResNet10': 'x',
                 'Online DeepSIC': '.',
-                'Online BlackBox': '.',
+                'Online ResNet10': '.',
                 'Meta-DeepSIC': 'd',
-                'Meta-BlackBox': 'd',
+                'Meta-ResNet10': 'd',
                 'Online DeepSIC - Single User': '.',
                 'Meta-DeepSIC - Single User': 'd'}
 
 LINESTYLES_DICT = {'Joint DeepSIC': '-',
-                   'Joint BlackBox': 'dotted',
+                   'Joint ResNet10': 'dotted',
                    'Online DeepSIC': '-',
-                   'Online BlackBox': 'dotted',
+                   'Online ResNet10': 'dotted',
                    'Meta-DeepSIC': '-',
-                   'Meta-BlackBox': 'dotted',
+                   'Meta-ResNet10': 'dotted',
                    'Online DeepSIC - Single User': 'dashdot',
                    'Meta-DeepSIC - Single User': 'dashdot'}

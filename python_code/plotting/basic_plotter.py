@@ -137,9 +137,9 @@ class Plotter:
         trainer = current_run_params[0]
         # name of detector
         name = current_run_params[1]
-        snr_values = list(range(13, 17))
+        snr_values = list(range(11, 15))
         total_sers = []
-        trial_num = 4
+        trial_num = 3
         for snr in snr_values:
             conf.set_value('snr', snr)
             avg_ser = 0
