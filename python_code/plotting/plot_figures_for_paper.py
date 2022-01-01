@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 # plot figures for the paper
 def plot_figure_wrapper(figure_ind: int):
-    if figure_ind in [1, 2, 7, 8, 11, 12, 17, 18, 23]:
+    if figure_ind in [1, 2, 5, 6, 7, 8, 11, 12, 15, 16, 17, 18, 23]:
         plotter.ser_versus_block(current_run_params=get_deepsic(figure_ind))
         if figure_ind in [7, 8, 17, 18, 23]:
             plotter.ser_versus_block(current_run_params=get_resnet(figure_ind))
@@ -42,6 +42,6 @@ def plot_figure_wrapper(figure_ind: int):
 
 if __name__ == "__main__":
     plotter = Plotter(run_over=False)
-    figure_ind = 24
+    figure_ind = 5
     plot_figure_wrapper(figure_ind)
     plt.show()

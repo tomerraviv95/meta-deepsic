@@ -19,8 +19,8 @@ COLORS_DICT = {'Joint DeepSIC': 'blue',
                'Online ResNet10': 'green',
                'Meta-DeepSIC': 'red',
                'Meta-ResNet10': 'red',
-               'Online DeepSIC - Single User': 'darkgreen',
-               'Meta-DeepSIC - Single User': 'darkred'}
+               'Online DeepSIC - Modular Training': 'darkgreen',
+               'Meta-DeepSIC - Modular Training': 'darkred'}
 
 MARKERS_DICT = {'Joint DeepSIC': 'x',
                 'Joint ResNet10': 'x',
@@ -28,8 +28,8 @@ MARKERS_DICT = {'Joint DeepSIC': 'x',
                 'Online ResNet10': '.',
                 'Meta-DeepSIC': 'd',
                 'Meta-ResNet10': 'd',
-                'Online DeepSIC - Single User': '.',
-                'Meta-DeepSIC - Single User': 'd'}
+                'Online DeepSIC - Modular Training': '.',
+                'Meta-DeepSIC - Modular Training': 'd'}
 
 LINESTYLES_DICT = {'Joint DeepSIC': '-',
                    'Joint ResNet10': 'dotted',
@@ -37,5 +37,5 @@ LINESTYLES_DICT = {'Joint DeepSIC': '-',
                    'Online ResNet10': 'dotted',
                    'Meta-DeepSIC': '-',
                    'Meta-ResNet10': 'dotted',
-                   'Online DeepSIC - Single User': 'dashdot',
-                   'Meta-DeepSIC - Single User': 'dashdot'}
+                   'Online DeepSIC - Modular Training': 'dashdot',
+                   'Meta-DeepSIC - Modular Training': 'dashdot'}

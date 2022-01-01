@@ -24,7 +24,7 @@ def get_online_deepsic(figure_ind):
 def get_online_deepsic_single_user(figure_ind):
     config = Config()
     config.load_config(os.path.join(CONFIG_RUNS_DIR, f'fig{figure_ind}.yaml'))
-    return (OnlineDeepSICTrainer(), 'Online DeepSIC - Single User')
+    return (OnlineDeepSICTrainer(), 'Online DeepSIC - Modular Training')
 
 
 def get_meta_deepsic(figure_ind):
@@ -36,7 +36,7 @@ def get_meta_deepsic(figure_ind):
 def get_meta_deepsic_single_user(figure_ind):
     config = Config()
     config.load_config(os.path.join(CONFIG_RUNS_DIR, f'fig{figure_ind}.yaml'))
-    return (MetaDeepSICTrainer(), 'Meta-DeepSIC - Single User')
+    return (MetaDeepSICTrainer(), 'Meta-DeepSIC - Modular Training')
 
 
 def get_resnet(figure_ind):
