@@ -1,7 +1,7 @@
-from python_code.ecc.wrappers import encoder
-from python_code.utils.constants import Phase
 from python_code.data.channel_model import ChannelModel
 from python_code.utils.config_singleton import Config
+from python_code.utils.constants import Phase
+from python_code.ecc.wrappers import encoder
 from torch.utils.data import Dataset
 import numpy as np
 import torch
