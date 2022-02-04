@@ -40,10 +40,16 @@ def plot_figure_wrapper(figure_ind: int):
         plotter.ser_versus_snr(current_run_params=get_online_resnet(figure_ind))
         plotter.ser_versus_snr(current_run_params=get_meta_deepsic(figure_ind))
         plotter.ser_versus_snr(current_run_params=get_meta_resnet(figure_ind))
+    if figure_ind in [17, 18]:
+        plotter.ser_versus_snr(current_run_params=get_deepsic(f'{figure_ind}a'))
+        plotter.ser_versus_snr(current_run_params=get_online_deepsic(f'{figure_ind}a'))
+        plotter.ser_versus_snr(current_run_params=get_online_deepsic_single_user(f'{figure_ind}b'))
+        plotter.ser_versus_snr(current_run_params=get_meta_deepsic(f'{figure_ind}a'))
+        plotter.ser_versus_snr(current_run_params=get_meta_deepsic_single_user(f'{figure_ind}b'))
 
 
 if __name__ == "__main__":
     plotter = Plotter(run_over=True)
-    figure_ind = 15
+    figure_ind = 17
     plot_figure_wrapper(figure_ind)
     plt.show()

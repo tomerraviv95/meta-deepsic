@@ -13,10 +13,12 @@ import torch
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 conf = Config()
 
-random.seed(1)
-torch.manual_seed(2)
-torch.cuda.manual_seed(3)
-np.random.seed(4)
+random.seed(10)
+torch.manual_seed(20)
+torch.cuda.manual_seed(30)
+np.random.seed(40)
+
+DEBUG = False
 
 
 class Trainer:
@@ -93,12 +95,13 @@ class Trainer:
             b_end_ind = (frame + 1) * b_frame_size
             current_x = b_test[b_start_ind:b_end_ind]
             if conf.use_ecc:
-                buffer_b, buffer_y = self.ecc_eval(model, buffer_b, buffer_y, probs_vec, ber_list, current_y, current_x,
-                                                   frame)
+                buffer_b, buffer_y, model = self.ecc_eval(model, buffer_b, buffer_y, probs_vec, ber_list, current_y,
+                                                          current_x,
+                                                          frame)
             else:
-                buffer_b, buffer_y = self.pilot_eval(model, buffer_b, buffer_y, probs_vec, ber_list, current_y,
-                                                     current_x,
-                                                     frame)
+                buffer_b, buffer_y, model = self.pilot_eval(model, buffer_b, buffer_y, probs_vec, ber_list, current_y,
+                                                            current_x,
+                                                            frame)
 
         return ber_list
 
@@ -137,7 +140,7 @@ class Trainer:
         ber_list.append(ber)
         print(frame, ber)
 
-        return buffer_b, buffer_y
+        return buffer_b, buffer_y, model
 
     def ecc_eval(self, model: nn.Module, buffer_b: torch.Tensor, buffer_y: torch.Tensor, probs_vec: torch.Tensor,
                  ber_list: List[float], current_y: torch.Tensor, current_x: torch.Tensor, frame: int) -> [
@@ -172,10 +175,11 @@ class Trainer:
         if self.self_supervised and ber <= conf.ber_thresh:
             if self.online_meta:
                 model = self.copy_model(self.saved_detector)
+
             # use last word inserted in the buffer for training
             self.online_train_loop(model, est_word, current_y, conf.self_supervised_epochs, self.phase)
 
-        return buffer_b, buffer_y
+        return buffer_b, buffer_y, model
 
     def main(self) -> List[float]:
         """

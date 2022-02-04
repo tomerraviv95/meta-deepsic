@@ -10,8 +10,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 conf = Config()
 
 MAML_FLAG = True
-META_LR = 0.01
-META_SAMPLES = 25
+META_LR = 0.1
 
 
 class MetaDeepSICTrainer(DeepSICTrainer):
@@ -54,7 +53,7 @@ class MetaDeepSICTrainer(DeepSICTrainer):
             opt.zero_grad()
 
             # choose only META_SAMPLES samples from the entire support, query to use for current epoch
-            cur_idx = torch.randperm(len(support_idx))[:META_SAMPLES]
+            cur_idx = torch.randperm(len(support_idx))
             cur_support_idx, cur_query_idx = support_idx[cur_idx], query_idx[cur_idx]
 
             # divide the words to following pairs - (support,query)
