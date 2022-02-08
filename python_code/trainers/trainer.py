@@ -18,7 +18,6 @@ torch.manual_seed(20)
 torch.cuda.manual_seed(30)
 np.random.seed(40)
 
-DEBUG = False
 
 
 class Trainer:
@@ -54,6 +53,10 @@ class Trainer:
         pass
 
     def train_loop(self, model: nn.Module, b_train: torch.Tensor, y_train: torch.Tensor, max_epochs: int, phase: Phase):
+        pass
+
+    def train_loop2(self, model: nn.Module, b_train: torch.Tensor, y_train: torch.Tensor, max_epochs: int,
+                    phase: Phase):
         pass
 
     def predict(self, model: nn.Module, y: torch.Tensor, probs_vec: torch.Tensor = None) -> torch.Tensor:

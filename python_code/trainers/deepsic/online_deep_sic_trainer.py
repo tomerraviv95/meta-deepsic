@@ -27,7 +27,7 @@ class OnlineDeepSICTrainer(DeepSICTrainer):
         """
         Loads the DeepSIC detector
         """
-        return DeepSICDetector()
+        return DeepSICDetector().to(device)
 
     def train_model(self, single_model: nn.Module, b_train: torch.Tensor, y_train: torch.Tensor, max_epochs: int):
         """

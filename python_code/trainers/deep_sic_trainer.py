@@ -1,3 +1,4 @@
+import itertools
 from python_code.trainers.trainer import Trainer
 from python_code.utils.config_singleton import Config
 from python_code.utils.constants import Phase, HALF
@@ -8,6 +9,7 @@ import copy
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 conf = Config()
+SEQUENTIAL_TRAINING = False
 
 
 def symbol_to_prob(s: torch.Tensor) -> torch.Tensor:
@@ -63,6 +65,13 @@ class DeepSICTrainer(Trainer):
         pass
 
     def train_loop(self, model: nn.Module, b_train: torch.Tensor, y_train: torch.Tensor, max_epochs: int, phase: Phase):
+        if SEQUENTIAL_TRAINING:
+            self.sequential_train_loop(model, b_train, y_train, conf.max_epochs, self.phase)
+        else:
+            self.end_to_end_train_loop(model, b_train, y_train, conf.max_epochs, self.phase)
+
+    def sequential_train_loop(self, model: nn.Module, b_train: torch.Tensor, y_train: torch.Tensor, max_epochs: int,
+                              phase: Phase):
         initial_probs = b_train.clone()
         b_train_all, y_train_all = self.prepare_data_for_training(b_train, y_train, initial_probs)
         # Training the DeepSIC network for each user for iteration=1
@@ -77,6 +86,51 @@ class DeepSICTrainer(Trainer):
             b_train_all, y_train_all = self.prepare_data_for_training(b_train, y_train, probs_vec)
             # Training the DeepSIC networks for the iteration>1
             self.train_models(model, i, b_train_all, y_train_all, max_epochs, phase)
+
+    def end_to_end_train_loop(self, model: nn.Module, b_train: torch.Tensor, y_train: torch.Tensor, max_epochs: int,
+                              phase: Phase):
+        # Initializing the probabilities
+        params = [j.parameters() for sub in model for j in sub]
+        opt = torch.optim.Adam(itertools.chain(*params), lr=conf.lr)
+        crt = torch.nn.CrossEntropyLoss()
+        outputs = [[] for _ in range(conf.n_user)]
+        for _ in range(max_epochs):
+            for i in range(conf.iterations):
+                # Generating soft symbols for training purposes
+                if i > 0:
+                    for user in range(conf.n_user):
+                        idx = [i for i in range(conf.n_user) if i != user]
+                        input = torch.cat((y_train, probs_vec[:, idx]), dim=1)
+                        with torch.no_grad():
+                            output = self.softmax(model[user][i - 1](input))
+                        probs_vec[:, user] = output[:, 1]
+                    # Obtaining the DeepSIC networks for each user-symbol and the i-th iteration
+                    b_train_all, y_train_all = self.prepare_data_for_training(b_train, y_train, probs_vec)
+                else:
+                    probs_vec = b_train.clone()
+                    # Obtaining the DeepSIC networks for each user-symbol and the i-th iteration
+                    b_train_all, y_train_all = self.prepare_data_for_training(b_train, y_train, probs_vec)
+
+                # Training the DeepSIC networks for the iteration>1
+                for user in range(conf.n_user):
+                    if phase == Phase.TEST and conf.retrain_user is not None:
+                        if not conf.retrain_user == user:
+                            continue
+                    single_model, b, y = model[user][i].to(device), b_train_all[user], y_train_all[user]
+                    output = single_model(y)
+                    output_probs = self.softmax(output)
+                    outputs[user].append(output)
+                    probs_vec[:, user] = output_probs[:, 1]
+
+                if i == 0:
+                    probs_vec = HALF * torch.ones(b_train.shape).to(device)
+
+            loss = 0
+            for user in range(conf.n_user):
+                loss += crt(outputs[user][-1], b_train_all[user].squeeze(-1).long())
+            loss.backward()
+            opt.step()
+            opt.zero_grad()
 
     def predict(self, model: nn.Module, y: torch.Tensor, probs_vec: torch.Tensor = None) -> torch.Tensor:
         # detect and decode
