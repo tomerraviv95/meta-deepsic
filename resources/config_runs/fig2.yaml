@@ -1,8 +1,8 @@
 n_user: 4 # number of Transmitted Symbols, users
 n_ant: 4 # number of Rx Antennas
-snr: 10 # SNR value
+snr: 14 # SNR value
 iterations: 5 # number of iterations in the unfolded network
-info_size: 80 # number of subsequent transmissions
+info_size: 120 # number of subsequent transmissions
 train_frame_num: 50 # coherence-time block size
 test_frame_num: 50 # coherence-time block size
 test_pilot_size: 0 # number of subsequent pilot transmissions
@@ -14,7 +14,7 @@ lr: 0.01 # learning rate
 max_epochs: 100 # number of training epochs
 self_supervised_epochs: 50 # number of self-supervised epochs
 use_ecc: True # whether to use ecc (corrupted data blocks) for training, or use the genie aided blocks
-n_ecc_symbols: 2 # number of symbols in ecc
+n_ecc_symbols: 4 # number of symbols in ecc
 ber_thresh: 0.02 # threshold for self-supervised training
-change_user_only: 2 # index of single fading user
+change_user_only: # index of single fading user
 retrain_user: # index of specific user-networks that need retraining

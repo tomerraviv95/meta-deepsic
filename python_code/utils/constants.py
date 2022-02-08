@@ -1,6 +1,6 @@
 from enum import Enum
 
-SUBFRAMES_IN_FRAME = 5
+SUBFRAMES_IN_FRAME = 10
 HALF = 0.5
 
 
