@@ -157,9 +157,8 @@ class MetaDeepSICTrainer(DeepSICTrainer):
 
             # meta-update (with query set)
             loss_query = 0
-            for i in range(conf.iterations):
-                for user in range(conf.n_user):
-                    loss_query += crt(outputs[user][i], b_train_all[user].squeeze(-1).long())
+            for user in range(conf.n_user):
+                loss_query += crt(outputs[user][-1], b_train_all[user].squeeze(-1).long())
 
             # set create_graph to True for MAML, False for FO-MAML
             for i in range(conf.iterations):
