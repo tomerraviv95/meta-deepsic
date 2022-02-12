@@ -1,6 +1,8 @@
+import itertools
+
 from python_code.detectors.deep_sic_detector import DeepSICDetector
 from python_code.detectors.meta_deep_sic_detector import MetaDeepSICDetector
-from python_code.trainers.deep_sic_trainer import DeepSICTrainer
+from python_code.trainers.deep_sic_trainer import DeepSICTrainer, SEQUENTIAL_TRAINING
 from python_code.utils.config_singleton import Config
 from python_code.utils.constants import Phase, HALF
 from torch import nn
@@ -49,7 +51,7 @@ class MetaDeepSICTrainer(DeepSICTrainer):
         support_idx = torch.arange(b_train.shape[0] - frame_size)
         query_idx = torch.arange(frame_size, b_train.shape[0])
 
-        for m in range(max_epochs):
+        for _ in range(max_epochs):
             opt.zero_grad()
 
             # choose only META_SAMPLES samples from the entire support, query to use for current epoch
@@ -83,7 +85,103 @@ class MetaDeepSICTrainer(DeepSICTrainer):
 
             opt.step()
 
+    def end_to_end_train_loop(self, model: nn.Module, b_train: torch.Tensor, y_train: torch.Tensor, max_epochs: int,
+                              phase: Phase):
+        """
+        Main meta-training loop. Runs in minibatches, each minibatch is split to pairs of following words.
+        The pairs are comprised of (support,query) words.
+        Evaluates performance over validation SNRs.
+        Saves weights every so and so iterations.
+        """
+        # Initializing the probabilities
+        params = [j.parameters() for sub in model for j in sub]
+        opt = torch.optim.Adam(itertools.chain(*params), lr=conf.lr)
+        crt = torch.nn.CrossEntropyLoss()
+        meta_model = [[MetaDeepSICDetector() for _ in range(conf.iterations)] for _ in
+                      range(conf.n_user)]
+        probs_vec = None
+
+        frame_size = self.train_frame_size if self.phase == Phase.TRAIN else self.test_frame_size
+        if b_train.shape[0] - frame_size <= 0:
+            return
+        support_idx = torch.arange(b_train.shape[0] - frame_size)
+        query_idx = torch.arange(frame_size, b_train.shape[0])
+
+        for _ in range(max_epochs):
+            print(1)
+            opt.zero_grad()
+
+            # choose only META_SAMPLES samples from the entire support, query to use for current epoch
+            cur_idx = torch.randperm(len(support_idx))
+            cur_support_idx, cur_query_idx = support_idx[cur_idx], query_idx[cur_idx]
+
+            # divide the words to following pairs - (support,query)
+            support_b, support_y = b_train[cur_support_idx], y_train[cur_support_idx]
+            query_b, query_y = b_train[cur_query_idx], y_train[cur_query_idx]
+
+            para_list_detector = [[
+                list(map(lambda p: p[0], zip(model[user][i].parameters())))
+                for i in range(conf.iterations)]
+                for user in range(conf.n_user)]
+
+            # local update (with support set)
+            b_train_all, outputs = self.end_to_end_train(support_b,
+                                                         meta_model,
+                                                         probs_vec,
+                                                         phase,
+                                                         support_y,
+                                                         para_list_detector)
+            loss_supp = 0
+            for user in range(conf.n_user):
+                loss_supp += crt(outputs[user][-1], b_train_all[user].squeeze(-1).long())
+
+            # set create_graph to True for MAML, False for FO-MAML
+            local_grads = [[_ for _ in range(conf.iterations)] for _ in range(conf.n_user)]
+            for i in range(conf.iterations):
+                for user in range(conf.n_user):
+                    local_grads[user][i] = torch.autograd.grad(loss_supp, para_list_detector[user][i],
+                                                               create_graph=MAML_FLAG)
+
+            updated_para_list_detector = [[
+                list(map(lambda p: p[1] - META_LR * p[0], zip(local_grads[user][i], para_list_detector[user][i])))
+                for i in range(conf.iterations)]
+                for user in range(conf.n_user)]
+
+            # local update (with support set)
+            b_train_all, outputs = self.end_to_end_train(query_b,
+                                                         meta_model,
+                                                         probs_vec,
+                                                         phase,
+                                                         query_y,
+                                                         updated_para_list_detector)
+
+            # meta-update (with query set)
+            loss_query = 0
+            for i in range(conf.iterations):
+                for user in range(conf.n_user):
+                    loss_query += crt(outputs[user][i], b_train_all[user].squeeze(-1).long())
+
+            # set create_graph to True for MAML, False for FO-MAML
+            for i in range(conf.iterations):
+                for user in range(conf.n_user):
+                    meta_grad = torch.autograd.grad(loss_query, para_list_detector[user][i], create_graph=False,
+                                                    retain_graph=True)
+                    ind_param = 0
+                    for param in model[user][i].parameters():
+                        param.grad = None  # zero_grad
+                        param.grad = meta_grad[ind_param]
+                        ind_param += 1
+
+            opt.step()
+
     def train_loop(self, model: nn.Module, b_train: torch.Tensor, y_train: torch.Tensor, max_epochs: int, phase: Phase):
+        if SEQUENTIAL_TRAINING:
+            self.sequential_train_loop(model, b_train, y_train, conf.max_epochs, self.phase)
+        else:
+            self.end_to_end_train_loop(model, b_train, y_train, conf.max_epochs, self.phase)
+
+    def sequential_train_loop(self, model: nn.Module, b_train: torch.Tensor, y_train: torch.Tensor, max_epochs: int,
+                              phase: Phase):
         initial_probs = b_train.clone()
         b_train_all, y_train_all = self.prepare_data_for_training(b_train, y_train, initial_probs)
         # Training the DeepSIC network for each user for iteration=1

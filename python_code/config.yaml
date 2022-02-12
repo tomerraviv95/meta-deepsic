@@ -11,7 +11,7 @@ linear_channel: True # whether channel is linear or not. In case it is not - a t
 channel_mode: 'SED' # the channel model: set 'SED' for the Spatial Exponential Decay Channel Model, i.e. exp(-|i-j|),
 # 'COST' for COST 8X8 setup.
 lr: 0.01 # learning rate
-max_epochs: 100 # number of training epochs
+max_epochs: 10 # number of training epochs
 self_supervised_epochs: 50 # number of self-supervised epochs
 use_ecc: True # whether to use ecc (corrupted data blocks) for training, or use the genie aided blocks
 n_ecc_symbols: 4 # number of symbols in ecc

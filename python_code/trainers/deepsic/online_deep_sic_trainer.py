@@ -1,11 +1,10 @@
 from python_code.detectors.deep_sic_detector import DeepSICDetector
 from python_code.trainers.deep_sic_trainer import DeepSICTrainer
 from python_code.utils.config_singleton import Config
+from python_code.utils.constants import Phase, HALF
 from torch import nn
-
+import itertools
 import torch
-
-from python_code.utils.constants import Phase
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 conf = Config()
@@ -56,6 +55,27 @@ class OnlineDeepSICTrainer(DeepSICTrainer):
     def online_train_loop(self, model: nn.Module, b_train: torch.Tensor, y_train: torch.Tensor, max_epochs: int,
                           phase: Phase):
         self.train_loop(model, b_train, y_train, max_epochs, phase)
+
+    def end_to_end_train_loop(self, model: nn.Module, b_train: torch.Tensor, y_train: torch.Tensor, max_epochs: int,
+                              phase: Phase):
+        # Initializing the probabilities
+        params = [j.parameters() for sub in model for j in sub]
+        opt = torch.optim.Adam(itertools.chain(*params), lr=conf.lr)
+        crt = torch.nn.CrossEntropyLoss()
+        probs_vec = None
+
+        for _ in range(max_epochs):
+            b_train_all, outputs = self.end_to_end_train(b_train,
+                                                         model,
+                                                         probs_vec,
+                                                         phase,
+                                                         y_train)
+            loss = 0
+            for user in range(conf.n_user):
+                loss += crt(outputs[user][-1], b_train_all[user].squeeze(-1).long())
+            loss.backward()
+            opt.step()
+            opt.zero_grad()
 
 
 if __name__ == "__main__":
