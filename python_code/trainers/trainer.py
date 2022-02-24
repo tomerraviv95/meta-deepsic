@@ -54,10 +54,6 @@ class Trainer:
     def train_loop(self, model: nn.Module, b_train: torch.Tensor, y_train: torch.Tensor, max_epochs: int, phase: Phase):
         pass
 
-    def train_loop2(self, model: nn.Module, b_train: torch.Tensor, y_train: torch.Tensor, max_epochs: int,
-                    phase: Phase):
-        pass
-
     def predict(self, model: nn.Module, y: torch.Tensor, probs_vec: torch.Tensor = None) -> torch.Tensor:
         pass
 
@@ -96,53 +92,11 @@ class Trainer:
             b_start_ind = frame * b_frame_size
             b_end_ind = (frame + 1) * b_frame_size
             current_x = b_test[b_start_ind:b_end_ind]
-            if conf.use_ecc:
-                buffer_b, buffer_y, model = self.ecc_eval(model, buffer_b, buffer_y, probs_vec, ber_list, current_y,
-                                                          current_x,
-                                                          frame)
-            else:
-                buffer_b, buffer_y, model = self.pilot_eval(model, buffer_b, buffer_y, probs_vec, ber_list, current_y,
-                                                            current_x,
-                                                            frame)
+            buffer_b, buffer_y, model = self.ecc_eval(model, buffer_b, buffer_y, probs_vec, ber_list, current_y,
+                                                      current_x,
+                                                      frame)
 
         return ber_list
-
-    def pilot_eval(self, model: nn.Module, buffer_b: torch.Tensor, buffer_y: torch.Tensor, probs_vec: torch.Tensor,
-                   ber_list: List[float], current_y: torch.Tensor, current_x: torch.Tensor, frame: int) -> [
-        torch.Tensor, torch.Tensor]:
-
-        x_pilot, x_data = current_x[:conf.test_pilot_size], current_x[conf.test_pilot_size:]
-        y_pilot, y_data = current_y[:conf.test_pilot_size], current_y[conf.test_pilot_size:]
-
-        last_x_pilot, last_y_pilot = buffer_b[-conf.test_pilot_size:], buffer_y[-conf.test_pilot_size:]
-
-        # meta-learning main function
-        if self.online_meta and (frame + 1) % SUBFRAMES_IN_FRAME == 0:
-            print('Meta')
-            self.train_loop(buffer_b, buffer_y, self.saved_detector, conf.self_supervised_epochs, self.phase)
-
-        # use last word inserted in the buffer for training
-        if self.self_supervised:
-            if self.online_meta:
-                model = self.copy_model(self.saved_detector)
-                self.online_train_loop(model, last_x_pilot, last_y_pilot, conf.self_supervised_epochs, self.phase)
-            else:
-                # use last word inserted in the buffer for training
-                self.online_train_loop(model, x_pilot, y_pilot, conf.self_supervised_epochs, self.phase)
-
-        # detect
-        detected_word = self.predict(model, y_data, probs_vec)
-
-        # save the encoded word in the buffer
-        buffer_b = torch.cat([buffer_b, x_pilot], dim=0)
-        buffer_y = torch.cat([buffer_y, y_pilot], dim=0)
-
-        # calculate error rate
-        ber = calculate_error_rates(detected_word, x_data)[0]
-        ber_list.append(ber)
-        print(frame, ber)
-
-        return buffer_b, buffer_y, model
 
     def ecc_eval(self, model: nn.Module, buffer_b: torch.Tensor, buffer_y: torch.Tensor, probs_vec: torch.Tensor,
                  ber_list: List[float], current_y: torch.Tensor, current_x: torch.Tensor, frame: int) -> [
