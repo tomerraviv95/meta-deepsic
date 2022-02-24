@@ -18,3 +18,4 @@ n_ecc_symbols: 0 # number of symbols in ecc
 ber_thresh: 0.02 # threshold for self-supervised training
 change_user_only: 2 # index of single fading user
 retrain_user: 2 # index of specific user-networks that need retraining
+seed: 0
