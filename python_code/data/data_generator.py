@@ -3,6 +3,7 @@ from python_code.utils.config_singleton import Config
 from python_code.utils.constants import Phase
 from python_code.ecc.wrappers import encoder
 from torch.utils.data import Dataset
+from typing import Tuple
 import numpy as np
 import torch
 
@@ -35,7 +36,7 @@ class DataGenerator(Dataset):
         self.frame_num = frame_num
         self.channel_model = ChannelModel(self.phase)
 
-    def __call__(self, snr: int):
+    def __call__(self, snr: int) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         Generates the input-channel symbols and output-channel values
         :param snr: signal-to-noise ratio

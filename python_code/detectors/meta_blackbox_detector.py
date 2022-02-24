@@ -1,3 +1,5 @@
+from typing import List
+
 from python_code.utils.python_utils import reshape_input, reshape_output
 from python_code.utils.config_singleton import Config
 from python_code.utils.constants import Phase, HALF
@@ -49,7 +51,7 @@ class MetaBlackBoxDetector(nn.Module):
     def set_state(self, state: Phase):
         self.state = state
 
-    def forward(self, y: torch.Tensor, var: list) -> torch.Tensor:
+    def forward(self, y: torch.Tensor, var: List[torch.Tensor]) -> torch.Tensor:
         out = tanh_func(reshape_input(y, conf.n_user, 1))
         for i in range(len(self.all_blocks)):
             cur_block = self.all_blocks[i]

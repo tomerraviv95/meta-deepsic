@@ -4,7 +4,6 @@ from python_code.trainers.deep_sic_trainer import DeepSICTrainer
 from python_code.utils.config_singleton import Config
 from python_code.utils.constants import Phase, HALF
 from torch import nn
-import itertools
 import torch
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

@@ -132,22 +132,25 @@ class Plotter:
         plt.savefig(os.path.join(FIGURES_DIR, self.folder_name, f'SER_versus_pilot_size_{data_frame_size}_data.png'),
                     bbox_inches='tight')
 
-    def ser_versus_snr(self, current_run_params: Tuple[Trainer, str]):
+    def ser_versus_snr(self, current_run_params: Tuple[Trainer, str], trial_num:int):
         # get trainer
         trainer = current_run_params[0]
         # name of detector
         name = current_run_params[1]
         snr_values = list(range(11, 16))
         total_sers = []
-        trial_num = 10
         for snr in snr_values:
             conf.set_value('snr', snr)
+            print(conf.snr)
             avg_ser = 0
             for trial in range(trial_num):
+                conf.set_value('seed', trial_num)
                 trainer.__init__()
                 ser_plot = self.get_ser_plot(trainer, run_over=self.run_over, method_name=name, trial=trial)
-                avg_ser += sum(ser_plot[0]) / len(ser_plot[0])
-            total_sers.append(avg_ser / trial_num)
+                cur_avg_ser = sum(ser_plot[0]) / len(ser_plot[0])
+                avg_ser += cur_avg_ser
+            total_sers.append(np.mean(avg_ser))
 
         self.plot_ser_versus_snr(snr_values, total_sers, name)
+        plt.ylim([1e-4, 1])
         plt.savefig(os.path.join(FIGURES_DIR, self.folder_name, f'SER_versus_snr.png'), bbox_inches='tight')

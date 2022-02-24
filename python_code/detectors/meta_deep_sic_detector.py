@@ -1,3 +1,5 @@
+from typing import List
+
 from python_code.utils.config_singleton import Config
 from torch.nn import functional as F
 from torch import nn
@@ -34,7 +36,7 @@ class MetaDeepSICDetector(nn.Module):
         self.fc1 = nn.Linear(HIDDEN_SIZE, int(HIDDEN_SIZE / 2))
         self.fc2 = nn.Linear(int(HIDDEN_SIZE / 2), CLASSES_NUM)
 
-    def forward(self, y: torch.Tensor, var: list) -> torch.Tensor:
+    def forward(self, y: torch.Tensor, var: List[torch.Tensor]) -> torch.Tensor:
         fc_out0 = F.linear(y.squeeze(-1), var[0], var[1])
         out0 = torch.sigmoid(fc_out0)
         fc_out1 = F.linear(out0, var[2], var[3])
