@@ -1,6 +1,6 @@
-*"When you can write well, you can think well."* 
+*"A baby has brains, but it doesn’t know much. Experience is the only thing that brings knowledge, and the longer you are on earth the more experience you are sure to get."* 
 
---Matt Mullenweg.
+--Wizard of Oz.
 
 # Meta-DeepSIC repository
 
@@ -55,7 +55,7 @@ Features main plotting tools for the paper:
 * basic_plotter - features the main plotting class, with plots of coded BER by block index and SNR, or SER by pilots length.
 * plotter_config - colors, markers and linestyles for all methods.
 * plotter_utils - wrapper for the trainers initialization and method name.
-* plot_figures_for_paper - loads the relevant config from config_runs directory, and runs the appropriate methods.
+* plot_figures_for_paper - loads the relevant config from config_runs directory, and runs the appropriate methods for plotting the MIMO figures in the paper.
 
 ### trainers 
 
