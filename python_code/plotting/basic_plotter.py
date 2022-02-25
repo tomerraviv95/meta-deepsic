@@ -71,6 +71,16 @@ class Plotter:
         plt.yscale('log')
         plt.legend(loc='upper left', prop={'size': 15})
 
+    def ser_versus_block(self, current_run_params: Tuple[Trainer, str]):
+        # get trainer
+        trainer = current_run_params[0]
+        # name of detector
+        name = current_run_params[1]
+        ser = self.get_ser_plot(trainer, run_over=self.run_over, method_name=name)
+        self.plot_ser_versus_block(range(conf.test_frame_num - 1), ser[0], name)
+        plt.savefig(os.path.join(FIGURES_DIR, self.folder_name, f'SER_versus_block_{trainer.test_frame_size}.png'),
+                    bbox_inches='tight')
+
     def plot_ser_versus_snr(self, blocks_ind: List[int], ser: List[float], method_name: str):
         plt.plot(blocks_ind, ser,
                  label=method_name,
@@ -84,73 +94,25 @@ class Plotter:
         plt.yscale('log')
         plt.legend(loc='lower left', prop={'size': 15})
 
-    def plot_ser_versus_blocks_num(self, blocks_ind: List[int], ser: List[float], method_name: str):
-        plt.plot(blocks_ind, ser,
-                 label=method_name,
-                 color=COLORS_DICT[method_name],
-                 marker=MARKERS_DICT[method_name],
-                 linestyle=LINESTYLES_DICT[method_name],
-                 linewidth=2.2)
-        plt.ylabel(r'SER', fontsize=20)
-        plt.xlabel(r'Pilot Block Size', fontsize=20)
-        plt.grid(True, which='both')
-        plt.yscale('log')
-        plt.legend(loc='upper left', prop={'size': 15})
-
-    def ser_versus_block(self, current_run_params: Tuple[Trainer, str]):
-        # get trainer
-        trainer = current_run_params[0]
-        # name of detector
-        name = current_run_params[1]
-        ser = self.get_ser_plot(trainer, run_over=self.run_over, method_name=name)
-        self.plot_ser_versus_block(range(conf.test_frame_num - 1), ser[0], name)
-        plt.savefig(os.path.join(FIGURES_DIR, self.folder_name, f'SER_versus_block_{trainer.test_frame_size}.png'),
-                    bbox_inches='tight')
-
-    def ser_versus_blocks_num(self, current_run_params: Tuple[Trainer, str]):
-        # get trainer
-        trainer = current_run_params[0]
-        # name of detector
-        name = current_run_params[1]
-        conf.set_value('use_ecc', False)
-        test_pilot_sizes = [50, 100, 150, 200, 250, 300, 350, 400, 450, 500]
-        data_frame_size = 5000
-        total_sers = []
-        trial_num = 5
-        for test_pilot_size in test_pilot_sizes:
-            conf.set_value('test_pilot_size', test_pilot_size)
-            info_size = test_pilot_size + data_frame_size
-            conf.set_value('info_size', info_size)
-            ser = 0
-            for trial in range(trial_num):
-                trainer.__init__()
-                ser_plot = self.get_ser_plot(trainer, run_over=self.run_over, method_name=name, trial=trial)
-                ser += sum(ser_plot[0]) / len(ser_plot[0])
-            total_sers.append(ser / trial_num)
-
-        self.plot_ser_versus_blocks_num(test_pilot_sizes, total_sers, name)
-        plt.savefig(os.path.join(FIGURES_DIR, self.folder_name, f'SER_versus_pilot_size_{data_frame_size}_data.png'),
-                    bbox_inches='tight')
-
-    def ser_versus_snr(self, current_run_params: Tuple[Trainer, str], trial_num:int):
+    def ser_versus_snr(self, current_run_params: Tuple[Trainer, str], trial_num: int):
         # get trainer
         trainer = current_run_params[0]
         # name of detector
         name = current_run_params[1]
         snr_values = list(range(11, 16))
         total_sers = []
+        print(name)
         for snr in snr_values:
             conf.set_value('snr', snr)
             print(conf.snr)
-            avg_ser = 0
+            avg_ser = []
             for trial in range(trial_num):
                 conf.set_value('seed', trial_num)
                 trainer.__init__()
                 ser_plot = self.get_ser_plot(trainer, run_over=self.run_over, method_name=name, trial=trial)
                 cur_avg_ser = sum(ser_plot[0]) / len(ser_plot[0])
-                avg_ser += cur_avg_ser
-            total_sers.append(np.mean(avg_ser))
+                avg_ser.append(cur_avg_ser)
+            total_sers.append(np.mean(np.sort(np.array(avg_ser))))
 
         self.plot_ser_versus_snr(snr_values, total_sers, name)
-        plt.ylim([1e-4, 1])
         plt.savefig(os.path.join(FIGURES_DIR, self.folder_name, f'SER_versus_snr.png'), bbox_inches='tight')

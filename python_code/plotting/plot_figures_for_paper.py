@@ -3,10 +3,10 @@ from python_code.plotting.plotter_utils import get_deepsic, get_online_deepsic, 
 from python_code.plotting.basic_plotter import Plotter
 import matplotlib.pyplot as plt
 
-trials_num_dict = {2: 10,
-                   4: 10,
-                   6: 10,
-                   7: 20,
+trials_num_dict = {2: 20,
+                   4: 20,
+                   6: 20,
+                   7: 80,
                    8: 80}
 
 
@@ -40,6 +40,6 @@ def plot_figure_wrapper(figure_ind: int):
 
 if __name__ == "__main__":
     plotter = Plotter(run_over=False)
-    figure_ind = 8
+    figure_ind = 2
     plot_figure_wrapper(figure_ind)
     plt.show()
