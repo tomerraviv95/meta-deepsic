@@ -4,9 +4,9 @@
 
 # Meta-DeepSIC repository
 
-Python repository for the paper "..." (to be completed).
+Python repository for the paper "Online Meta-Learning For Hybrid Model-Based Deep Receivers".
 
-Please cite our [paper](...), if the code is used for publishing research.
+Please cite our [paper](https://arxiv.org/abs/2203.14359), if the code is used for publishing research.
 
 # Table of Contents
 
