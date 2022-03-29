@@ -69,7 +69,7 @@ Each trainer is executable by running it. The trainer runs the main function of 
 
 Extra utils for pickle manipulations and tensor reshaping; calculating the accuracy over FER and BER; several constants; and most important - the config singleton class.
 
-The config works by the [singleton design patter](https://en.wikipedia.org/wiki/Singleton_pattern). Check the link if unfamiliar. 
+The config works by the [singleton design pattern](https://en.wikipedia.org/wiki/Singleton_pattern). Check the link if unfamiliar. 
 
 The config is accessible from every module in the package, featuring the next parameters:
 
